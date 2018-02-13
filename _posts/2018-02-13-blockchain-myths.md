@@ -16,7 +16,7 @@ In this post, I going to talk about what I see as the top 8 myths of blockchain.
 
 ## Myth 1: Blockchain Is Digital Currencies
 
-Many early applications of blockchain technology have been directed at the creation of digital currencies (more precisely: de-centralized, consensus-driven, append-only ledgers).
+Many early applications of blockchain technology have been directed at the creation of digital assets that can be used as currencies (more precisely: de-centralized, consensus-driven, append-only ledgers).
 
 Blockchain technology itself, however, is neither about nor restricted to the creation of digital currencies.
 
@@ -24,9 +24,9 @@ In the most general possible sense, _blockchain technology_ refers to _a mathema
 
 > "Blockchain technology refers to a mathematical innovation that allows us to incentivize independent parties in an untrusted, purely consensual network to provide well-defined, agreed upon services."
 
-It is hard to overstate how important this innovation is. One of the oldest problems in the history of civilization is figuring out how to get different parties to work together.
+It is hard to overstate just how important this innovation is. One of the oldest problems in the history of civilization is figuring out how to get different parties to work together.
 
-Previously, legal markets have heavily relied upon _physical force_ to incentivize independent parties to provide (contractually) agreed upon services. Indeed, this is one of the important functions of governments.
+Previously, legal markets have heavily relied on _physical force_ to incentivize independent parties to provide (contractually) agreed upon services. Indeed, this is one of the important functions of governments.
 
 Force works reasonably well for trustworthy parties in the same jurisdiction, but is costly and slow. Force doesn't work in cases where the parties are untrusted, in cases where the parties span different jurisdictions, or in cases where speed or low costs are critical.
 
@@ -42,15 +42,17 @@ Tokens, such as Bitcoins, can be _used_ as currencies, but fundamentally, tokens
 
 Possession of a token gives you the _capability_ to avail yourself of the well-defined, agreed upon services provided by a blockchain technology. _Incidentally_, people may be willing to give you some form of currency in order to acquire a token, if they want those services, or if they are speculating on the value of the tokens.
 
-For _pure cryptocurrencies_ such as Bitcoin, the services revolve around providing a global, distributed ledger, which blurs the line between capability and currency. But the world doesn't need more than a few pure cryptocurrencies, so the majority of successful blockchain applications will not be pure cryptocurrencies.
+For _pure cryptocurrencies_ such as Bitcoin, the services revolve around providing a global, distributed ledger, which blurs the line between capability and currency. But the world doesn't need more than a few pure cryptocurrencies, so the majority of successful blockchain applications will _not_ be pure cryptocurrencies.
 
-A better analogy for tokens is _corporate stock_: just like stock gives you capabilities to avail yourself of the services provided by the corporation to stockholders (such as the right to vote, right to dividends, etc.), tokens give let you avail yourself of the services provided by the blockchain platform. Stock usually has real value, because you can often exchange it for money, but it's less a currency than it is a set of rights to do something.
+A better analogy for tokens is _corporate stock_: just like stock gives you capabilities to avail yourself of the services provided by the corporation to stockholders (such as the right to vote, right to dividends, etc.), tokens let you avail yourself of the services provided by the blockchain platform.
+
+Stock usually has real value, because you can often exchange it for money, but it's less a currency than it is a set of rights to do something.
 
 ## Myth 3: Blockchain Isn't Scalable
 
-Today's blockchains are generally _not_ scalable. Bitcoin can handle a few transactions per second. Ethereum can handle five times that amount. To give you a sense for how terrible this performance is, Visa handles 65,000 transactions per second.
+Today's blockchains are generally _not_ scalable. Bitcoin can handle a few transactions per second. Ethereum can handle about five times that amount. To give you a sense for how terrible this performance is, Visa handles 65,000 transactions per _second_!
 
-Now, since _tokens are not currency_, blockchain platforms don't _necessarily_ need to scale to the level of payment systems. That said, it's clear numerous applications require performance orders of magnitude greater than currently offered, as well as far cheaper storage and compute than currently possible on any blockchain.
+Now, since _tokens are not currency_, blockchain platforms don't _necessarily_ need to scale to the level of payment systems. That said, it's clear numerous applications require performance orders of magnitude greater than currently offered, as well as far cheaper storage and compute than currently possible on any existing blockchain.
 
 Nonetheless, there are no theoretical reasons why even public blockchain technology cannot scale. Ongoing work in proof-of-stake consensus algorithms, sharding, efficient routing, reputation networks and heterogeneous (specialized) networks, all provide a clear (if difficult) path toward building highly scalable blockchain platforms.
 
@@ -84,11 +86,11 @@ Blockchains are not anti-government, they are just a new technological tool, one
 
 ## Myth 6: Blockchain Is An Append-Only Chain of Blocks
 
-Technically speaking, the word _blockchain_ stems from Bitcoin's append-only chain of blocks, produced as part of the "mining" process that confirms transactions.
+Technically speaking, the word _blockchain_ stems from Bitcoin's append-only chain of blocks, a data structure produced as part of the "mining" process that confirms transactions.
 
 These days, blockchain technology has evolved past linear append-only chains. Sharded systems utilize Directed Acyclic Graphs (DAGs) of blocks, not linear chains, and there is no specific requirement for ever-growing, append-only chains (we'll see other types of chains in the future that preserve the ability to audit but discard some historical information).
 
-While some developers may not like the imprecision or evolution, _blockchain_ now refers generically to a _space_ of solutions, not any specific _implementation techniques_.
+While some developers may not like the imprecision or terminology drift, _blockchain_ now refers generically to a _space_ of solutions, not any specific _implementation techniques_ or _data structures_.
 
 ## Myth 7: Blockchains Should Be Implemented in Go or C/C++
 
@@ -98,13 +100,13 @@ Given the high stakes involved, blockchain platforms should be written in langua
 
 Languages with strong, static type systems, which possess semantics amenable to formal verification, and which support functional programming (a mathematical style of developing software), are an excellent fit for implementation of blockchain technology.
 
-Haskell in particular is proving to be a robust choice for implementing new blockchain technology, and other functional programming languages show promise as well (OCaml, Scala).
+Haskell in particular is proving to be a [robust choice](https://www.cardanohub.org/en/home/) for implementing new blockchain technology, and other functional programming languages show promise as well (OCaml, Scala).
 
-(Sorry, I couldn't resist.)
+(Sorry, I couldn't resist!)
 
 ## Myth 8: Blockchain Is a Bubble
 
-No one can perfectly predict the future of Bitcoin, Ethereum, and other major players in the blockchain space&mdash;precisely because the success of those platforms depends on people. Developers writing code, pull requests being accepted or rejected, and miners adopting (or refusing to adopt) upgrades.
+No one can perfectly predict the future of Bitcoin, Ethereum, and other major players in the blockchain space&mdash;precisely because the success of those platforms depends on people. Developers have to write code, pull requests must be accepted or rejected, and miners must adopt (or not adopt) upgrades.
 
 While it's impossible to perfectly predict what will become of the first-movers in the blockchain space, I feel confident in saying that the market cap of all blockchain technologies today is completely insignificant compared to what it will ultimately become.
 
