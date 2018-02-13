@@ -6,9 +6,9 @@ category:     articles
 tags:         [functional programming, ml, haskell, scala, idris, purescript]
 ---
 
-My [last post](/articles/principled-typeclasses/) talked about what's wrong with type classes (in general, but also specifically in Haskell). This post generated some [great feedback on Reddit](http://www.reddit.com/r/haskell/comments/2dw3zq/haskells_type_classes_why_we_can_do_better/), including some valid criticism that I didn't explain why I hated on newtypes so much.
+My [last post](/articles/principled-typeclasses) talked about what's wrong with type classes (in general, but also specifically in Haskell). This post generated some [great feedback on Reddit](http://www.reddit.com/r/haskell/comments/2dw3zq/haskells_type_classes_why_we_can_do_better/), including some valid criticism that I didn't explain why I hated on newtypes so much.
 
-I took some of that feedback and incorporated it into a [revised version](/articles/principled-typeclasses/) of the post, but I have even *more* to say about "newtypes", so I decided to write another blog post.
+I took some of that feedback and incorporated it into a [revised version](/articles/principled-typeclasses) of the post, but I have even *more* to say about "newtypes", so I decided to write another blog post.
 
 ## What's in a Newtype
 
@@ -32,7 +32,7 @@ There's a slight semantic difference between the two, but for purposes of this b
 
 ## The Promise of Newtypes
 
-Newtypes are used to provide and select between alternate implementations of type classes for some base types. I think that's a hack (albeit a necessary one), but I've [already talked about this](/articles/principled-typeclasses/) so I won't belabor it here.
+Newtypes are used to provide and select between alternate implementations of type classes for some base types. I think that's a hack (albeit a necessary one), but I've [already talked about this](/articles/principled-typeclasses) so I won't belabor it here.
 
 The other promise of newtypes is that we can use them to make our code more type safe. Instead of passing around `String` as an email, for example, we can create a super lightweight "wrapper" around `String` called `Email`, and make it an error to use a `String` wherever an `Email` is expected.
 
