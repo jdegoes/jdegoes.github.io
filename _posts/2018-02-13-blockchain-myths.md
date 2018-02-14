@@ -34,15 +34,15 @@ Blockchain technology provides a shocking answer to one of civilization's oldest
 
 Classifying the set of viable blockchain solutions is not trivial, but it's clear based on this definition that any problem uniquely solved by blockchain technology will involve some combination of untrusted parties, multiple jurisdictions, high speed, and low costs.
 
-It should also be clear that some solutions currently marketed as blockchain solutions are not actually blockchain solutions, _per se_, even though they share some of the underlying math (zero-knowledge proofs, homomorphic computing, lattice cryptography, etc). More precisely, all blockchain tech involves cryptographic tech, but not all cryptographic tech involves blockchain tech.
+It should also be clear that some solutions currently marketed as blockchain solutions are not actually blockchain solutions, _per se_, even though they share some of the underlying math (zero-knowledge proofs, homomorphic computing, lattice cryptography, etc). All blockchain tech involves cryptographic tech, but not all cryptographic tech involves blockchain tech.
 
 ## Myth 2: Tokens Are Currencies
 
 Tokens, such as Bitcoins, can be _used_ as currencies, but fundamentally, tokens are _not_ currencies, but _capabilities_.
 
-Possession of a token gives you the _capability_ to avail yourself of the well-defined, agreed upon services provided by a blockchain technology. _Incidentally_, people may be willing to give you some form of currency in order to acquire a token, if they want those services, or if they are speculating on the value of the tokens.
+Possession of tokens gives you the _capability_ to avail yourself of the well-defined, agreed upon services provided by a blockchain technology. _Incidentally_, people may be willing to give you some form of currency in order to acquire a token, if they want those services, or if they are speculating on the value of the tokens.
 
-For _pure cryptocurrencies_ such as Bitcoin, the services revolve around providing a global, distributed ledger, which blurs the line between capability and currency. But the world doesn't need more than a few pure cryptocurrencies, so the majority of successful blockchain applications will _not_ be pure cryptocurrencies.
+For _pure cryptocurrencies_ such as Bitcoin, the services revolve around providing a global, distributed ledger _for the tokens_, which blurs the line between capability and currency. But the world doesn't need more than a few pure cryptocurrencies, so the majority of successful blockchain applications will _not_ be pure cryptocurrencies.
 
 A better analogy for tokens is _corporate stock_: just like stock gives you capabilities to avail yourself of the services provided by the corporation to stockholders (such as the right to vote, right to dividends, etc.), tokens let you avail yourself of the services provided by the blockchain platform.
 
