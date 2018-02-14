@@ -42,7 +42,7 @@ There are many dimensions on which COCs can be compared. I've highlighted a few 
 Against these dimensions, the following table shows how the different codes of conduct stack up against one another.
 
 |                      | FCOP  | Citizen COC | Contributor COC |
-|----------------------|-------|-------------|-----------------|
+|:---------------------|:------|:------------|:----------------|
 | Anti-Harassment      | ✔     | ✔           | ✔               |
 | Anti-Insulting       | ✔     | ✔           | ✔               |
 | Anti-Doxxing         | ✔     | ✔           | ✔               |
@@ -73,7 +73,7 @@ Since COCs are often designed to signal inclusivity, many specifically mention c
 The following table shows what types of demographic dimensions are explicitly mentioned in each of the three COCs.
 
 |                      | FCOP  | Citizen COC | Contributor COC |
-|----------------------|-------|-------------|-----------------|
+|:---------------------|:------|:------------|:----------------|
 | Race                 | ✔     | ✔           | ✔               |
 | Gender               | ✔     | ✔           | ✔               |
 | Ethnicity            | ✔     | ✔           | ✔               |
