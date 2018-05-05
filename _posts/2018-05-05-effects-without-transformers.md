@@ -171,6 +171,16 @@ This approach works smoothly and efficiently for most common type classes, inclu
 
 Now you can have your cake and eat it, too: use type classes to precisely capture the minimal set of effects required by different parts of your application, and use instances of these type classes for your own newtype around `IO`, giving you both abstraction and (relatively) high-performance.
 
+## Stack Safety
+
+In Scala, many obvious monad transformers are stack unsafe. For example, the classic definition of `StateT` is not stack safe. It can be modified to become stack safe, but the performance of an already slow data type becomes even slower, with many more method calls and allocations.
+
+The problem is not limited to transformers, either. It is common to use stack-safe monad transformers to implement base monads (`State`, `Writer`, `Reader`, and so on). For example, one can define a stack-safe base `State` monad by using the type alias `type State[S, A] = StateT[F, S, A]`, for some stack-safe `StateT` and trampolined monad `F`.
+
+While this approach (seen [in the Cats library](https://github.com/typelevel/cats/blob/55e09026bd7e48f1cedf358cbe4f54666aca5460/core/src/main/scala/cats/data/package.scala#L48)) creates stack safety for the base monad (by piggybacking on the safety of the transformer and the trampolined base monad), the resulting `State` monad, which is powered by a slow `StateT` transformer (made slower by stack safety!), becomes even slower due to trampolining.
+
+The technique presented in this post lets you eliminate base monads like `State`, bypassing the massive performance overhead entailed by older approaches to stack safety.
+
 ## Going Forward
 
 A decade of functional programming in Scala has taught us that while the abstraction afforded by MTL is extremely powerful and useful, transformers themselves just don't work well in Scala&mdash;not today, and maybe not ever.
