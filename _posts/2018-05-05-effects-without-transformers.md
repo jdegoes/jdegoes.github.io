@@ -65,7 +65,7 @@ This looks bad, but the actual situation is *far worse* than it appears.
 
 Monad transformers can be stacked on top of any monad. This means they need to require monadic constraints on `F[_]`, here represented by `implicit F: Functor[F]` on the `map` function (for this operation, we don't need to assume `Monad`, because all we need is `Functor`).
 
-We are interacting with the base monad through a JVM interface, which has many, many implementations across our code base. Most likely, the JVM will not be able to determine which concrete class we are interacting with, and if so, the method calls will become *megamorphic*, which prevents many types of optimizations that occur when the calling methods on concrete classes.
+We are interacting with the base monad through a JVM interface, which has many, many implementations across our code base. Most likely, the JVM will not be able to determine which concrete class we are interacting with, and if so, the method calls will become *megamorphic*, which prevents many types of optimizations that can occur when calling methods on concrete classes.
 
 The story for `flatMap` is similar:
 
