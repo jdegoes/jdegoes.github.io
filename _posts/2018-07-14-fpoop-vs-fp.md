@@ -63,7 +63,7 @@ Other times, the lack of first-class programs means poor expressivity. Expressio
 
 I'll show you a few examples with [ZIO](http://github.com/scalaz/scalaz-zio) to demonstrate the power of this approach.
 
-Suppose we want to define a combinator which retries a program until it succeeds. It's as simple as this:
+Suppose we want to define a combinator which retries a program until it succeeds:
 
 {% highlight scala %}
 def retry[E, A](io: IO[E, A]): IO[E, A] = io orElse retry(io)
@@ -72,7 +72,8 @@ def retry[E, A](io: IO[E, A]): IO[E, A] = io orElse retry(io)
 Or suppose we want to define a combinator to run an action forever:
 
 {% highlight scala %}
-def forever[E, A](io: IO[E, A]): IO[E, Nothing] = io *> forever(io)
+def forever[E, A](io: IO[E, A]): IO[E, Nothing] =
+  io.flatMap(_ => forever(io))
 {% endhighlight %}
 
 Or suppose we want to continuously take values from a queue and upload them to S3 (logging failures), in a separate thread:
@@ -87,33 +88,38 @@ Or suppose we want to spin up 1000 threads to load test a web server, adding a r
 IO.parAll(List.fill(1000)(randomTime.flatMap(IO.sleep) *> doLoadTest))).timeout(60.seconds)
 {% endhighlight %}
 
-The fact that we can define and use combinators on our programs allows us to solve very complex problems with very little code. These solutions don't have distracting clutter or irrelevant details; their structure cleanly reflects their intended semantics.
+Because we can define and use combinators on our programs, we can solve very complex problems with very little code. These solutions don't have distracting clutter or irrelevant details; their structure cleanly reflects their intended semantics.
 
 ### Performance & Power
 
 The final very attractive property of an effect monad like [ZIO](http://github.com/scalaz/scalaz-zio) (and similar ones like Monix `Task`) is that it can provide us with a level of performance and power that cannot be obtained elsewhere.
 
-For example, in a variety of benchmarks, ZIO is 100x or more faster than Scala's own `Future`. `Future` is not functional code, and it has all the drawbacks of dysfunctional code, including a different reasoning model and poor interop with pure code.
+For example, in a [variety of benchmarks](https://github.com/scalaz/scalaz-zio/tree/master/benchmarks/src/main/scala/scalaz/zio), ZIO is 100x or more faster than Scala's own `Future`. `Future` is not functional code, and it has all the drawbacks of dysfunctional code, including a different reasoning model and poor interop with pure code.
 
 That's not all, though. Programs written using ZIO can be maximally "lazy", without effort, thanks to a feature of ZIO called _interruption_. _Interruption_ allows the runtime system for ZIO to interrupt any "thread" immediately and safely release resources.
 
-This happens automatically in many places. For example, if a web response depends on some key piece of information that's not available, then all the other computations running in parallel will be gracefully shut down, reducing latency, network bandwidth, and CPU overhead. Similarly, if you race a bunch of computations, then as soon as one of them succeeds, the others will be terminated immediately and shut down gracefully.
+This happens automatically in many places. For example, if a web response depends on some key piece of information that's not available, then all the other computations running in parallel will be gracefully shut down, reducing latency, network bandwidth, and CPU overhead. Similarly, if you race a bunch of computations, then as soon as one of them succeeds, the others will be terminated immediately.
 
-ZIO models both synchronous and asynchronous effects in a uniform way. If you have some `IO[A]`, it could represent an arbitrary composition of both synchronous and asynchronous effects. But as a user, you don't have to care about that. If you don't use `IO`, then you need to structure your code quite differently, as a combination of both statements and callbacks&mdash;every bit of code is painfully aware of whether it's synchronous or asynchronous.
+ZIO models both synchronous and asynchronous effects in a uniform way. An `IO[A]` represents an arbitrary composition of both synchronous and asynchronous effects. But as a user, you don't have to care about this. If you don't use `IO`, then you need to structure your code quite differently, as a combination of both statements and callbacks&mdash;every bit of code is painfully aware of whether it's synchronous or asynchronous.
 
-ZIO gives you other superpowers, too, like letting you supervise child "threads" spawned by a parent (so you can take action if they crash), and the ability to automatically shut down child "threads" when the parent "thread" finishes. These aren't threads in the JVM sense&mdash;they're super lightweight _fibers_, which are a user-land implementation of green threads, so you can have hundreds of thousands of them running at a time.
+ZIO gives you other superpowers, too:
 
-All of these capabilities rely on the functional nature of ZIO. Because `IO` is just an ordinary immutable value, your main function needs to call the runtime system to interpret the data structure. This interpreter adds very powerful features that you can't get from other approaches.
+ * Concurrency using _fibers_ instead of threads, which are a user-land implementation of green threads, so you can have hundreds of thousands of them running at a time.
+ * A `try` / `finally` construct called `bracket`, which lets you perform resource acquisition and release safely, even across asynchronous boundaries, and even in the presence of interruption or catastrophic errors.
+ * The ability to supervise child fibers spawned by a parent, so you can take action if they crash.
+ * The ability to automatically terminate child fibers when the parent fiber finishes.
 
-Even if you hate functional programming, the benefits of ZIO are so compelling, you might be tempted to use it anyway.
+All of these capabilities rely on the functional nature of ZIO. Because `IO` is just an ordinary immutable value, your main function needs to call the runtime system to interpret the effectful program modeled by the data structure. This separate interpretation process allows the runtime to add very powerful features that you can't get from a non-functional approach.
+
+Even if you _hate_ functional programming, the benefits of purely functional programming are so compelling, you might be tempted to use a full-featured `IO` type anyway!
 
 ### Flexibility
 
-Although I have mentioned using `IO` data types, and you'll hear functional programmers talk about writing `IO` programs, it's more common these days to define type classes to represent bundles of effects, and to make programs polymorphic in the effect type, so long as they provide the required capabilities.
+Although I have mentioned using `IO` data types, and you'll hear functional programmers talk about writing `IO` programs, it's more common these days to define type classes to abstract over fine-grained effects, and to make programs polymorphic in the effect type, so long as they provide the required capabilities.
 
-This pattern, sometimes called _final tagless_ or _mtl style_, is very powerful. It lets you easily plug-in new implementations of type classes without changing any code. For example, you could have multiple implementations of a key-value store.
+This pattern, sometimes called _final tagless_ or _mtl style_, is very powerful. It lets you easily plug-in new implementations of type classes without changing any code.
 
-While there are many uses for this functionality, a powerful use is testing systems thoroughly without having to rely on error-prone, type-unsafe mocking frameworks built on byte code rewriting and custom class-loading.
+While there are many uses for this functionality, a powerful use case is testing systems thoroughly without having to rely on error-prone, type-unsafe mocking frameworks built on byte code rewriting and custom class-loading.
 
 ### Industry Proven
 
@@ -123,12 +129,14 @@ For example, a proposal to use implicit function types for effect capabilities (
 
  * **Strictly Synchronous**. Implicit function types are not powerful enough to model asynchronous effects, generators, or other effects that require continuations. If you combine them with continuations, then you now have two effect systems, when you really only need one (continuations are actually powerful enough to implement everything else!). The stitched-together creation adds complexity, confusion, and cognitive and runtime overhead.
  * **Stack Suicide**. Functional programming relies on recursion to perform (possibly infinite) iteration, and while `IO` types in Scala are built for unbounded, safe recursion, implicit function types will stack overflow on recursion, making them unsuitable for general-purpose programming.
- * **Escaped Effects**. Implicit function types require a linear type system in order to guarantee that no capabilities are leaked. Because Scala does not have linear typing, it cannot guarantee that capabilities won't leak. Monadic approaches are much simpler and can't leak.
+ * **Escaped Effects**. Implicit function types require a linear type system in order to guarantee that no capabilities are leaked. Because Scala does not have linear typing, it cannot guarantee that capabilities won't leak. Monadic approaches are much simpler and don't need linear types to avoid leaking capabilities.
  * **Dysfunctional Drawbacks**. Implicit function types encourage you to write non-functional code, and therefore have all the drawbacks of dysfunctional code&mdash;you cannot reason about them in the same way, they mix poorly with pure code, they don't reify effects as values, and so on.
 
-Contrast this with monadic approaches based on `IO`, which have had 30 years of active development and production use. They have proven so successful, you can now find effect monads implemented in PureScript, Kotlin, Scala, Javascript, Java, C#, F#, and numerous other programming languages.
+Contrast this with monadic approaches based on `IO`, which have had 30 years of active development and significant production usage (including at my [last company](http://github.com/slamdata/), where they were used to build large-scale analytics infrastructure).
 
-If you want to get work done and write functional code everywhere, then monads are the only general-purpose, industry-proven technique available.
+Indeed, monads have proven so successful, you can now find effect monads implemented in PureScript, Kotlin, Scala, Javascript, Java, C#, F#, and numerous other programming languages.
+
+If you want to get work done and write functional code *everywhere* (and not everyone does!), then monads are the only general-purpose, industry-proven technique available.
 
 ### Summary
 
@@ -138,10 +146,14 @@ A lot of these benefits are about making it easier for us to refactor our progra
 
 Other benefits include uniform purity, so we don't have to worry about mixing pure and impure code; and the ability to turn our programs into first-class values, so we can pass them around, store them in data structures, and combine them in expressions&mdash;giving us insane levels of expressivity.
 
-Beyond all this, there is a strong business case for using an `IO` effect system like [ZIO](http://github.com/scalaz/scalaz-zio). ZIO includes features like super fast performance, a uniform interface for synchronous and asynchronous effects, lazy evaluation (_interruption_) that safely eliminates wasted resources (memory, network, CPU), parallelism, concurrency, scalability, and so much more.
+Beyond all this, there is a strong business case for using an `IO` effect system like [ZIO](http://github.com/scalaz/scalaz-zio), Monix `Task`, or equivalent. ZIO includes features like super fast performance, a uniform interface for synchronous and asynchronous effects, lazy evaluation (_interruption_) that safely eliminates wasted resources (memory, network, CPU), parallelism, concurrency, scalability, and so much more.
 
-Unlike implicit function types and other academic curiosities, monads are battle-tested and industry proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across the functional programming community, regardless of language.
+Unlike implicit function types and other academic curiosities, monadic effects are battle-tested and industry proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across the purely functional programming community, regardless of programming language.
 
-Maybe these reasons aren't compelling enough to get you to use `IO`. But they should _at least_ be compelling enough to get you to _try_ `IO`.
+Maybe these reasons aren't compelling enough to get you to use `IO` (which is fine!). But they should _at least_ be compelling enough to get you to _try_ `IO`.
 
-After all, the growing armies of developers using `IO` to solve everyday problems can't all be crazy! (Or can we?)
+In my experience, people are usually put off by `IO` not because it's more complex or doesn't have obvious, tangible benefits, but because it's _different_ and _unfamiliar_. With practice, unfamiliarity turns into familiarity, and many embrace all the benefits described in this article.
+
+After all, the growing armies of developers across many different communities using monadic effects to solve everyday problems can't all be crazy! (Or can we?)
+
+*Note: Post originally inspired by a [Reddit thread](https://www.reddit.com/r/scala/comments/8ygjcq/can_someone_explain_to_me_the_benefits_of_io/) on the benefits of IO.*
