@@ -65,27 +65,27 @@ I'll show you a few examples with [ZIO](http://github.com/scalaz/scalaz-zio) to 
 
 Suppose we want to define a combinator which retries a program until it succeeds. It's as simple as this:
 
-```
+{% highlight scala %}
 def retry[E, A](io: IO[E, A]): IO[E, A] = io orElse retry(io)
-```
+{% endhighlight %}
 
 Or suppose we want to define a combinator to run an action forever:
 
-```
+{% highlight scala %}
 def forever[E, A](io: IO[E, A]): IO[E, Nothing] = io *> forever(io)
-```
+{% endhighlight %}
 
 Or suppose we want to continuously take values from a queue and upload them to S3 (logging failures), in a separate thread:
 
-```
+{% highlight scala %}
 queue.take.flatMap(uploadToS3 orElse logFailure).forever.fork
-```
+{% endhighlight %}
 
 Or suppose we want to spin up 1000 threads to load test a web server, adding a random delay before each worker starts, and timing out the whole load test after 60 seconds, cleanly shutting down each worker:
 
-```
+{% highlight scala %}
 IO.parAll(List.fill(1000)(randomTime.flatMap(IO.sleep) *> doLoadTest))).timeout(60.seconds)
-```
+{% endhighlight %}
 
 The fact that we can define and use combinators on our programs allows us to solve very complex problems with very little code. These solutions don't have distracting clutter or irrelevant details; their structure cleanly reflects their intended semantics.
 
