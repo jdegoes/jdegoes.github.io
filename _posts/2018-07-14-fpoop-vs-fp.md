@@ -120,7 +120,7 @@ Even if you _hate_ functional programming, the benefits of purely functional pro
 
 Although I have mentioned using `IO` data types, and you'll hear functional programmers talk about writing `IO` programs, it's more common these days to define type classes to abstract over fine-grained effects, and to make programs polymorphic in the effect type, so long as they provide the required capabilities.
 
-This pattern, sometimes called _final tagless_ or _mtl style_, is very powerful. It lets you easily plug-in new implementations of type classes without changing any code.
+This pattern, sometimes called _final tagless_ or _mtl-style_, is very powerful. It lets you easily plug-in new implementations of type classes without changing any code.
 
 While there are many uses for this functionality, a powerful use case is testing systems thoroughly without having to rely on error-prone, type-unsafe mocking frameworks built on byte code rewriting and custom class-loading.
 
@@ -128,17 +128,18 @@ While there are many uses for this functionality, a powerful use case is testing
 
 Other proposed solutions for modeling effects in Scala are interesting research projects&mdash;worthy of exploration in labs, but they have not been proven in industry.
 
-For example, a proposal to use implicit function types for effect capabilities (`CanIO`) has a variety of drawbacks that render it Dead On Arrival:
+For example, a Scala 3 proposal to use implicit function types for effect capabilities (`CanIO`) has a variety of drawbacks that render it Dead On Arrival:
 
  * **Strictly Synchronous**. Implicit function types are not powerful enough to model asynchronous effects, generators, or other effects that require continuations. If you combine them with continuations, then you now have two effect systems, when you really only need one (continuations are actually powerful enough to implement everything else!). The stitched-together creation adds complexity, confusion, and cognitive and runtime overhead.
  * **Stack Suicide**. Functional programming relies on recursion to perform (possibly infinite) iteration, and while `IO` types in Scala are built for unbounded, safe recursion, implicit function types will stack overflow on recursion, making them unsuitable for general-purpose programming.
  * **Escaped Effects**. Implicit function types require a linear type system in order to guarantee that no capabilities are leaked. Because Scala does not have linear typing, it cannot guarantee that capabilities won't leak. Monadic approaches are much simpler and don't need linear types to avoid leaking capabilities. *Note: I saw an attempt to hack special case magic to the compiler to prevent leaking, but like all magic, it may interact poorly with other parts of Scala or have edge cases.*
  * **Dysfunctional Drawbacks**. Implicit function types encourage you to write non-functional code, and therefore have all the drawbacks of dysfunctional code&mdash;you cannot reason about them in the same way, they mix poorly with pure code, they don't reify effects as values, and so on.
- * **Runaway Resources**. Implicit function types do not solve the fundamental problem of how to perform `try` / `finally` across asynchronous, synchronous, and concurrent sections of code, which means they will be prone to leaking resources in exceptional cases. Modern `IO` types solve this easily.
+ * **Runaway Resources**. Implicit function types do not solve the fundamental problem of how to perform `try` / `finally` across asynchronous, synchronous, and concurrent sections of code (because this requires continuations), which means they will be prone to leaking resources in exceptional cases. Modern `IO` types solve this easily.
+ * **Monstrous Monomorphism**. Unlike monadic approaches, which, via final tagless / mtl-style, permit you to write code that is polymorphic across different implementations (a mock implementation for testing, an asynchronous one for production, etc.), implicit function types are too monomorphic to achieve this degree of flexibility&mdash;unless you use them to wrap monads, in which case, what's the point?
 
-Contrast this with monadic approaches based on `IO`, which have had 30 years of active development and significant production usage (including at my [last company](http://github.com/slamdata/), where they were used to build large-scale analytics infrastructure).
+Contrast an effect system based on implicit function types with monadic approaches based on `IO`, which have had 30 years of active development and have seen significant use in industry (including at my [last company](http://github.com/slamdata/quasar), where they were used to build large-scale analytics infrastructure).
 
-Indeed, monads have proven so successful, you can now find effect monads implemented in PureScript, Kotlin, Scala, Javascript, Java, C#, F#, and numerous other programming languages.
+Indeed, monads have proven so successful at solving all of the above problems (and more!), you can now find monadic effect systems implemented in PureScript, Kotlin, Scala, Javascript, Java, C#, F#, and numerous other programming languages.
 
 If you want to get work done and write functional code *everywhere* (and not everyone does!), then monads are the only general-purpose, industry-proven technique available.
 
@@ -152,11 +153,11 @@ Other benefits include uniform purity, so we don't have to worry about mixing pu
 
 Beyond all this, there is a strong business case for using an `IO` effect system like [ZIO](http://github.com/scalaz/scalaz-zio), Monix `Task`, or equivalent. ZIO includes features like super fast performance, a uniform interface for synchronous and asynchronous effects, lazy evaluation (_interruption_) that safely eliminates wasted resources (memory, network, CPU), parallelism, concurrency, scalability, and so much more.
 
-Unlike implicit function types and other academic curiosities, monadic effects are battle-tested and industry proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across purely functional programming communities, regardless of the language.
+Unlike implicit function types and other academic curiosities, monadic effects are battle-tested and industry-proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across purely functional programming communities, regardless of language.
 
 Maybe these reasons aren't compelling enough to get you to use `IO` (which is fine!). But they should _at least_ be compelling enough to get you to _try_ `IO`.
 
-In my experience, people are usually put off by `IO` not because it's more complex or doesn't have obvious, tangible benefits, but because it's _different_ and _unfamiliar_. With practice, unfamiliarity turns into familiarity, and many embrace all the benefits described in this article.
+In my experience, people are usually put off by `IO` not because it's more complex or doesn't have obvious, tangible benefits, but because it's _different_ and _unfamiliar_. With practice, unfamiliarity turns into familiarity, and many fall in love with the many benefits described in this article.
 
 After all, the growing armies of developers across many different communities all using monadic effects to solve everyday problems can't all be crazy! (Or can we?)
 
