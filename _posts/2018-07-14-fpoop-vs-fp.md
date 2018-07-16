@@ -27,11 +27,12 @@ When you use immutable data structures like Scala's collections, or when you rel
 
  * **Inversion of Control**. When you see a functional expression like `list.map(f)`, you know that the `map` method cannot modify the original `list`. In functional code, the callee cannot change or do anything (only the caller), which means you don't have to program defensively and you can push decisions higher in your code base, resulting in more flexible programs with less wiring.
  * **Equational Reasoning**. When you see an expression like `list ++ list`, you know the meaning of this expression by inlining the value of `list`, and simplifying. More generally, in any functional code, you always know what an expression means through substitution and simplification. This makes it easier to understand what your programs do, and lets you refactor safely, without worrying that you're changing the behavior of your programs.
- * **Type-Based Reasoning**. When you see a type like `List[A] => (A => B) => List[B]` in functional code, you have some idea of what this function can and cannot do, merely by looking at the type. In Java, a method like `(InetAddress, InetAddress) => Boolean` could perform network IO (and in fact, `equals` on `InetAddress` does just this!), which means you need to thoroughly study implementations to understand what functions do.
+ * **Type-Directed Reasoning**. When you see a type like `List[A] => (A => B) => List[B]` in functional code, you have some idea of what this function can and cannot do, merely by looking at the type. In Java, a method like `(InetAddress, InetAddress) => Boolean` could perform network IO (and in fact, `equals` on `InetAddress` does just this!), which means you need to thoroughly study implementations to understand what functions do.
+ * **Local Reasoning**. As a consequence of the other reasoning properties, it becomes possible to reason about quite a lot of code locally. Global understanding of the entire program is not necessary to understand local correctness, so it becomes faster and easier to make safe changes to the code.
 
 These reasoning properties only hold for functional code. You have to use different reasoning properties for non-functional code, which involve examining the implementation of methods (to see what they do, since the types don't tell you!) and simulating their stateful execution in your head.
 
-Humans aren't particularly good computers, and so lots of us don't like to study implementations and simulate stateful execution in our head.
+Human brains aren't particularly good at computation, and so many of us don't like to study lots of code and simulate stateful execution in our heads just to make a small change.
 
 If you mix functional code and non-functional code, then you have to constantly change the way you reason about the code, depending on whether you are in a functional section, or a non-functional section. The process of constantly switching how you reason about the code is mentally exhausting and error-prone.
 
@@ -148,12 +149,12 @@ Other benefits include uniform purity, so we don't have to worry about mixing pu
 
 Beyond all this, there is a strong business case for using an `IO` effect system like [ZIO](http://github.com/scalaz/scalaz-zio), Monix `Task`, or equivalent. ZIO includes features like super fast performance, a uniform interface for synchronous and asynchronous effects, lazy evaluation (_interruption_) that safely eliminates wasted resources (memory, network, CPU), parallelism, concurrency, scalability, and so much more.
 
-Unlike implicit function types and other academic curiosities, monadic effects are battle-tested and industry proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across the purely functional programming community, regardless of programming language.
+Unlike implicit function types and other academic curiosities, monadic effects are battle-tested and industry proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across purely functional programming communities, regardless of the language.
 
 Maybe these reasons aren't compelling enough to get you to use `IO` (which is fine!). But they should _at least_ be compelling enough to get you to _try_ `IO`.
 
 In my experience, people are usually put off by `IO` not because it's more complex or doesn't have obvious, tangible benefits, but because it's _different_ and _unfamiliar_. With practice, unfamiliarity turns into familiarity, and many embrace all the benefits described in this article.
 
-After all, the growing armies of developers across many different communities using monadic effects to solve everyday problems can't all be crazy! (Or can we?)
+After all, the growing armies of developers across many different communities all using monadic effects to solve everyday problems can't all be crazy! (Or can we?)
 
 *Note: Post originally inspired by a [Reddit thread](https://www.reddit.com/r/scala/comments/8ygjcq/can_someone_explain_to_me_the_benefits_of_io/) on the benefits of IO.*
