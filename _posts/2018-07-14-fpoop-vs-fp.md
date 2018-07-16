@@ -25,10 +25,10 @@ In the sections that follow, I'll explain each of these reasons.
 
 When you use immutable data structures like Scala's collections, or when you rely on pattern matching and recursion to manipulate your own immutable data structures, you are able to rely on very powerful reasoning properties of functional code:
 
- * **Inversion of Control**. When you see a functional expression like `list.map(f)`, you know that the `map` method cannot modify the original `list`. In functional code, the callee cannot change or do anything (only the caller), which means you don't have to program defensively and you can push decisions higher in your code base, resulting in more flexible programs with less wiring.
- * **Equational Reasoning**. When you see an expression like `list ++ list`, you know the meaning of this expression by inlining the value of `list`, and simplifying. More generally, in any functional code, you always know what an expression means through substitution and simplification. This makes it easier to understand what your programs do, and lets you refactor safely, without worrying that you're changing the behavior of your programs.
- * **Type-Directed Reasoning**. When you see a type like `List[A] => (A => B) => List[B]` in functional code, you have some idea of what this function can and cannot do, merely by looking at the type. In Java, a method like `(InetAddress, InetAddress) => Boolean` could perform network IO (and in fact, `equals` on `InetAddress` does just this!), which means you need to thoroughly study implementations to understand what functions do.
- * **Local Reasoning**. As a consequence of the other reasoning properties, it becomes possible to reason about quite a lot of code locally. Global understanding of the entire program is not necessary to understand local correctness, so it becomes faster and easier to make safe changes to the code.
+1. **Equational Reasoning**. When you see an expression like `list ++ list`, you know the meaning of this expression by inlining the value of `list`, and simplifying. More generally, in any functional code, you always know what an expression means through substitution and simplification. This makes it easier to understand what your programs do, and lets you refactor safely, without worrying that you're changing the behavior of your programs.
+2. **Type-Directed Reasoning**. When you see a type like `List[A] => (A => B) => List[B]` in functional code, you have some idea of what this function can and cannot do, merely by looking at the type. In Java, a method like `(InetAddress, InetAddress) => Boolean` could perform network IO (and in fact, `equals` on `InetAddress` does just this!), which means you need to thoroughly study implementations to understand what functions do.
+3. **Inversion of Control**. As a consequence of (1), when you see a functional expression like `list.map(f)`, you know that the `map` method cannot modify the original `list`. In functional code, the callee cannot change or do anything (only the caller), which means you don't have to program defensively and you can push decisions higher in your code base, resulting in more flexible programs with less wiring.
+4. **Local Reasoning**. As a consequence of (1) and (2), it becomes possible to reason about quite a lot of code locally. Global understanding of the entire program is not necessary to verify local correctness, so it becomes faster and easier to make safe changes to the code.
 
 These reasoning properties only hold for functional code. You have to use different reasoning properties for non-functional code, which involve examining the implementation of methods (to see what they do, since the types don't tell you!) and simulating their stateful execution in your head.
 
@@ -86,7 +86,9 @@ queue.take.flatMap(uploadToS3 orElse logFailure).forever.fork
 Or suppose we want to spin up 1000 threads to load test a web server, adding a random delay before each worker starts, and timing out the whole load test after 60 seconds, cleanly shutting down each worker:
 
 {% highlight scala %}
-IO.parAll(List.fill(1000)(randomTime.flatMap(IO.sleep) *> doLoadTest))).timeout(60.seconds)
+IO.parAll(List.fill(1000)(
+  randomTime.flatMap(IO.sleep).
+    flatMap(_ =>  doLoadTest))).timeout(60.seconds)
 {% endhighlight %}
 
 Because we can define and use combinators on our programs, we can solve very complex problems with very little code. These solutions don't have distracting clutter or irrelevant details; their structure cleanly reflects their intended semantics.
@@ -130,8 +132,9 @@ For example, a proposal to use implicit function types for effect capabilities (
 
  * **Strictly Synchronous**. Implicit function types are not powerful enough to model asynchronous effects, generators, or other effects that require continuations. If you combine them with continuations, then you now have two effect systems, when you really only need one (continuations are actually powerful enough to implement everything else!). The stitched-together creation adds complexity, confusion, and cognitive and runtime overhead.
  * **Stack Suicide**. Functional programming relies on recursion to perform (possibly infinite) iteration, and while `IO` types in Scala are built for unbounded, safe recursion, implicit function types will stack overflow on recursion, making them unsuitable for general-purpose programming.
- * **Escaped Effects**. Implicit function types require a linear type system in order to guarantee that no capabilities are leaked. Because Scala does not have linear typing, it cannot guarantee that capabilities won't leak. Monadic approaches are much simpler and don't need linear types to avoid leaking capabilities.
+ * **Escaped Effects**. Implicit function types require a linear type system in order to guarantee that no capabilities are leaked. Because Scala does not have linear typing, it cannot guarantee that capabilities won't leak. Monadic approaches are much simpler and don't need linear types to avoid leaking capabilities. *Note: I saw an attempt to hack special case magic to the compiler to prevent leaking, but like all magic, it may interact poorly with other parts of Scala or have edge cases.*
  * **Dysfunctional Drawbacks**. Implicit function types encourage you to write non-functional code, and therefore have all the drawbacks of dysfunctional code&mdash;you cannot reason about them in the same way, they mix poorly with pure code, they don't reify effects as values, and so on.
+ * **Runaway Resources**. Implicit function types do not solve the fundamental problem of how to perform `try` / `finally` across asynchronous, synchronous, and concurrent sections of code, which means they will be prone to leaking resources in exceptional cases. Modern `IO` types solve this easily.
 
 Contrast this with monadic approaches based on `IO`, which have had 30 years of active development and significant production usage (including at my [last company](http://github.com/slamdata/), where they were used to build large-scale analytics infrastructure).
 
