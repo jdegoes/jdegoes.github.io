@@ -1,9 +1,9 @@
 ---
 layout:       post
-title:        "Using ZIO with tagless-final"
+title:        "Using ZIO with Tagless-Final"
 description:  "ZIO's new bifunctor design works beautifully with tagless-final style, with or without modifications."
 category:     articles
-tags:         [zio, bifunctor, fp, functional programming, scala, monads, effects, reactive, scalaz, cats]
+tags:         [zio, bifunctor, fp, functional programming, scala, monads, effects, reactive, scalaz, cats, tagless-final, finally tagless, mtl]
 ---
 
 Since launching [ZIO](http://github.com/scalaz/scalaz-zio/) a few months ago (formerly known as the _Scalaz 8 IO monad_), one of the most common questions I get is how to use its `IO` type with [*tagless-final*](https://blog.scalac.io/exploring-tagless-final.html).
