@@ -6,7 +6,7 @@ category:     articles
 tags:         [fp, functional programming, type classes, scala, monads, lenses, effects, reactive, scalaz, cats, mtl, monad transformers, zio]
 ---
 
-As I covered in a [previous post](/posts/effects-without-transformers), monad transformers have poor performance properties in languages and runtimes unequipped to deal with them&mdash;including the Scala programming language and the JRE.
+As I covered in a [previous post](/articles/effects-without-transformers), monad transformers have poor performance properties in languages and runtimes unequipped to deal with them&mdash;including the Scala programming language and the JRE.
 
 There's a general technique to improving performance that involves something I call _effect rotation_.
 
