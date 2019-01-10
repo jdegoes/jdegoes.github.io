@@ -34,7 +34,7 @@ Vertical effect composition has some very desirable properties:
 
 Unfortunately, in too many languages and runtimes, every layer of the effect stack introduces additional overhead. In languages like Scala, the overhead is severe and renders the technique impractical for performance and memory sensitive applications.
 
-To examine the cost of vertical effects, let's look at one the simplest of all monad transformers: `EitherT`.
+To examine the cost of vertical effects, let's look at one of the simplest of all monad transformers: `EitherT`.
 
 ## The Cost of `EitherT`
 
