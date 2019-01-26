@@ -47,7 +47,7 @@ ZIO has three functions that make thread management a breeze:
 2. `IO.unyielding(task)`
 3. `IO.blocking(task)`
 
-Internally, two of these functions benefit from the fact that the ZIO runtime system has two primary thread pools, which are set by the user at the level of the main function. One of these thread pools is for asynchronous code, and one is for synchronous code. These are configurable, of course, but the built-in defaults provide excellent performance for most applications.
+Internally, two of these functions benefit from the fact that the ZIO runtime system has two primary thread pools, which are set by the user at the level of the main function. One of these thread pools is for asynchronous code, and one is for blocking code. These pools are configurable, of course, but the built-in defaults provide excellent performance for most applications.
 
 The sections that follow introduce each of the three thread management functions.
 
@@ -55,17 +55,19 @@ The sections that follow introduce each of the three thread management functions
 
 The first method that ZIO provides to support thread management is `IO#lock`, which allows you to run a task on a given thread pool.
 
-The `lock` function guarantees that the specified task will be executed with a given executor, which determines the thread pool.
+The `lock` function guarantees that the specified task will be executed with a given executor, which chooses the thread pool.
 
 {% highlight scala %}
 task.lock(executor)
 {% endhighlight %}
 
-With other functional effect types, even though you can shift a task to another thread pool (via something like `shift` or `evalOn`), any asynchronous boundary in the task can shift it _off_ the thread pool.
+With other functional effect types, even though you can shift a task to another thread pool (via something like `shift` or `evalOn`), any asynchronous boundary in the task can shift it _off_ the thread pool. 
 
-The guarantee that `lock` provides is stronger than any other effect system in Scala: the task will _always_ execute on the specified thread pool, even with asynchronous boundaries.
+Because whether or not a task is composed of asynchronous boundaries is not visible in its type, it's impossible to reason locally about _where_ a task will run using the `shift` and `evalOn` primitives of other effect types. They have poorly-defined semantics.
 
-The `lock` function provides you a way to guarantee that, for example, blocking effects will always be executed on a blocking thread pool; or that a client request will always happen in a client library's thread pool (and so forth).
+The unique guarantee that `lock` provides is semantically well-defined and stronger than any other effect system in Scala: the specified task will _always_ execute on the given thread pool, even in the presence of asynchronous boundaries. 
+
+The `lock` function is the missing ingredient for principled task location in purely functional effect systems. It lets you trivially verify with local reasoning that, for example, blocking effects will always be executed on a blocking thread pool; or that a client request will always happen in a client library's thread pool (and so forth).
 
 ### Unyielding
 
@@ -75,11 +77,11 @@ The second method that ZIO provides to support thread management is `IO.unyieldi
 IO.unyielding(task)
 {% endhighlight %}
 
-This function is not primitive (it's implemented in terms of `lock` and another function, which provides access to the two primary thread pools), but it's one of the most common methods for thread pool management in ZIO.
+This function is not primitive (it's implemented in terms of `lock` and another function, which provides access to the two primary thread pools in [ZIO](https://github.com/scalaz/scalaz-zio)), but it's one of the most common methods for thread pool management in [ZIO](https://github.com/scalaz/scalaz-zio).
 
 ### Blocking
 
-The third method that ZIO provides to support thread management is `IO.blocking`, which allows suspending (or _importing_) a blocking effect into a pure task.
+The third method that [ZIO](https://github.com/scalaz/scalaz-zio) provides to support thread management is `IO.blocking`, which allows suspending (or _importing_) a blocking effect into a pure task.
 
 {% highlight scala %}
 // def blocking[A](effect: => A): IO[Nothing, A] = ...
@@ -101,15 +103,21 @@ val interruptedSleep =
   } yield ()
 {% endhighlight %}
 
-This is a first for functional effect systems in Scala.
+Like `lock` and `unyielding`, this feature is a first for functional effect systems in Scala. Now runaway JDBC queries, thread sleeps, remote file downloads, and other blocking effects can be trivally interrupted in a composable fashion using ordinary [ZIO](https://github.com/scalaz/scalaz-zio) interruption.
 
 ## Summary 
 
-Proper thread management is essential for efficient applications. Applications should use at least two thread pools, a fixed one for asynchronous code, and a dynamic one for blocking code.
+Proper thread management is essential for efficient applications. High-performance applications on the JVM should use at least two thread pools: a fixed one for asynchronous code, and a dynamic one for blocking code.
 
-[ZIO](https://github.com/scalaz/scalaz-zio) provides three functions to make thread pool management easy. The `lock` function that locks a task to a given thread pool (even over asynchronous boundaries!); the `unyielding` function that locks a task to [ZIO](https://github.com/scalaz/scalaz-zio)'s blocking thread pool; and the `blocking` function that suspends a blocking effect into an interruptible `IO`, by using Java's own interruption.
+[ZIO](https://github.com/scalaz/scalaz-zio) bakes in these two primary thread pools so users don't need to worry about them (although, of course, they can be configured as necessary and applications can use many more than just two thread pools).
 
-Thanks to no implicit execution contexts, no implicit context shifts, no weird edge-cases (like asynchronous boundaries shifting a task to another thread pool), and well-defined semantics, ZIO makes it easier than ever to build applications that follow best practices.
+ZIO uses its two primary thread pools to make thread management easy using three functions, which bring unique functionality to the functional effect systems in Scala:
+
+ * The `lock` function locks a task to a given thread pool (even over asynchronous boundaries!), providing principled, well-defined semantics for locating tasks;
+ * The `unyielding` function locks a task to [ZIO](https://github.com/scalaz/scalaz-zio)'s blocking thread pool; 
+ * The `blocking` function suspends a blocking effect into an interruptible `IO`, by safely delegating to Java's own thread interruption, allowing composable interruption of any blocking code.
+
+Thanks to no implicit execution contexts, no implicit context shifts, no weird edge-cases (like asynchronous boundaries shifting a task to another thread pool), built-in asynchronous and blocking thread pools, and well-defined semantics, ZIO makes it easier than ever to build applications that follow best practices.
 
 Who said functional programming wasn't practical?
 
