@@ -32,7 +32,7 @@ The simplest way to build a functional effect is to _describe_ an effect by usin
 
 Here's a data type called `IO` which does exactly this:
 
-{ % highlight scala % }
+{% highlight scala %}
 class IO[+A](val unsafeInterpret: () => A) { s =>
   def map[B](f: A => B) = flatMap(f.andThen(IO.effect(_)))
   def flatMap[B](f: A => IO[B]): IO[B] =
@@ -41,38 +41,38 @@ class IO[+A](val unsafeInterpret: () => A) { s =>
 object IO {
   def effect[A](eff: => A) = new IO(() => eff)
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Now we can construct pure functions that return functional effects (_models_ of effects) quite simply:
 
-{ % highlight scala % }
+{% highlight scala %}
 def putStrLn(line: String): IO[Unit] = 
   IO.effect(println(line))
 
 val getStrLn: IO[String] = 
   IO.effect(scala.io.StdIn.readLine())
-{ % endhighlight % }
+{% endhighlight %}
 
 These functions are total, deterministic, and free of side effects, because they don't _do_ anything effectful, they merely build a data structure that _describes_ effectful operations.
 
 Using `map` and `flatMap`, we can build describes of whole effectful programs. For example, the following `IO` program asks the user for some input and prints it back out to them:
 
-{ % highlight scala % }
+{% highlight scala %}
 val program: IO[String] = 
   for {
     _    <- putStrLn("Good morning, what's your name?")
     name <- getStrLn
     _    <- putStrLn(s"Great to meet you, $name")
   } yield name
-{ % endhighlight % }
+{% endhighlight %}
 
 Now if you evaluate `program` in the Scala REPL, you'll find that it doesn't actually _do_ anything except construct an `IO` value, which is itself an immutable data structure.
 
 However, you can (non-functionally) interpret this program to the effects that it describes by calling the `unsafeInterpret()` function:
 
-{ % highlight scala % }
+{% highlight scala %}
 program.unsafeInterpret()
-{ % endhighlight % }
+{% endhighlight %}
 
 In this way, while we can't avoid doing something "non-functional" forever, we can at least make the vast majority of our code purely functional, and benefit from increased power of abstraction, refactoring, and testability.
 
@@ -84,10 +84,10 @@ Although Scala functions do have `equals` and `hashCode`, like all ojbects, thes
 
 An easy way to see this is comparing the values of two `putStrLn` values constructed with the same text output:
 
-{ % highlight scala % }
+{% highlight scala %}
 > putStrLn("Hello") == putStrLn("Hello")
 : false 
-{ % endhighlight % }
+{% endhighlight %}
 
 Even though both of these `IO` values represent the _same_ program, Scala cannot know that, because functions cannot be sensibly compared for equality. This is not just a limitation of Scala, but rather a fundamental limitation of computation: in Turing complete languages, we cannot know for sure if two functions are equal, even if we look at their implementations.
 
@@ -101,7 +101,7 @@ In tagless-final, we often use _type classes_ to model effects (although it's _p
 
 So instead of interacting with `putStrLn` and `getStrLn` directly, we define a type class to describe console capabilities. The type class is _parameterized_ over the effect type:
 
-{ % highlight scala % }
+{% highlight scala %}
 trait Console[F[_]] {
   def putStrLn(line: String): F[Unit]
 
@@ -110,11 +110,11 @@ trait Console[F[_]] {
 object Console {
   def apply[F[_]](implicit F: Console[F]): Console[F] = F
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Then we can define instances of this type class for `IO`:
 
-{ % highlight scala % }
+{% highlight scala %}
 implicit val ConsoleIO: Console[IO] = new Console[IO] {
   def putStrLn(line: String): IO[Unit] = 
     IO.effect(println(line))
@@ -122,30 +122,30 @@ implicit val ConsoleIO: Console[IO] = new Console[IO] {
   val getStrLn: IO[String] = 
     IO.effect(scala.io.StdIn.readLine())
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Now we write programs that are _polymorphic_ in the effect type, which express which capabilities they require from the effect by using type class constraints (commonly modeled using context bounds, which desugar to implicit parameter lists):
 
-{ % highlight scala % }
+{% highlight scala %}
 def program[F[_]: Console: Monad]: F[String] = 
   for {
     _    <- Console[F].putStrLn("Good morning, what's your name?")
     name <- Console[F].getStrLn
     _    <- Console[F].putStrLn(s"Great to meet you, $name")
   } yield name
-{ % endhighlight % }
+{% endhighlight %}
 
 Since this program is _polymorphic_ in the effect type, you can _instantiate_ it to any concrete data type (such as `IO`) that supports its required capabilities. For example:
 
-{ % highlight scala % }
+{% highlight scala %}
 val programIO: IO[String] = program[IO]
-{ % endhighlight % }
+{% endhighlight %}
 
 (This assumes a sutiable instance of some `Monad` type class has been defined for `IO`, which is required because Scala's `for` comprehension desugars to `map` and `flatMap`.)
 
 Once all this machinery is in place, it becomes fairly straightforward to define a data type just for testing:
 
-{ % highlight scala % }
+{% highlight scala %}
 case class TestData(input: List[String], output: List[String])
 case class TestIO[A](run: TestData => (TestData, A)) { s =>
   def map[B](f: A => B): TestIO[B] = flatMap(TestIO.value(_))
@@ -156,15 +156,15 @@ case class TestIO[A](run: TestData => (TestData, A)) { s =>
 object TestIO {
   def value[A](a: => A): TestIO[A] = TestIO(d => (d, a))
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 With this test data type, you can define an instance of the `Console` type class that simply pulls lines of input from the test data, and writes lines of output to the test data (left as an exercise for the reader!).
 
 Once you define this and the `Monad` instance, you can instantiate the polymorphic program to the test effect:
 
-{ % highlight scala % }
+{% highlight scala %}
 val programTest: TestIO[String] = program[TestIO]
-{ % endhighlight % }
+{% endhighlight %}
 
 Finally, at long last testability has been regained: you can write fast, deterministic unit tests that thoroughly test your application logic. Your CI builds will complete quickly and you can refactor with confidence.
 
@@ -214,7 +214,7 @@ _Big bang_ refactoring can improve a code base, but it is often at odds with the
 
 Constraints on type classes are propagated with implicit parameter lists. Context bounds provide a more compact syntax for implicit parameter lists, but when a method that's polymorphic in an effect requires a lot of different type classes, it can still be unwieldly:
 
-{ % highlight scala % }
+{% highlight scala %}
 ef genFeed[F[_]: Monad: 
   Logging: UserDatabase:         
   ProfileDatabase: RedisCache: 
@@ -222,17 +222,17 @@ ef genFeed[F[_]: Monad:
   SessionManager: Localization:   
   Config: EventQueue: Concurrent:   
   Async: MetricsManager]: F[Feed] = ???
-{ % endhighlight % }
+{% endhighlight %}
 
 Unfortunately, if you are following functional programming best practices, and pushing dependencies to the edges, requiring as little as possible from every method, then you will find yourself engaging in tedious repetition of similar lists of context bounds:
 
-{ % highlight scala % }
+{% highlight scala %}
 def cacheFeed[F[_]: Monad: 
   Logging: UserDatabase:         
   ProfileDatabase: RedisCache:  
   Config: EventQueue: Concurrent:   
   Async: MetricsManager](feed: Feed): F[Unit] = ???
-{ % endhighlight % }
+{% endhighlight %}
 
 Some developers try to work around this tedium by creating "module" classes that declare the same set of dependencies for every method inside the module&mdash;even if many methods require less than the full set of constraints across all methods.
 
@@ -244,11 +244,11 @@ Not only is there a lot of repetition in tagless-final programs, but this repeti
 
 Ideally, if we have two methods with the same set of type class constraints, we'd like to be able to create _something_ to represent that set of constraints, and then use it to remove the duplication across the two methods:
 
-{ % highlight scala % }
+{% highlight scala %}
 def method1[F[_]: AllConstraints] = ???
 
 def method2[F[_]: AllConstraints] = ???
-{ % endhighlight % }
+{% endhighlight %}
 
 Unfortunately, Scala does not have any mechanism to abstract across duplicated parameter lists. 
 
@@ -260,9 +260,9 @@ One of the reasons writing Haskell or PureScript is so exceedingly pleasant is t
 
 We would love to be able to take advantage of type inference for tagless-final programs, writing the equivalent of:
 
-{ % highlight scala % }
+{% highlight scala %}
 def genFeed = ...
-{ % endhighlight % }
+{% endhighlight %}
 
 Unfortunately, the type class constraints cannot be inferred, even in theory, because they are not actually type parameters, but values in an implicit parameter list (in a language in which anything can be implicit), and asking any compiler to infer arbitrary implicit parameter lists is unreasonable.
 
@@ -276,36 +276,36 @@ An often-touted benefit of tagless-final is that we it provides us _parametric r
 
 This claim is not without merit. For example, if we look at the following method signature, we should be able to tell from its type that it works with any effect that provides `Monad`, and is therefore free of effects (it may only use `Monad` operations, such as `map`, `flatMap`, and `ap`):
 
-{ % highlight scala % }
+{% highlight scala %}
 def innocent[F[_]: Monad]: F[Unit] = ???
-{ % endhighlight % }
+{% endhighlight %}
 
 However, since Scala does not restrict procedural effects, this means that we can embed them anywhere, even in supposedly pure code like this:
 
-{ % highlight scala % }
+{% highlight scala %}
 def innocent[F[_]: Monad]: F[Unit] = {
   println("What guarantees?")
 
   Monad[F].point(())
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Worse still, it is trivial to write a helper method that can embed _any_ effect into any `Applicative`:
 
-{ % highlight scala % }
+{% highlight scala %}
 def effect[F[_]: Applicative](a: => A): F[A] = 
   Applicative[F].point(()).map(_ => a)
-{ % endhighlight % }
+{% endhighlight %}
 
 We may not use this helper method to further contaminate the original definition of `innocent`:
 
-{ % highlight scala % }
+{% highlight scala %}
 def innocent[F[_]: Monad]: F[Unit] = {
   println("What guarantees?")
 
   effect(System.exit(42))
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 In a large code base, whatever _can_ happen, _will_ happen. 
 
@@ -331,13 +331,13 @@ If testability is our primary concern, then it's possible we can take a page fro
 
 In the case of our preceding example, we can create a simple Scala trait to represent console capabilities:
 
-{ % highlight scala % }
+{% highlight scala %}
 trait Console {
   def putStrLn(line: String): IO[Unit]
 
   val getStrLn: IO[Unit]
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 This is just an ordinary interface. The only difference is that the methods return functional effects. They don't actually _do_, they only _describe_.
 
@@ -345,7 +345,7 @@ It's easy to teach this to Scala developers, because they probably have used int
 
 Now our program, which requires console capabilities, can simply accept `Console` as a parameter:
 
-{ % highlight scala % }
+{% highlight scala %}
 def program(c: Console): IO[Unit] = 
   for {
     _    <- c.println("Good morning, " +
@@ -353,13 +353,13 @@ def program(c: Console): IO[Unit] =
     name <- c.readLine
     _    <- c.println(s"Good to meet you, $name!")
   } yield ()
-{ % endhighlight % }
+{% endhighlight %}
 
 We can provide either test or production instances of `Console`, ensuring we can reliably test our program.
 
 This technique works reasonably well for tiny programs, but most programs will require more than one service. If you try to scale this technique up, it becomes quite unpleasant:
 
-{ % highlight scala % }
+{% highlight scala %}
 def program(s1: Service1, s2: Service2,
             s3: Service3, … sn: ServiceN) =
   for {
@@ -367,7 +367,7 @@ def program(s1: Service1, s2: Service2,
     b <- bar(sn, s19, s3)(a, 1024)
     ...
  } yield z
-{ % endhighlight % }
+{% endhighlight %}
 
 The pain results from us having to thread `n` services into our methods, and then manually pass subsets of these services into all of the methods that we call.
 
@@ -381,27 +381,27 @@ The module pattern involves placing our services inside a module trait to provid
 
 To use this pattern, you first define a module, which contains a single field with the appropriate service type:
 
-{ % highlight scala % }
+{% highlight scala %}
 trait HasConsole {
   def console: ConsoleService
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Then you define the service type as normal:
 
-{ % highlight scala % }
+{% highlight scala %}
 trait ConsoleService {
   def putStrLn(line: String): IO[Unit]
 
   val getStrLn: IO[Unit]
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Now personally, to avoid extraneous typing, I prefer to choose a simplified naming convention and organizational style: I use a shortname for the module, and put the service definition inside the companion object of the module.
 
 For example:
 
-{ % highlight scala % }
+{% highlight scala %}
 trait Console {
   def console: Console.Service
 }
@@ -412,7 +412,7 @@ object Console {
     val getStrLn: IO[Unit]
   }
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 In any case, with the module pattern, we are now able to take advantage of _intersection types_ to compose multiple modules into a single module.
 
@@ -422,14 +422,14 @@ Scala 3 has first-class support for intersection types. But in the meantime, we 
 
 The `with` operator enables us to create a type that must satisfy multiple requirements. In our case, we can use it to create a module that contains many services.
 
-{ % highlight scala % }
+{% highlight scala %}
 def program(s: Module1 with Module2 ... with ModuleN) =
   for {
     a <- foo(s)("localhost", 42)
     b <- bar(s)(a, 1024)
     ...
   } yield z
-{ % endhighlight % }
+{% endhighlight %}
 
 Notice the _dramatic_ reduction in the amount of work necessary to thread services throughout our application.
 
@@ -449,7 +449,7 @@ Every level of the application has access to the environment, and they can even 
 
 The `Reader` monad is explained elsewhere, so I won't go into depth on how it works, but I'll present a simple reference implementation:
 
-{ % highlight scala % }
+{% highlight scala %}
 case class Reader[-R, +A](provide: R => A) { self =>
   def map[B](f: A => B) = flatMap(a => Reader.point(f(a)))
   def flatMap[R1 <: R, B](f: A => Reader[R1, B]) =
@@ -461,42 +461,42 @@ object Reader {
   def access[R, A](f: R => A): Reader[R, A] = 
     environment[R].map(f)
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 A `Reader[R, A]` is an effect that requires environment `R` and produces a value of type `A`. 
 
 So, for example, a `Reader[Config, String]` is an effect that requires a `Config` and produces a value of type `String`. To extract the `String` from the `Reader`, you first have to _provide_ the `Config` that it requires:
 
-{ % highlight scala % }
+{% highlight scala %}
 case class Config(serverName: String, port: Int)
 
 val serverName: Reader[Config, String] = 
   Reader.access[Config](_.serverName)
 
 val name = serverName.provide(Config("localhost", 43))
-{ % endhighlight % }
+{% endhighlight %}
 
 Now a `Reader[Any, A]` means that the effect can work with _any_ environment. This is equivalent to saying it requires _no_ environment. You can extract values from these type of effects by supplying any value at all (for example, unit):
 
-{ % highlight scala % }
+{% highlight scala %}
 val tempFile: Reader[Any, String] = 
   Reader.point("/tmp/tempfile.dat")
 
 val file = tempFile.provide(())
-{ % endhighlight % }
+{% endhighlight %}
 
 Note that the `Reader` definition above only models _reader_ effects, not effects like input / output, which were modeled by our previous `IO` data type.
 
 However, if we ignore that fact, then if one squints hard enough, one can see a path forward to a final simplification of the module pattern, which uses the `Reader` monad to pass modules:
 
-{ % highlight scala % }
+{% highlight scala %}
 def program: Reader[Module1 with ... with ModuleN, String] =
   for {
     a <- foo("localhost", 42)
     b <- bar(a, 1024)
     ...
   } yield z
-{ % endhighlight % }
+{% endhighlight %}
 
 This step is not so far away. There is a `Reader` monad transformer that can add the reader effect to any base monad, including the `IO` monad. However, not only are monad transformers very slow in Scala (adding 2-4x overhead per layer), but they have clumsy ergonomics and bad type inference.
 
@@ -508,9 +508,9 @@ This is the approach taken by _ZIO Environment_, a new feature in ZIO and quite 
 
 ZIO Environment uses a functional effect data type with three type parameters:
 
-{ % highlight scala % }
+{% highlight scala %}
 ZIO[R, E, A]
-{ % endhighlight % }
+{% endhighlight %}
 
 The interpretation of these type parameters is as follows:
 
@@ -520,11 +520,11 @@ The interpretation of these type parameters is as follows:
 
 Not everyone may be comfortable using the full ZIO data type, so the library defines three type synonyms for common cases:
 
-{ % highlight scala % }
+{% highlight scala %}
 type UIO[+A] = ZIO[Any, Nothing, A]
 type Task[+A] = ZIO[Any, Throwable, A]
 type IO[+E, +A] = ZIO[Any, E, A]
-{ % endhighlight % }
+{% endhighlight %}
 
 The meaning of these types is as follows:
 
@@ -544,7 +544,7 @@ The meaning of these types is as follows:
 
 ZIO Environment just adds two new primitive functions (and then a couple helpers based on these):
 
-{ % highlight scala % }
+{% highlight scala %}
 sealed trait ZIO[-R, +E, +A] {
   ...
   def provide(environment: R): ZIO[Any, E, A] = ...
@@ -558,7 +558,7 @@ object ZIO {
     accessM(ZIO.succeed(_))
   def environment[R]: ZIO[R, Nothing, R] = access(identity)
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 The core functions are `ZIO#provide`, which allows you to "feed" an `R` to an effect that requires an `R`, to eliminate its requirement; by changing the environment type parameter to `Any`); and `ZIO.accessM`, which allows you to effectfully access part of the environment.
 
@@ -570,7 +570,7 @@ To really understand how the core methods can help us solve the testability prob
 
 To make our console program testable, we're going to start out defining a module and associated service class. We've seen these before, and there are no substantial changes this time around:
 
-{ % highlight scala % }
+{% highlight scala %}
 import scalaz.zio._
 
 trait Console { def console: Console.Service }
@@ -589,7 +589,7 @@ object Console {
   }
   object Live extends Live
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Note that in the console service, the `println` function returns a `UIO[Unit]` (because it cannot fail), while the `readLine` function returns an `IO[IOException, String]`, because it might fail because of an `IOException`. 
 
@@ -601,7 +601,7 @@ Notice how there are no polymorphic types, no higher-kinded types, no type class
 
 The next step is to define a few helper functions, to make using the module easier. This step isn't necessary, but it's convenient, so I'll show the technique:
 
-{ % highlight scala % }
+{% highlight scala %}
 package object console {
   def println(line: String): ZIO[Console, Nothing, Unit] =
     ZIO.accessM(_.console println line)
@@ -609,13 +609,13 @@ package object console {
   val readLine: ZIO[Console, IOException, String] =
     ZIO.accessM(_.console.readLine)
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 This package object, which I called `console`, defines `println` and `readLine` functions that return functional effects. These functional effects are defined by using `ZIO.accessM`, which gives us access to any set of modules we want. In this case, we just need the `Console` module, which is reflected in the return types.
 
 Using these helper functions, we can now build our purely functional ZIO program:
 
-{ % highlight scala % }
+{% highlight scala %}
 import console._
 
 val program: ZIO[Console, IOException, String] =
@@ -624,39 +624,39 @@ val program: ZIO[Console, IOException, String] =
     name <- readLine
     _    <- println(s"Good to meet you, $name!")
   } yield name
-{ % endhighlight % }
+{% endhighlight %}
 
 Again notice the simplicy of this definition. Without any of the final tagless machinery, a basic understanding of functional effects and `for` comprehensions is all that's necessary to write code like this.
 
 Now when we need to unsafely interpret this data structure into the effect that it represents, we will generally first provide its required environment using the `ZIO#provide` method. Since this effect only requires `Console`, and since we have already written an implementation in `Console.Live`, we can easily provide our program its production environment:
 
-{ % highlight scala % }
+{% highlight scala %}
 val programLive: IO[IOException, String] = 
   program.provide(Console.Live)
-{ % endhighlight % }
+{% endhighlight %}
 
 Notice the use of the type synonym `IO[IOException, String]`, which of course expands to `ZIO[Any, IOException, String]`, indicating our effect no longer requires any specific environment.
 
 We're now ready to run our program, which we can do with the default runtime system in ZIO:
 
-{ % highlight scala % }
+{% highlight scala %}
 DefaultRuntime.unsafeRun(programLive)
-{ % endhighlight % }
+{% endhighlight %}
 
 It's nearly as easy to test our program. All we have to do is construct an implementation of the `Console.Service` interface for testing:
 
-{ % highlight scala % }
+{% highlight scala %}
 object TestConsole extends Console {
   val console: Console.Servie = ...
 }
-{ % endhighlight % }
+{% endhighlight %}
 
 Now we can run the same program using our test service:
 
-{ % highlight scala % }
+{% highlight scala %}
 val programTest = program.provide(TestConsole)
 DefaultRuntime.unsafeRun(programTest)
-{ % endhighlight % }
+{% endhighlight %}
 
 That's all there is to ZIO Environment! With just two primitives (`provide` and `accessM`), and an additional type parameter, we're able to completely solve the testability problem in a way that requires only a tiny fraction of the knowledge and skills of tagless-final.
 
@@ -670,7 +670,7 @@ Tagless-final had a number of drawbacks beyond just a massive ramp up curve. In 
 
 Like tagless-final, ZIO Environment is composable: we can compose requirements horizontally, using the `with` operator for type intersection:
 
-{ % highlight scala % }
+{% highlight scala %}
 trait Console { def console: Console.Service }
 trait Logging { def logging: Logging.Service }
 trait Persistence { def persistence: Persistence.Service }
@@ -678,7 +678,7 @@ trait Persistence { def persistence: Persistence.Service }
 
 val program: ZIO[Console with Logging with Persistence,
                  ProgramError, Unit] = ...
-{ % endhighlight % }
+{% endhighlight %}
 
 #### Performant
 
@@ -698,7 +698,7 @@ This means if you use many different modules, you can call functions from all th
 
 As an example:
 
-{ % highlight scala % }
+{% highlight scala %}
 val program =
   for {
     _    <- putStrLn("Good morning, what is your name?")
@@ -707,7 +707,7 @@ val program =
     _    <- log.debug("Saved $name to configuration")
     _    <- putStrLn(s"Good to meet you, $name!")
   } yield ()
-{ % endhighlight % }
+{% endhighlight %}
 
 In this case, Scala will infer the environment to be `Console with Persistence with Logging`.
 
@@ -721,7 +721,7 @@ With full inference, ZIO can be extremely concise. However, inference is actuall
 
 Because ZIO Environment uses a type parameter, and because Scala has type aliases, this means we can eliminate all duplication in method signatures:
 
-{ % highlight scala % }
+{% highlight scala %}
 trait Console { def console: Console.Service }
 trait Logging { def logging: Logging.Service }
 trait Persistence { def persistence: Persistence.Service }
@@ -732,17 +732,17 @@ type ProgramEnv = Console with Logging with Persistence
 val program1: ZIO[ProgramEnv, AppError, Unit] = ...
 
 val program2: ZIO[ProgramEnv, AppError, String] = ...
-{ % endhighlight % }
+{% endhighlight %}
 
 In fact, if we want to create a custom effect type, with our own environment and error type, it's easy to do that too:
 
-{ % highlight scala % }
+{% highlight scala %}
 type Program[A] = ZIO[Console with Logging with Persistence, 
                       AppError, A]
 
 val program1: Program[Unit] = ...
 val program2: Program[String] = ... 
-{ % endhighlight % }
+{% endhighlight %}
 
 Type synonyms like this, especially when combined with associated companion objects, can make it possible for beginners to rapidly become productive in a large code base. Further, they enable beginners and experts alike to avoid repeating themselves, which makes code maintenance easier, less costly, and more predictable.
 
@@ -752,7 +752,7 @@ With ZIO Environment, there is no need to build up a monolothic environment. Rat
 
 An example of this technique is shown below:
 
-{ % highlight scala % }
+{% highlight scala %}
 def fn1: ZIO[R1, E, A] = {
   def fn2: ZIO[R2, E, B] = ...
 
@@ -763,7 +763,7 @@ def fn1: ZIO[R1, E, A] = {
 val globalEnvironment: R1 = ...
 val v2 = fn1.provide(globalEnvironment)
 ...
-{ % endhighlight % }
+{% endhighlight %}
 
 This is only one technique to provide vertical modularity. Over time, other techniques may emerge.
 
@@ -775,7 +775,7 @@ Unlike tagless-final, a code base that uses no abstraction, which is merely usin
 
 For example, let's say we have a database call deeply embedded everywhere inside our program:
 
-{ % highlight scala % }
+{% highlight scala %}
 // Deeply nested code:
 def myCode: Task[Unit] = …
   for {
@@ -783,13 +783,13 @@ def myCode: Task[Unit] = …
     result <- database.query(q)
     ...
   } yield ()
-{ % endhighlight % }
+{% endhighlight %}
 
 We would like to be able to test application logic without connecting to a real database, because that will slow our tests down and may fail for unrelated reasons.
 
 In order to do this, we need merely refactor the `database.query` function to require a `Database` module. Then with simple introduction of a type synonym, we can leave the code unchanged:
 
-{ % highlight scala % }
+{% highlight scala %}
 type TaskDB[A] = ZIO[Database, Throwable, A]
 ...
 def myCodeV2: TaskDB[Unit] = …
@@ -798,7 +798,7 @@ def myCodeV2: TaskDB[Unit] = …
     result <- database.query(q)
     ...
   } yield ()
-{ % endhighlight % }
+{% endhighlight %}
 
 All of the other code can stay exactly the same as it is. The only change we needed to make was the type synonym (which we could have called `Task`, if we didn't want to update the type signatures at all), and the single method we wanted to make testable.
 
