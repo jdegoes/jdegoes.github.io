@@ -1,6 +1,6 @@
 ---
 layout:       post
-title:        "Smooth and Easy Testability for Functional Effect Systems"
+title:        "Beautiful, Simple, Testable Functional Effects for Scala"
 description:  "Tagless-final has given us testable functional effects, but at great cost. Now ZIO provides an easier way."
 category:     articles
 tags:         [fp, functional programming, type classes, scala, monads, lenses, effects, reactive, scalaz, cats, mtl, monad transformers, zio]
