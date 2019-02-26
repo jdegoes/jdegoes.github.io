@@ -6,6 +6,8 @@ category:     articles
 tags:         [fp, functional programming, type classes, scala, monads, lenses, effects, reactive, scalaz, cats, mtl, monad transformers, zio]
 ---
 
+**See my accompanying talk, [The Death of Finally Tagless](https://skillsmatter.com/skillscasts/13247-scala-matters), which was released today and covers ZIO Environment.**
+
 Today's functional effect systems for Scala, such as the [ZIO library](https://github.com/scalaz/scalaz-zio) that I work on, Scala are _incredibly_ powerful.
 
 They provide an effect data type that unifies synchronous, asynchronous, concurrent, and resource effects, and support automatic error propagation across these boundaries.
@@ -823,3 +825,5 @@ If you'd like to give it a try, head over to the [ZIO project page](https://gith
 As of today, the first release candidate (RC) for ZIO 1.0 has been published, which means a (nearly) stable API and a focus on documentation, polish, and performance. It's my hope that ZIO 1.0 will be released sometime in March, and that the 1.x line will enjoy at least a full year of backward-compatible tweaks, fine-tunings, and enhancements to the microsite.
 
 If you're still using `Future` and on the fence about a functional effect system, now's the perfect time to jump in and give ZIO (or one of the other functional effect systems) a try. You might just find you can't live without one!
+
+**P.S.** A huge thanks to [Wiem Zine Elabidine](https://twitter.com/wiemzin) for her work on ZIO Environment, and to [Itamar Ravid](https://twitter.com/itrvd), [Regis Kuckaertz](https://twitter.com/regiskuckaertz), and [Kai](https://twitter.com/kaidaxofficial) for their early feedback on the ZIO Environment project, and to [SkillsMatters](https://twitter.com/skillsmatter) for the opportunity to present this work at Scala Matters, London.
