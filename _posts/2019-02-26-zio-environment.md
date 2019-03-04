@@ -272,7 +272,7 @@ The lack of full type inference for tagless-final programs makes writing them an
 
 ### Fake Parametric Guarantees
 
-An often-touted benefit of tagless-final is that we it provides us _parametric reasoning_.
+An often-touted benefit of tagless-final is that it provides us with _parametric reasoning_.
 
 This claim is not without merit. For example, if we look at the following method signature, we should be able to tell from its type that it works with any effect that provides `Monad`, and is therefore free of effects (it may only use `Monad` operations, such as `map`, `flatMap`, and `ap`):
 
@@ -290,14 +290,16 @@ def innocent[F[_]: Monad]: F[Unit] = {
 }
 {% endhighlight %}
 
-Worse still, it is trivial to write a helper method that can embed _any_ effect into any `Applicative`:
+Worse still, it is trivial to write a helper method that can embed _any_ effect into any `Applicative`, even an `Applicative` with a strict (non-lazy) version of `point`:
 
 {% highlight scala %}
 def effect[F[_]: Applicative](a: => A): F[A] = 
   Applicative[F].point(()).map(_ => a)
 {% endhighlight %}
 
-We may not use this helper method to further contaminate the original definition of `innocent`:
+The `effect` helper method itself violates neither Scalazzi (the pure functional subset of Scala), nor any `Applicative` laws.
+
+We may use this helper method to further contaminate the original definition of `innocent`:
 
 {% highlight scala %}
 def innocent[F[_]: Monad]: F[Unit] = {
@@ -307,11 +309,13 @@ def innocent[F[_]: Monad]: F[Unit] = {
 }
 {% endhighlight %}
 
+We've now trivially embedding a raw effect, which will be executed before the creation of `F[Unit]`, and an effect inside the `Applicative`.
+
 In a large code base, whatever _can_ happen, _will_ happen. 
 
 As a testament to this fact, it is common practice among new users of effect systems to accidentally embed effects inside the functions they pass to `map` and `flatMap` (in fact, some effect monads _encourage_ this anti-pattern), as well as embed effects inside lazy versions of the `Monad` `point` operation.
 
-The benefits of _parametric reasoning_ do apply to tagless-final programs, but only "up to discipline". Yet, a lot of other techniques with fewer drawbacks _also_ provide reasoning benefits _up to discipline_.
+The benefits of _parametric reasoning_ do apply to tagless-final programs, but only _up to discipline_. Yet, a lot of other techniques with fewer drawbacks _also_ provide reasoning benefits _up to discipline_.
 
 ### Summary of Tagless-Final
 
@@ -540,7 +544,7 @@ The meaning of these types is as follows:
 
  Rather, I'll focus on a few methods that help you use the new `R` type parameter, and then we'll take a look at how we can use these methods to solve the testability problem.
 
- ### Core Environment
+### Core Environment
 
 ZIO Environment just adds two new primitive functions (and then a couple helpers based on these):
 
@@ -585,7 +589,7 @@ object Console {
     def println(line: String) = 
       UIO.effectTotal(scala.io.StdIn.println(line))
     val readLine = 
-      IO.effect(readLine()).refineOrDie(JustIOException)
+      IO.effect(readLine()).refineOrDie(JustIOExceptions)
   }
   object Live extends Live
 }
@@ -647,7 +651,7 @@ It's nearly as easy to test our program. All we have to do is construct an imple
 
 {% highlight scala %}
 object TestConsole extends Console {
-  val console: Console.Servie = ...
+  val console: Console.Service = ...
 }
 {% endhighlight %}
 
