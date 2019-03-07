@@ -8,23 +8,23 @@ tags:         [fp, functional programming, type classes, scala, monads, lenses, 
 
 In my [last post](/articles/zio-environment), I introduced _ZIO Environment_, which is a new feature in ZIO that bakes in a high-performance, type-safe, and fully-inferred reader effect into the ZIO data type.
 
-This capability leads naturally to a way of describing and testing effects that I call _environmental effects_. Unlike tagless-final, which is difficult to teach, difficult to abstract over, and does not infer, environmental effects are simple, abstract well, and infer completely.
+This capability leads to a way of describing and testing effects that I call _environmental effects_. Unlike tagless-final, which is difficult to teach, difficult to abstract over, and does not infer, environmental effects are simple, abstract well, and infer completely.
 
-Moreover, while proponents of tagless-final argue tagless-final _constrains_ effects, my last post demonstrated this is imprecise: not only can you embed raw effects anywhere in Scala, but even without leaving _Scalazzi_ (the purely functional subset of Scala), you can lift arbitrary effects into any `Applicative` functor.
+Moreover, while proponents of tagless-final argue that tagless-final _parametrically constrains_ effects, my [last post](/articles/zio-environment) demonstrated this is not quite correct: not only can you embed raw effects _anywhere_ in Scala, but even without leaving _Scalazzi_ (the purely functional subset of Scala), you can lift arbitrary effects into any `Applicative` functor.
 
-The inability of tagless-final to constrain effects is more than just theory:
+The inability of tagless-final to constrain effects is more than just theoretical:
 
- - Inexperienced Scala functional programmers use effect type classes like `Sync` everywhere (which are themselves lawless and serve only to embed effects), and use lazy methods like `defer` to embed effects.
- - Some experienced Scala functional programmers embed effects into "pure" monads (for example, exceptions in the functions they pass to `map`, `flatMap`), and effect types like Monix and Cats IO actively encourage this behavior.
+ - New Scala functional programmers use effect type classes like `Sync` everywhere (which are themselves lawless and serve only to embed effects), and they embed effects using lazy methods, like `defer` or `point`.
+ - Even some experienced Scala functional programmers embed effects in pure methods (for example, exceptions in the functions they pass to `map`, `flatMap`), and some effect types encourage this behavior.
 
-At the end of the day, then, there are only two compelling reasons to use tagless-final:
+At the end of the day, and after professionally and pedagogically wrestling with these issues for several years now, I've come to the conclusion there are only two highly compelling reasons to use tagless-final:
 
-1. Avoiding commitment to a specific effect type, which can be useful to library authors, but which is less useful for (and often detrimental to) application developers;
+1. Avoiding commitment to a specific effect type, which can be useful to library authors, but which is less useful for application developers, and often detrimental to them;
 2. Writing testable functional code, which is fairly straightforward with tagless-final because you can just create test instances for different effect type classes.
 
-In this post, I'm going to show you how to use environmental effects to incrementally test an existing application.
+While testability is a compelling reason to use tagless-final, it's not necessarily a compelling reason to choose tagless-final over another approach.
 
-In providing this example, I hope to make the _big picture_ clear to application developers, as well as show that environmental effects provide easier, more incremental, and more modular testability than tagless-final.
+In this post, I'm going to show you how to use environmental effects to achieve testability. I hope to demonstrate that environmental effects provide easier, more incremental, and more modular testability&mdash;all without sacrificing teachability, abstraction, or type inference.
 
 ## A Web App
 
@@ -65,9 +65,9 @@ object Email {
 }
 {% endhighlight %}
 
-As currently written, our web application is not very testable. The function `inviteFriends` makes direct calls to functions that interact with the database, interact with the Facebook API, and send email.
+As currently written, our web application is not very testable. The function `inviteFriends` makes direct calls to database functions, Facebook API functions, and email service functions.
 
-While we may have automated tests for our web service, because our application talks to a real database, a real API, and a real email service, the tests are actually system tests, _not_ unit tests. Such tests are very difficult to write, run slowly, prone to random failures, and they test much more than our application logic.
+While we may have automated tests for our web service, because our application interacts directly with the real world, the tests are actually _system_ tests, _not_ unit tests. Such tests are very difficult to write, run slowly, prone to random failures, and they test much more than our application logic.
 
 We do not have time to rewrite our application, and we cannot make it testable all at once. Instead, let's try to remove dependency on the database for the `inviteFriends` function.
 
@@ -75,7 +75,7 @@ If we succeed in doing this, we will make our test code a _little better_, and a
 
 ### Steps Toward Testability
 
-To incrementally refactor `inviteFriends` to be more testable, we're going to perform the following series of steps:
+To incrementally refactor `inviteFriends` to be more testable, we're going to perform the following series of refactorings:
 
 1. Introduce a type alias.
 2. Introduce a module for the database.
@@ -88,13 +88,13 @@ Each of these steps will be covered in the sections that follow.
 
 ### Introduce A Type Alias
 
-Mainly to make refactoring our application a little easier, especially if we aren't using an IDE, we're going to first introduce a simple type alias that we can use in the definition of `inviteFriends` and the functions that call it:
+Mainly to simplify the process of refactoring our application, especially if we aren't using an IDE, we're going to first introduce a simple type alias that we can use in the definition of `inviteFriends` and the functions that call it:
 
 {% highlight scala %}
 type Webapp[A] = Task[A]
 {% endhighlight %}
 
-Now with a simple change, we update the `lookupUser` function and any functions that call it to use the new `Webapp` type alias:
+Now with a straightforward change, we will update the `lookupUser` function and any functions that call it to use the type alias:
 
 {% highlight scala %}
 def inviteFriends(userID: UserID): Webapp[List[Send]] =
@@ -115,7 +115,7 @@ After this step, we are ready to introduce a service for the database.
 
 The database module will provide access to a database service.
 
-As discussed in my post on [ZIO Environment](/articles/zio-environment), the database module is an ordinary interface with a single field, which contains the database service; and the database service is just an ordinary interface, which can contain anything we want.
+As discussed in my post on [ZIO Environment](/articles/zio-environment), the database module is an ordinary interface with a single field, which contains the database service; and the database service is just an ordinary interface.
 
 We can define both the module and the service very simply:
 
