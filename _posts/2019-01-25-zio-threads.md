@@ -44,8 +44,8 @@ However, in preparation for the upcoming release of [ZIO](https://github.com/sca
 [ZIO](https://github.com/scalaz/scalaz-zio) has three functions that make thread management a breeze:
 
 1. `IO#lock(executor)`
-2. `IO.unyielding(task)`
-3. `IO.blocking(task)`
+2. `scalaz.zio.blocking.blocking(task)`
+3. `scalaz.zio.blocking.interruptible(task)`
 
 Internally, two of these functions benefit from the fact that the [ZIO](https://github.com/scalaz/scalaz-zio) runtime system has two primary thread pools, which are set by the user at the level of the main function. One of these thread pools is for asynchronous code, and one is for blocking code. These pools are configurable, of course, but the built-in defaults provide excellent performance for most applications.
 
@@ -71,41 +71,48 @@ The unique guarantee that `lock` provides is semantically well-defined and stron
 
 The `lock` function is the missing ingredient for principled task location in purely functional effect systems. It lets you trivially verify with local reasoning that, for example, blocking effects will always be executed on a blocking thread pool; that a client request will always happen in a client library's thread pool; or that a UI task will always execute on the UI thread, even if composed with other tasks that may need to execute elsewhere.
 
-### Unyielding
+### Blocking
 
-The second method that [ZIO](https://github.com/scalaz/scalaz-zio) provides to support thread management is `IO.unyielding`, which allows you to lock a task on the blocking thread pool.
+The second method that [ZIO](https://github.com/scalaz/scalaz-zio) provides to support thread management is `blocking`, which allows you to lock a task on the blocking thread pool.
 
 {% highlight scala %}
-IO.unyielding(task)
+import scalaz.zio.blocking._
+
+val blockingTask = blocking(task)
 {% endhighlight %}
 
 This function is not primitive (it's implemented in terms of `lock` and another function, which provides access to the two primary thread pools in [ZIO](https://github.com/scalaz/scalaz-zio)), but it's one of the most common methods for thread pool management in [ZIO](https://github.com/scalaz/scalaz-zio).
 
 ### Blocking
 
-The third method that [ZIO](https://github.com/scalaz/scalaz-zio) provides to support thread management is `IO.blocking`, which allows suspending (or _importing_) a blocking effect into a pure task.
+The third method that [ZIO](https://github.com/scalaz/scalaz-zio) provides to support thread management is `interruptible`, which allows suspending (or _importing_) a blocking effect into a pure task.
 
 {% highlight scala %}
-// def blocking[A](effect: => A): IO[Nothing, A] = ...
-IO.blocking(Thread.sleep(Long.MaxValue))
+// def interruptible[A](effect: => A): IO[Throwable, A] = ...
+import scalaz.zio.blocking._
+
+val interruptibleSleep =
+  interruptible(Thread.sleep(Long.MaxValue))
 {% endhighlight %}
 
-The `blocking` function returns a task that has two important features:
+The `interruptible` function returns a task that has two important features:
 
-1. It executes the effect on the blocking thread pool using `unyielding`.
+1. It executes the effect on the blocking thread pool using the `blocking` combinator.
 2. It is interruptible (assuming the effect is blocking!), and any interruption will delegate to Java's `Thread.interrupt`.
 
 The following code snippet will interrupt a really long `Thread.sleep` (which is a blocking function on the JVM):
 
 {% highlight scala %}
+import scalaz.zio.blocking.interruptible
+
 val interruptedSleep =
   for {
-    fiber <- IO.blocking(Thread.sleep(Long.MaxValue)).fork
+    fiber <- interruptible(Thread.sleep(Long.MaxValue)).fork
     _     <- fiber.interrupt
   } yield ()
 {% endhighlight %}
 
-Like `lock` and `unyielding`, this feature is a first for functional effect systems in Scala. Now runaway JDBC queries, thread sleeps, remote file downloads, and other blocking effects can be trivally interrupted in a composable fashion using ordinary [ZIO](https://github.com/scalaz/scalaz-zio) interruption.
+Like `lock` and `blocking`, this feature is a first for functional effect systems in Scala. Now runaway JDBC queries, thread sleeps, remote file downloads, and other blocking effects can be trivally interrupted in a composable fashion using ordinary [ZIO](https://github.com/scalaz/scalaz-zio) interruption.
 
 ## Summary 
 
@@ -116,8 +123,8 @@ Proper thread management is essential for efficient applications. High-performan
 [ZIO](https://github.com/scalaz/scalaz-zio) uses its two primary thread pools to make thread management easy using three functions, which bring unique functionality to the functional effect systems in Scala:
 
  * The `lock` function locks a task to a given thread pool (even over asynchronous boundaries!), providing principled, well-defined semantics for locating tasks;
- * The `unyielding` function locks a task to [ZIO](https://github.com/scalaz/scalaz-zio)'s blocking thread pool; 
- * The `blocking` function suspends a blocking effect into an interruptible `IO`, by safely delegating to Java's own thread interruption, allowing composable interruption of any blocking code.
+ * The `blocking` function locks a task to [ZIO](https://github.com/scalaz/scalaz-zio)'s blocking thread pool; 
+ * The `interruptible` function suspends a blocking effect into an interruptible `IO`, by safely delegating to Java's own thread interruption, allowing composable interruption of any blocking code.
 
 Thanks to no implicit execution contexts, no implicit context shifts, no weird edge-cases (like asynchronous boundaries shifting a task to another thread pool), built-in asynchronous and blocking thread pools, fairness and performance, and well-defined semantics, [ZIO](https://github.com/scalaz/scalaz-zio) makes it easier than ever to build applications that follow best practices.
 

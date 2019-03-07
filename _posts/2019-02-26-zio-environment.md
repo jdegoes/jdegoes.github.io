@@ -504,7 +504,7 @@ def program: Reader[Module1 with ... with ModuleN, String] =
 
 This step is not so far away. There is a `Reader` monad transformer that can add the reader effect to any base monad, including the `IO` monad. However, not only are monad transformers very slow in Scala (adding 2-4x overhead per layer), but they have clumsy ergonomics and bad type inference.
 
-So instead, using a technique called [effect rotation](/posts/effect-rotation), we can bake the reader effect into the base effect monad, yielding a data type that is high-performance, and, if we are _very thoughtful_ in the design of the data type, opening the door to _delightful_ ergonomics and _flawless_ type inference.
+So instead, using a technique called [effect rotation](/articles/effect-rotation), we can bake the reader effect into the base effect monad, yielding a data type that is high-performance, and, if we are _very thoughtful_ in the design of the data type, opening the door to _delightful_ ergonomics and _flawless_ type inference.
 
 This is the approach taken by _ZIO Environment_, a new feature in ZIO and quite possibly the most defining feature of the impending 1.0 release of the ZIO library.
 
@@ -540,7 +540,7 @@ The meaning of these types is as follows:
 
  This hierarchy of power allows users to start with `Task` and possibly `UIO` (any type they handle errors, they'll get something that has type `UIO`), and then gradually migrate to either `IO` or `ZIO`, or maybe their own type alias that uses offers a combination of types suited to their application.
 
- In this post, I won't talk about the `E` and `A` parameters, since you can find [previous material](/posts/bifunctor-io) on these, and [ZIO itself](https://github.com/scalaz/scalaz-zio), including Scaladoc and the microsite, have extensive documentation on failure and success values.
+ In this post, I won't talk about the `E` and `A` parameters, since you can find [previous material](/articles/bifunctor-io) on these, and [ZIO itself](https://github.com/scalaz/scalaz-zio), including Scaladoc and the microsite, have extensive documentation on failure and success values.
 
  Rather, I'll focus on a few methods that help you use the new `R` type parameter, and then we'll take a look at how we can use these methods to solve the testability problem.
 
@@ -565,6 +565,8 @@ object ZIO {
 {% endhighlight %}
 
 The core functions are `ZIO#provide`, which allows you to "feed" an `R` to an effect that requires an `R`, to eliminate its requirement; by changing the environment type parameter to `Any`); and `ZIO.accessM`, which allows you to effectfully access part of the environment.
+
+Just like a function whose input requires `Any` can be fed anything (including `()`), and which therefore has no requirements, an effect whose environment is `Any` has no requirements (this is different than `ZIO[Unit, E, A]`, which is a type indicating the effect requires the `Unit` value).
 
 The helper functions are `ZIO.access`, which allows you to (non-effectfully) access part of the environment, and `ZIO.environment`, which gives you the whole environment.
 
