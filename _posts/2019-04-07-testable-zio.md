@@ -17,22 +17,24 @@ The inability of tagless-final to constrain effects is more than just theoretica
  - New Scala functional programmers use effect type classes like `Sync` everywhere (which are themselves lawless and serve only to embed effects), and they embed effects using lazy methods, like `defer` or `point`.
  - Even some experienced Scala functional programmers embed effects in pure methods (for example, exceptions in the functions they pass to `map`, `flatMap`), and some effect types encourage this behavior.
 
-At the end of the day, and after professionally and pedagogically wrestling with these issues for several years now, I've come to the conclusion there are only two highly compelling reasons to use tagless-final:
+Tagless-final can be used by a well-trained and highly-disciplined team to constrain effects, but the same can be said for many approaches, _including_ environmental effects.
 
-1. Avoiding commitment to a specific effect type, which can be useful to library authors, but which is less useful for application developers, and often detrimental to them;
+After professionally and pedagogically wrestling with these issues for several years now, I've come to the conclusion there are just two legitimately compelling reasons to use tagless-final:
+
+1. Avoiding commitment to a specific effect type, which can be useful for library authors, but which is less useful for application developers (often it's a hinderance!);
 2. Writing testable functional code, which is fairly straightforward with tagless-final because you can just create test instances for different effect type classes.
 
-While testability is a compelling reason to use tagless-final, it's not necessarily a compelling reason to choose tagless-final over another approach.
+While testability is a compelling reason to _use_ tagless-final, it's not necessarily a compelling reason to _choose_ tagless-final over other approaches&mdash;in particular, over environmental effects.
 
-In this post, I'm going to show you how to use environmental effects to achieve testability. I hope to demonstrate that environmental effects provide easier, more incremental, and more modular testability&mdash;all without sacrificing teachability, abstraction, or type inference.
+In this post, I'm going to show you how to use environmental effects to achieve testability. I hope to demonstrate that environmental effects provide easier and more incremental testability&mdash;all without sacrificing teachability, abstraction, or type inference.
 
 ## A Web App
 
 Let's say we are building a web application with ZIO. Suppose the application was originally written with `Future` or perhaps some version of `IO` or `Task`.
 
-Later, the application was ported to ZIO's `Task[A]`, which is a type alias for `ZIO[Any, Throwable, A]`&mdash;indicating an effect that requires no specific environment and which may fail with a `Throwable`.
+Later, the application was ported to ZIO's `Task[A]`, which is a type alias for `ZIO[Any, Throwable, A]`&mdash;representing an effect that requires no specific environment and that may fail with any `Throwable`.
 
-Now a typical function in our application might look something like this one:
+Now let's say one of the functions in our application, called `inviteFriends`, invites the friends of a given user to the application by sending them emails:
 
 {% highlight scala %}
 def inviteFriends(userID: UserID): Task[List[Send]] =
@@ -45,7 +47,7 @@ def inviteFriends(userID: UserID): Task[List[Send]] =
   } yield resp
 {% endhighlight %}
 
-where portions of the `DB` and `Social` objects are shown below:
+Portions of the `Social`, `DB`, and `Email` objects are shown below:
 
 {% highlight scala %}
 object Social {
@@ -67,11 +69,11 @@ object Email {
 
 As currently written, our web application is not very testable. The function `inviteFriends` makes direct calls to database functions, Facebook API functions, and email service functions.
 
-While we may have automated tests for our web service, because our application interacts directly with the real world, the tests are actually _system_ tests, _not_ unit tests. Such tests are very difficult to write, run slowly, prone to random failures, and they test much more than our application logic.
+While we may have automated tests for our web service, because our application interacts directly with the real world, the tests are actually _system tests_, not _unit tests_. Such tests are very difficult to write, they run slowly, they randomly fail, and they test much more than our application logic.
 
-We do not have time to rewrite our application, and we cannot make it testable all at once. Instead, let's try to remove dependency on the database for the `inviteFriends` function.
+We do not have time to rewrite our application, and we cannot make it testable all at once. Instead, let's try to remove dependency on the live database for the `inviteFriends` function.
 
-If we succeed in doing this, we will make our test code a _little better_, and after we ship the new code, we can incrementally use the same technique to make the function _fully_ testable&mdash;fast, deterministic, and without external dependencies.
+If we succeed in doing this, we will make our test code a _little better_, and after we ship the new code, we can incrementally use the same technique to make the function _fully_ testable&mdash;fast, deterministic, and without any external dependencies.
 
 ### Steps Toward Testability
 
@@ -88,13 +90,13 @@ Each of these steps will be covered in the sections that follow.
 
 ### Introduce A Type Alias
 
-Mainly to simplify the process of refactoring our application, especially if we aren't using an IDE, we're going to first introduce a simple type alias that we can use in the definition of `inviteFriends` and the functions that call it:
+To simplify the process of refactoring our application, we're going to first introduce a simple type alias that we can use in the definition of `inviteFriends` and the functions that call it:
 
 {% highlight scala %}
 type Webapp[A] = Task[A]
 {% endhighlight %}
 
-Now with a straightforward change, we will update the `lookupUser` function and any functions that call it to use the type alias:
+Now we will mechanically update the `lookupUser` function and any functions that call it to use the type alias:
 
 {% highlight scala %}
 def inviteFriends(userID: UserID): Webapp[List[Send]] =
@@ -107,7 +109,7 @@ def inviteFriends(userID: UserID): Webapp[List[Send]] =
   } yield resp
 {% endhighlight %}
 
-As an alternative to this technique, we could simply delete the return types entirely, but it's considered a good practice to place return types on top-level function signatures, so developers without IDEs can easily determine the return type of functions.
+As an alternative to this technique, we could simply delete the return types entirely. However, it's a good practice to place return types on top-level function signatures, so developers without IDEs can easily determine the return type of functions.
 
 After this step, we are ready to introduce a service for the database.
 
@@ -115,7 +117,7 @@ After this step, we are ready to introduce a service for the database.
 
 The database module will provide access to a database service.
 
-As discussed in my post on [ZIO Environment](/articles/zio-environment), the database module is an ordinary interface with a single field, which contains the database service; and the database service is just an ordinary interface.
+As discussed in my post on [ZIO Environment](/articles/zio-environment), the database module is an ordinary interface with a single field, which contains the database service.
 
 We can define both the module and the service very simply:
 
@@ -132,7 +134,7 @@ object Database {
 }
 {% endhighlight %}
 
-Notice how we have decided to place only a single method inside the database service: the `lookupUser` method. Although there may be many database methods, we don't have time to make all of them testable, so we will focus on the one required by the `inviteFriends` method.
+Notice how we have decided to place just one method inside the database service: the `lookupUser` method. Although there may be many database methods, we don't have time to make all of them testable, so we will focus on the one required by the `inviteFriends` method.
 
 We are now ready to implement a production version of the service.
 
@@ -141,8 +143,8 @@ We are now ready to implement a production version of the service.
 We will call the production database module `DatabaseLive`. To implement the module, we need only copy and paste the implementation of `Database.lookupUser` into our implementation of the service interface:
 
 {% highlight scala %}
-trait DatabaseLive {
-  val database: Database.Service = 
+trait DatabaseLive extends Database {
+  val database = 
     new Database.Service {
       // Implementation copy/pasted from
       // DB.lookupUser:
@@ -153,13 +155,11 @@ trait DatabaseLive {
 object DatabaseLive extends DatabaseLive
 {% endhighlight %}
 
-For maximum flexibility and convenience, we have both a _trait_ that implements the database module, which can be mixed into other traits, and we have an _object_ that extends the trait, which can be used standalone.
+For maximum flexibility and convenience, we have defined both a _trait_ that implements the database module, which can be mixed into other traits, and an _object_ that extends the trait, which can be used standalone.
 
 ### Integrate Production Module
 
-We now have all the pieces we need to replace the original `DB.lookupUser` method, whose actual implementation now resides inside our `DatabaseLive` module.
-
-The new version of the `DB` object looks like this:
+We now have all the pieces we need to replace the original `DB.lookupUser` method, whose actual implementation now resides inside our `DatabaseLive` module:
 
 {% highlight scala %}
 object DB {
@@ -174,13 +174,13 @@ The `lookupUser` method merely delegates to the database module, by accessing th
 
 Here we don't use the `Webapp` type alias, because the functions in `DB` will not necessarily have the same dependencies as our web application.
 
-However, after enough refactoring, we might introduce a new type alias in the `DB` object: `type DB[A] = ZIO[Database, Throwable, A]`. Eventually, all methods in `DB` would return effects of this type.
+However, after enough refactoring, we might introduce a new type alias in the `DB` object: `type DB[A] = ZIO[Database, Throwable, A]`. Eventually, all methods in `DB` might return effects of this type.
 
-At this point, our refactoring is nearly complete. But we have to take care of one last detail: we have to provide our database module to our production application.
+At this point, our refactoring is nearly complete. But we have to take care of one last detail: we have to provide our database module to the production application.
 
 There are two main ways to provide the database module to our application. If it is inconvenient to propagate the `Webapp` type signature to the top of our application, we can always supply the production module somewhere inside our application.
 
-In the worst case, if we are pressed for time and need to ship the code today, maybe we choose to provide the production database wherever we call `inviteFriends`.
+In the worst case, if we are pressed for time and need to ship code today, maybe we choose to provide the production database wherever we call `inviteFriends`.
 
 {% highlight scala %}
 inviteFriends(userId).provide(DatabaseLive)
