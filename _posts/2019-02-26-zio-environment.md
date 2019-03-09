@@ -8,7 +8,7 @@ tags:         [fp, functional programming, type classes, scala, monads, lenses, 
 
 **See my accompanying talk, [The Death of Finally Tagless](https://skillsmatter.com/skillscasts/13247-scala-matters), which was released today and covers ZIO Environment.**
 
-Today's functional effect systems for Scala, such as the [ZIO library](https://github.com/scalaz/scalaz-zio) that I work on, Scala are _incredibly_ powerful.
+Today's functional effect systems for Scala, such as the [ZIO library](https://github.com/scalaz/scalaz-zio) that I work on, are _incredibly_ powerful.
 
 They provide an effect data type that unifies synchronous, asynchronous, concurrent, and resource effects, and support automatic error propagation across these boundaries.
 
