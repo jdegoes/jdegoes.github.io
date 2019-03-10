@@ -99,4 +99,4 @@ If you post your code in a Gist so the whole world can learn from your solution,
 
 Finally, if your solution is among the top 1-3 I receive over the next 2 weeks, I'll connect with you on LinkedIn and write a short, honest endorsement of your skills in functional Scala.
 
-Read? On your marks, get set, go!
+Ready? On your marks, get set, go!
