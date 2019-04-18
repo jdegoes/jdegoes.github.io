@@ -180,7 +180,7 @@ While it turns out that one can define an operator that provides more control ov
 
 ZIO lets anyone write interruption-friendly code, operating at a high-level, with declarative, composable operators, and doesn't force you to either choose between extreme complexity and poor performance on the one hand, and wasted resources and deadlocks on the other.
 
-Moreover, although not discussed in this post, the newly-added Software Transactional Memory in ZIO lets users declaratively write data structures and code that is automatically asynchronous, concurrent, and safely interruptible.
+Moreover, although not discussed in this post, the newly-added [Software Transactional Memory](https://www.youtube.com/watch?list=PL8NC5lCgGs6MYG0hR_ZOhQLvtoyThURka&v=d6WWmia0BPM) in ZIO lets users declaratively write data structures and code that is automatically asynchronous, concurrent, and safely interruptible.
 
 # 3. Guaranteed Finalizers
 
@@ -457,7 +457,7 @@ In a small, cross-platform package, ZIO provides a highly-integrated toolbox for
 This toolbox includes the following:
 
  - The most important concurrent data structures, including `Ref`, `Promise`, `Queue`, `Semaphore`, and a small `Stream` for file / socket / data streaming
- - Software transactional memory, which can be used to simply build composable, asynchronous, concurrent, and interruptible data structures
+ - [Software Transactional Memory](https://www.youtube.com/watch?list=PL8NC5lCgGs6MYG0hR_ZOhQLvtoyThURka&v=d6WWmia0BPM) (STM), which can be used to simply build composable, asynchronous, concurrent, and interruptible data structures
  - `Schedule`, which offers composable retries and repetitions
  - Tiny and testable `Clock`, `Random`, `Console`, and `System` services, which are used by nearly every application
  - Many helper methods on the effect type covering common use cases
