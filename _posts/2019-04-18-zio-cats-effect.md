@@ -286,13 +286,19 @@ All the following situations can lead to multiple errors being produced:
  - Two (failing) effects being raced
  - An interrupted effect also failing before exiting an uninterruptible section
 
-Because errors do not compose, ZIO has a data structure called `Cause[E]`, which provides a free _semiring_ (an abstraction from abstract algebra), which allows lossless composition of sequential and parallel errors for any arbitrary error type.
+Because errors do not compose, ZIO has a data structure called `Cause[E]`, which provides a free _semiring_ (an abstraction from abstract algebra, which you can safely ignore if you haven't heard about before!), which allows lossless composition of sequential and parallel errors for any arbitrary error type.
 
 During all operations (including cleanup for a failed or interrupted effect), ZIO aggregates errors into the `Cause[E]` data structure, which can be accessed at any time.
 
 As a result, ZIO never loses any errors: they can all be accessed at the value level, and then logged, inspected, or transformed, as dictated by business requirements.
 
 Cats IO chose to embrace a lossy error model. Wherever ZIO would compose two errors using `Cause[E]`, Cats IO "throws" one error away&mdash;for example, by calling `e.printStackTrace()` on the tossed error.
+
+For example, the finalizer error in this snippet will be "thrown away":
+
+{% highlight scala %}
+IO.raiseError(new Error("Error 1")).guarantee(IO.raiseError(new Error("Error 2")))
+{% endhighlight %}
 
 This lossy side-channel error reporting means there is no way to locally detect and respond to the full range of errors that can occur as effects are composed.
 
