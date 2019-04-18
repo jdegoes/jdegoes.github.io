@@ -374,7 +374,7 @@ On the JVM, ZIO provides two operators that provide direct support for blocking 
  - The `blocking(effect)` operator, which will shift execution of the specified effect to a blocking thread pool, which uses very good settings and can also be configured;
  - The `effectBlocking(effect)` operator, which translates side-effectful blocking code into a pure effect, whose interruption will interrupt a lot of blocking code.
 
-If you are dealing with some effect, and need to make sure it's executed on a blocking thread pool, then you can wrap it in `blocking`. On the other hand, if you are wrapping some side-effectful code that blocks, then you can wrap it in `effectBlocking`, and benefit from ZIO's composable, pervasive, and safe interruption (where possible).
+If you have an effect, and you need to make sure it's executed on a blocking thread pool, then you can wrap it in `blocking`. On the other hand, if you are wrapping some side-effectful code that blocks, then you can wrap it in `effectBlocking`, and benefit from ZIO's composable, pervasive, and safe interruption (where possible).
 
 Cats IO chose to adopt a more minimal core, and delegate such functionality to user-land code. While there are libraries that help provide the functionality of the `blocking` operator, they are based on `evalOn`, and therefore cannot actually guarantee execution on the blocking thread pool.
 
