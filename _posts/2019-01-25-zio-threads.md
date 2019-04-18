@@ -45,7 +45,7 @@ However, in preparation for the upcoming release of [ZIO](https://github.com/sca
 
 1. `IO#lock(executor)`
 2. `scalaz.zio.blocking.blocking(task)`
-3. `scalaz.zio.blocking.interruptible(task)`
+3. `scalaz.zio.blocking.effectBlocking(task)`
 
 Internally, two of these functions benefit from the fact that the [ZIO](https://github.com/scalaz/scalaz-zio) runtime system has two primary thread pools, which are set by the user at the level of the main function. One of these thread pools is for asynchronous code, and one is for blocking code. These pools are configurable, of course, but the built-in defaults provide excellent performance for most applications.
 
@@ -85,17 +85,17 @@ This function is not primitive (it's implemented in terms of `lock` and another 
 
 ### Blocking
 
-The third method that [ZIO](https://github.com/scalaz/scalaz-zio) provides to support thread management is `interruptible`, which allows suspending (or _importing_) a blocking effect into a pure task.
+The third method that [ZIO](https://github.com/scalaz/scalaz-zio) provides to support thread management is `effectBlocking`, which allows suspending (or _importing_) a blocking effect into a pure task.
 
 {% highlight scala %}
-// def interruptible[A](effect: => A): IO[Throwable, A] = ...
+// def effectBlocking[A](effect: => A): IO[Throwable, A] = ...
 import scalaz.zio.blocking._
 
 val interruptibleSleep =
-  interruptible(Thread.sleep(Long.MaxValue))
+  effectBlocking(Thread.sleep(Long.MaxValue))
 {% endhighlight %}
 
-The `interruptible` function returns a task that has two important features:
+The `effectBlocking` function returns a task that has two important features:
 
 1. It executes the effect on the blocking thread pool using the `blocking` combinator.
 2. It is interruptible (assuming the effect is blocking!), and any interruption will delegate to Java's `Thread.interrupt`.
@@ -103,11 +103,11 @@ The `interruptible` function returns a task that has two important features:
 The following code snippet will interrupt a really long `Thread.sleep` (which is a blocking function on the JVM):
 
 {% highlight scala %}
-import scalaz.zio.blocking.interruptible
+import scalaz.zio.blocking.effectBlocking
 
 val interruptedSleep =
   for {
-    fiber <- interruptible(Thread.sleep(Long.MaxValue)).fork
+    fiber <- effectBlocking(Thread.sleep(Long.MaxValue)).fork
     _     <- fiber.interrupt
   } yield ()
 {% endhighlight %}
@@ -124,7 +124,7 @@ Proper thread management is essential for efficient applications. High-performan
 
  * The `lock` function locks a task to a given thread pool (even over asynchronous boundaries!), providing principled, well-defined semantics for locating tasks;
  * The `blocking` function locks a task to [ZIO](https://github.com/scalaz/scalaz-zio)'s blocking thread pool; 
- * The `interruptible` function suspends a blocking effect into an interruptible `IO`, by safely delegating to Java's own thread interruption, allowing composable interruption of any blocking code.
+ * The `effectBlocking` function suspends a blocking effect into an interruptible `IO`, by safely delegating to Java's own thread interruption, allowing composable interruption of any blocking code.
 
 Thanks to no implicit execution contexts, no implicit context shifts, no weird edge-cases (like asynchronous boundaries shifting a task to another thread pool), built-in asynchronous and blocking thread pools, fairness and performance, and well-defined semantics, [ZIO](https://github.com/scalaz/scalaz-zio) makes it easier than ever to build applications that follow best practices.
 
