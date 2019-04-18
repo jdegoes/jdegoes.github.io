@@ -124,7 +124,7 @@ for {
 } yield data
 {% endhighlight %}
 
-Most programmers would not be surprised that if `readFile` failed, then the `closeFile` would not be executed. Fortunately, effect systems have `ensuring` (called `guarantee` in Cats Effect) that lets you add a finalizer to an effect.
+Most programmers would not be surprised that if `readFile` failed, then the `closeFile` would not be executed. Fortunately, effect systems have `ensuring` (called `guarantee` in Cats Effect) that lets you add a finalizer to an effect, similar to `finally`.
 
 So the main problem with the above effect can be fixed simply:
 
@@ -196,21 +196,10 @@ This guarantee holds even if:
  - There are errors in the `try` block
  - There are errors in a nested `finally` block
 
-ZIO provides a similar operation called `ensuring`, which goes by the name `guarantee` in Cats Effect; and a related operation called `bracket`, which provides a higher-level form of the classic `try` / `finally` construct (similar to _try-with-resources_ in Java). The `bracket` operation lets you acquire, use, and release a resource, with the guarantee that any acquired resource will be released.
-
-The `ensuring` operation can be used exactly like `try` / `finally`:
+ZIO's `ensuring` operation can be used exactly like `try` / `finally`:
 
 {% highlight scala %}
 val effect2 = effect.ensuring(cleanup)
-{% endhighlight %}
-
-The `bracket` operation can be used as follows:
-
-{% highlight scala %}
-val processed = 
-  openFile(file).bracket(closeFile(_)) { handle =>
-    readData(handle)
-  }
 {% endhighlight %}
 
 ZIO provides the following guarantee on `effect.ensuring(finalizer)`:
@@ -223,7 +212,7 @@ Like `try` / `finally`, this guarantee holds even if:
  - There are errors in `effect`
  - There are errors in any nested finalizer
 
-Moreover, the guarantee holds even if the effect is _interrupted_. The guarantees on `bracket` are similar, except neither the resource acquisition nor the release can be interrupted.
+Moreover, the guarantee holds even if the effect is _interrupted_ (the guarantees on `bracket` are similar, and in fact, `bracket` is implemented on `ensuring`).
 
 The Cats IO data type chose a different, weaker guarantee. For `effect.guarantee(finalizer)`, the guarantee is weakened as follows:
 
@@ -238,7 +227,7 @@ In order to leak resources, it is only necessary to compose, somewhere in the ef
 val bigTrouble = interruptedFiber.join
 {% endhighlight %}
 
-When `bigTrouble` is so composed into another effect, the effect becomes non-terminating&mdash;neither finalizers installed with `guarantee` nor cleanup effects installed with `bracket` will be executed, leading to _resource leaks_ and _skipped_ finalization.
+When `bigTrouble` is so composed into another effect, the effect becomes _non-terminating_&mdash;neither finalizers installed with `guarantee` nor cleanup effects installed with `bracket` will be executed, leading to _resource leaks_ and _skipped_ finalization.
 
 For example, the finalizer in the following code will never begin execution:
 
