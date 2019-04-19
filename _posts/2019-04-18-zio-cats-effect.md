@@ -10,7 +10,7 @@ Cats Effect has become the ["Reactive Streams"](http://www.reactive-streams.org)
 
 Many great libraries like http4s, FS2, and Doobie are built on the Cats Effect type classes, and effect libraries like [ZIO](https://github.com/scalaz/scalaz-zio) and Monix provide instances of these type classes for their effect types. 
 
-Although not without a few drawbacks, many of which will be [rectified in 2.0](https://github.com/typelevel/cats-effect/issues/321), the Cats Effect library is helping many open source contributors economically support the whole functional Scala ecosystem.
+Although not without a few drawbacks, many of which will be [rectified in 3.0](https://github.com/typelevel/cats-effect/issues/321), the Cats Effect library is helping many open source contributors economically support the whole functional Scala ecosystem.
 
 Application developers who use Cats Effect face a far more difficult choice: which of the major effect types they will use to build their applications.
 
@@ -362,7 +362,7 @@ Since one can always choose to ignore the provided `ExecutionContext`, the ZIO c
 
 # 8. Blocking IO
 
-As covered in [Thread Pool Best Practices with ZIO](/articles/zio-threads.md), server-side applications must have at least two separate thread pools for maximum efficiency:
+As covered in [Thread Pool Best Practices with ZIO](/articles/zio-threads), server-side applications must have at least two separate thread pools for maximum efficiency:
 
  - A fixed thread pool for CPU / async effects
  - A dynamic, growing thread pool for blocking effects
