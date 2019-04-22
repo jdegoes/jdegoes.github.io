@@ -162,7 +162,7 @@ ZIO has facilities to make both of these very easy. For example, we can implemen
 ZIO.uninterruptible {
   for {
     a    <- acquire
-    exit <- ZIO.interruptible(use(a)).run.flatMap(exit => release(a, e).const(exit))
+    exit <- ZIO.interruptible(use(a)).run.flatMap(exit => release(a, exit).const(exit))
     b    <- ZIO.done(exit)
   } yield b
 }
