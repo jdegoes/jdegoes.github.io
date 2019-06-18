@@ -1,26 +1,28 @@
 ---
 layout:       post
-title:        "The False Hope of Tagless-Final in Scala"
-description:  "For many but not all, tagless-final in Scala is not what it's cracked up to be"
+title:        "The False Hope of Managing Effects with Tagless-Final in Scala"
+description:  "Using agless-final to manage effects has seen some buy-in in the Scala community, but the benefits are questionable and the drawbacks significant"
 category:     articles
 tags:         [type classes, haskell, purescript, scala, cats, scalaz, mtl, tagless-final, functional programming, fp]
 ---
 
-Tagless-final is a technique used to [embed domain-specific languages](http://okmij.org/ftp/tagless-final/index.html) into a host language, without the use of Generalized Algebraic Data Types.
+Tagless-final is a technique originally used to [embed domain-specific languages](http://okmij.org/ftp/tagless-final/index.html) into a host language, without the use of Generalized Algebraic Data Types.
 
-In the Haskell community, _tagless-final_ refers to a way of creating polymorphic programs that are interpreted by instantiaing them to a target data type. In the Scala community, usage of the term is closest to what Haskeller's mean by _MTL-style_, albeit, without the algebraic laws that govern the type classes in the Monad Transformers Library.
+In the Haskell community, _tagless-final_ still refers to a way of creating polymorphic programs in some DSL that are interpreted by instantiating them to a concrete data type. In the Scala community, however, tagless-final is used almost exclusively for monadic, effectful DSLs. Usage of the term in Scala is closest to what Haskeller's mean by _MTL-style_, but without the algebraic laws that govern MTL type classes.
 
-In Haskell, tagless-final is used with types of various kinds, but in Scala, the terminology has become synonymous with types of kind `* -> *`&mdash;leading to the infamous `F[_]` higher-kinded type parameter that is so pervasively associated with the phrase _tagless-final_.
+In Scala, tagless-final has become almost synonymous with types of kind `* -> *`, leading to the infamous `F[_]` higher-kinded type parameter that is so pervasively associated with the phrase _tagless-final_.
 
-In this post, I will argue that tagless-final, as practiced by the Scala community, and as embodied by the `F[_]` higher-kinded type parameter, has drawbacks so substantial, they overwhelm the benefits of the approach for the vast majority of companies doing Scala development.
+In this post, I will argue that the many claims made about tagless-final in Scala are not _entirely_ true, and that the purported benefits of tagless-final stem mostly from _discipline_, not from so-called _effect polymorphism_.
 
-I'll wrap up by providing a concrete list of recommendations for you and your team.
+After this detailed analysis, I will conclude the post by providing a list of concrete recommendations for developers who are developing functional Scala libraries and applications.
 
 ## Tagless-Final 101
 
-In Scala, tagless-final involves creating an interface, or at least type class, which describes the capabilities of a generic effect `F[_]`. 
+In Scala, tagless-final involves creating _type classes_, which describe capabilities of a generic effect `F[_]`. 
 
-For example, we could create the following interface to describe the capabilities of a `Console`:
+_Note: There is an alternate, and (I'd argue) superior encoding of tagless-final that involves not type classes, but effect-polymorphic interfaces, which are passed as ordinary parameters; but this alternate encoding doesn't substantially change my arguments, so I won't discuss it here._
+
+For example, we could create the following type class to describe console-related capabilities of some effect `F[_]`:
 
 {% highlight scala %}
 trait Console[F[_]] {
@@ -29,7 +31,7 @@ trait Console[F[_]] {
 }
 {% endhighlight %}
 
-Or, we could create the following interface to describe the persistence capabilities around `User` objects in our domain:
+Or, we could create the following type class to describe the persistence capabilities around `User` objects in our domain:
 
 {% highlight scala %}
 trait UserRepository[F[_]] {
@@ -41,7 +43,7 @@ trait UserRepository[F[_]] {
 }
 {% endhighlight %}
 
-These interfaces, or type classes, then allow us to create functions that are _polymorphic_ in the effect type `F[_]`. For example, we could describe a program that uses the `Console` interface as follows:
+These type classes then allow us to create functions that are _polymorphic_ in the effect type `F[_]`, but which have access to required capabilities. For example, we could describe a program that uses the `Console` interface as follows:
 
 {% highlight scala %}
 def consoleProgram[F[_]: Console]: F[Unit] = 
@@ -112,7 +114,7 @@ With tagless-final, you can defer the decision of which effect type to use _inde
 
 Tagless-final, because it provides a strong layer of indirection between your application, and the concrete effect type that models effects, allows you to make your code testable.
 
-In the preceding console implementation, it would be easy to define a test implementation of the `Console` interface:
+In the preceding console implementation, it would be easy to define a test instance of the `Console` type class:
 
 {% highlight scala %}
 final case class ConsoleData(input: List[String], output: List[String])
@@ -159,8 +161,6 @@ For example, take the following code snippet:
 {% highlight scala %}
 def consoleProgram[F[_]: Console: Applicative]: F[String] = ???
 {% endhighlight %}
-
- _Note there is an alternate, and, I'd argue, superior encoding of tagless-final that passes `Console` explicitly as an argument, rather than using a type class constraint; but this alternate encoding doesn't substantially change my argument, so I won't discuss it here._
 
 Although we don't know what the implementation of this function is without looking, we know that it requires `F[_]` to support both `Console` and `Applicative`.
 
@@ -222,9 +222,9 @@ While this is a compelling argument for libraries that care about market share, 
 
 ### 2. Untestable Effects
 
-Tagless-final provides a _path_ to testability, but tagless-final programs are not _inherently_ testable. In fact, they are testable _only to the degree their tagless-final interfaces are testable_.
+Tagless-final provides a _path_ to testability, but tagless-final programs are not _inherently_ testable. In fact, they are testable _only to the degree their tagless-final type classes are testable_.
 
-For example, while we can create a testable version of the `Console` interface, many other interfaces, including popular interfaces in the tagless-final community, are inherently _untestable_.
+For example, while we can create a testable version of the `Console` type class, many others, including popular type classes in the tagless-final community, are inherently _untestable_.
 
 The majority of applications written in the tagless-final style make heavy use of a type class in Cats Effect called `Sync`, or its more powerful versions, including `Async`, `LiftIO`, `Concurrent`, `Effect` and `ConcurrentEffect`.
 
@@ -234,7 +234,7 @@ While such code can be tested with integration and system tests, _any code at al
 
 Ultimately, the testability of tagless-final programs requires they follow the principle of _code to an interface, not an implementation_. Yet, if code follows this principle, it can be tested even _without_ tagless-final!
 
-Here is a monomorphic version of the `Console` interface, for example:
+Here is a monomorphic version of the `Console` type class, for example:
 
 {% highlight scala %}
 trait Console {
@@ -245,7 +245,7 @@ trait Console {
 
 If your program uses this interface to perform console input/output, then it can be tested, even with a monomorphic effect type. The key insight is that your program must be _written to an interface_, rather than a concrete implementation. Unfortunately, numerous widely-used tagless-final interfaces (like `Sync`, `Async`, `LiftIO`, `Concurrent`, `Effect`, and `ConcurrentEffect`) encourage you to code to an _implementation_.
 
-Using tagless-final doesn't guarantee you will be coding to an interface, nor does tagless-final provide any inherent testing benefits. The testability of your code is completely orthogonal to its use of tagless-final, and comes down to whether or not you follow best practices&mdash;which you can do with or without tagless-final.
+Using tagless-final doesn't guarantee you will code to an interface, nor does tagless-final provide any inherent testing benefits. The testability of your code is completely orthogonal to its use of tagless-final, and comes down to whether or not you follow best practices&mdash;which you can do with or without tagless-final.
 
 ### 3. No Effect Polymorphic Reasoning
 
