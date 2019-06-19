@@ -358,32 +358,34 @@ Two different implementations of `Console[F]` could do totally different things,
 
 Keep in mind that `Console[F]` is just a toy example. A realistic tagless-final type class would be far larger and more complex, containing numerous operations, which are ad hoc, unlawful, and impossible to reason about generically. If we write code using this type class, it will be highly coupled to unspecified implementation details.
 
-_Real_ generic reasoning applies only to _real_ abstractions, like `Monoid`, `Monad`, and type classes from functional programming. The moment we introduce ad hoc, unspecified, implementation-specific operations like `putStrLn` or `getStrLn`, we can no longer reason generically about the behavior of our code in any principled, useful way.
+_Real_ generic reasoning applies only to _real_ abstractions, like `Monoid`, `Monad`, and type classes from functional programming. The moment we introduce ad hoc, unspecified, implementation-specific operations like `putStrLn` or `getStrLn`, we can no longer reason generically about the behavior of our code in any principled way.
 
 What this means is that even if we grant that Scala has effect parametric polymorphism (which it doesn't!), and even if we assume that developers won't use type classes like `Sync` (which they will!), the ad hoc nature of tagless-final type classes means we don't actually have _useful generic reasoning_ across these type classes.
 
-We can tell that `bind` is not used if only `Applicative[F]` is required, but we cannot tell how many individual side-effects are chained together to make up a single operation like `putStrLn`. The limited reasoning we can do is _useless_ (a parlor trick, at best!), precisely because of all the reasoning we _cannot_ do.
+If only `Applicative[F]` is required, we can tell that `bind` is not used, but we cannot tell how many individual side-effects are chained together to make up a single operation like `putStrLn`. The limited reasoning we can do is _useless_ (a parlor trick, at best!), precisely because of all the reasoning we _cannot_ do.
 
-Does `putStrLn` print a line of text to a console? Or does it launch a concurrent `main` function with the whole application? Who knows. The types and laws don't tell you anything. Adding `Console[F]` to a type signatue is at best a form of wishful thinking&mdash;a hope that whoever gives us a `Console[F]` will abide by an unspecified contract that has something to do with console input/output.
+Does `putStrLn` print a line of text to a console? Or does it launch a multithreaded `main` function with the whole application? Who knows. The types and laws don't tell you anything.
 
-Polymorphic code that we can reason about generically is an awesome benefit of statically-typed functional programming. But the benefit requires abstractions, which must always have algebraic laws. The moment we create fake abstractions (operations without laws), we aren't doing principled functional programming anymore.
+Adding `Console[F]` to a type signatue is at best a prayer that whoever gives us a `Console[F]` will abide by an unspecified contract that has something to do with console input/output and will make our "generic" code work correctly.
+
+Polymorphic code that we can reason about generically is an awesome benefit of statically-typed functional programming. But generic reasoning requires abstractions, which must always have algebraic laws. The moment we create fake abstractions (operations without laws), we aren't doing principled functional programming anymore.
 
 ## The Tagless-Final Hit List
 
-Tagless-final in Scala is a false hope, for all the reasons we've seen:
+Tagless-final in Scala doesn't entirely live up to the hype, as I've argued in this post:
 
-1. **Premature Indirection**. For applications, using tagless-final to guard against the possibility of changing effect types is usually _overengineering_ (premature indirection). Your application doesn't add indirection layers for Akka Streams, Slick, Future, or even the dialect of SQL you're using&mdash;because in most cases, the cost of building and maintaining that layer of indirection is _unending_. In the case of tagless-final effects, you also deprive yourself of many new lawful operations and additional type safety.
+1. **Premature Indirection**. For applications, using tagless-final to guard against the possibility of changing effect types is usually _overengineering_ (premature indirection). Your application doesn't add indirection layers for Akka Streams, Slick, Future, or even the dialect of SQL you're using&mdash;because in most cases, the cost of building and maintaining that layer of indirection is _unending_. In the case of tagless-final effects, you also deprive yourself of many lawful operations and added type safety.
 2. **Untestable Effects**. Many popular tagless-final type classes encourage capturing side-effects. Even if we are disciplined and diligent, these type classes destroy our ability to reason about and unit test applications built using them. In the end, testability is not a property of tagless-final code; testability requires you code to an interface, which you can do with or without tagless-final.
-3. **No Effect Parametric Polymorphism**. Scala doesn't constrain side-effects anywhere, and implicit parameters don't change that. If you want to _constrain_ side-effects, you need a _social contract_, enforced by discipline and diligence. In this case, reasoning benefits (such as they are) come only from discipline, not from effect polymorphism. Yet other approaches that require discipline, like ensuring programmers only code to an interface, can provide similar benefits, but without the drawbacks of tagless-final.
-4. **Sync Bloat**. In Scala, real world tagless-final code tends not to use custom type classes, but rather, a few type classes that allow the unrestricted capture of side-effects. These `Sync` code bases do not confer any benefits to reasoning or testability, even if we are disciplined and diligent during code reviews. They combine the ceremony and boilerplate of tagless-final with the untestable, unreasonable nature of the worst procedural code.
+3. **No Effect Parametric Polymorphism**. Scala doesn't constrain side-effects, and implicit parameters don't change this. If you want to _constrain_ side-effects, you need a _social contract_, enforced by discipline and diligence. In this case, reasoning benefits (such as they are) come only from painstaking review of every line of code, not from effect polymorphism. Yet other approaches that require discipline, like ensuring programmers only code to an interface, can provide similar benefits, but without the drawbacks of tagless-final.
+4. **Sync Bloat**. In Scala, real world tagless-final code tends not to use custom type classes, but rather, a few type classes that allow the unrestricted capture of side-effects. These `Sync` code bases do not confer any benefits to reasoning or testability, even if we are disciplined and diligent during code review. They combine the ceremony and boilerplate of tagless-final with the untestable, unreasonable nature of the worst procedural code.
 5. **Fake Abstraction**. Reasoning about generic code requires abstractions, which come equipped with algebraic laws. Algebraic laws precisely define common structure across different data types, and they let us reason generically about the correctness of polymorphic code. Yet most tagless-final type classes do not have any laws. Any code that uses "fake abstractions" is not actually generic, but instead, is closely wedded to unspecified implementation details.
 
 Beyond just not living up to the hype, tagless-final has a number of serious drawbacks:
 
 1. Tagless-final has significant pedagogical costs, because of the huge number of concepts it requires a team to master (parametric polymorphism, higher-kinded types, higher-kinded parametric polymorphism, type classes, higher-kinded type classes, the functor hierarchy, etc.).
-2. Tagless-final has significant institutional costs, because of the level of ceremony and boilerplate involved (type classes, type class instances, instance summoners, syntax extensions, higher-kinded implicit parameter lists, non-inferrable types, etc.).
+2. Tagless-final has significant institutional costs, because of the level of ceremony and boilerplate involved (type classes, type class instances, instance summoners, syntax extensions, higher-kinded implicit parameter lists, non-inferrable types, compiler plug-ins, etc.).
 
-I've [talked about these other drawbacks](/posts/zio-environment) at length in the past.
+I've [talked about these drawbacks](/posts/zio-environment) at length in the past, and I encourage readers to investigate for themselves the drawbacks of tagless-final in Scala.
 
 ## Objections
 
@@ -391,17 +393,17 @@ Some functional programmers, when presented with these drawbacks, immediately co
 
 This is true, but also entirely beside the point.
 
-There are _zero_ approaches to constraining effects in Scala, because Scala cannot constrain effects. This means that when comparing two different approaches to modeling effects in Scala, there is no dimension for "constraining effects". 
+There are _zero_ approaches to statically constraining effects in Scala, because Scala cannot statically constrain effects. This means that when comparing two different approaches to managing effects in Scala, there is no dimension for "constraining effects". 
 
 You can combine tagless-final with manual inspection of every line of code in an application, to ensure it satisfies the social contract that side-effects will only be executed and captured in "approved" places. This combination, which is powered by discipline (not effect polymorphism), provides both testability and reasoning benefits.
 
 Similarly, you can combine the reader monad with manual inspection of every line of code in an application, to ensure it satisfies a social contract that logic will be written to interfaces, not implementations. As with tagless final, this combination is powered by discipline, and provides both testability and reasoning benefits.
 
-Both tagless-final and the reader monad (and many other approaches) can indeed provide "guarantees" about where effects happen, but it's not really the _techniques_ that are providing the guarantees, but the _programmers_ who are reviewing and merging code. These "guarantees" derive from discipline, not from the Scala compiler.
+Both tagless-final and the reader monad (and many other approaches) can indeed provide "guarantees" about effects, but it's not really the _techniques_ that are providing the guarantees, but the _programmers_ who are manually reviewing and merging every line of code. These "guarantees" come from discipline, not from the Scala compiler.
 
 Another vague objection I have heard is that tagless-final is somehow more principled than other approaches, or that it somehow lends itself better to designing composable functional APIs. 
 
-In reality, principled, composable, functional code has everything to do with whether your domain's operations satisfy algebraic laws. As practiced in Scala, tagless-final has no relation to principled functional programming. 
+In reality, principled, composable, functional code has everything to do with whether the operations of your domain satisfy algebraic laws. As practiced in Scala, tagless-final has no relation to principled functional programming. 
 
 The use of higher-kinded parametric polymorphism may provide an illusion of "rigor", but it's just a thin veneer on what is typically unprincipled imperative code. All the effect type polymorphism in the world can't change this.
 
@@ -409,32 +411,32 @@ The use of higher-kinded parametric polymorphism may provide an illusion of "rig
 
 In light of this analysis of tagless-final, I have some concrete recommendations for different situations:
 
-1. **Stay the Course**. If you're in a small, stable, high-skilled team that's already using and benefiting from tagless-final due to a working social contract, then _keep using tagless-final_. Long-time functional programmers may "forget" how to program procedurally and instinctively confine themselves to a functional subset of Scala, which makes enforcement of the contract easier. Consider abandoning tagless-final if the team starts scaling (or building a compiler plug-in to enforce that contract).
-2. **Build a Library**. If you're building an open source library that doesn't take advantage of effect-specific features, then use an existing layer of indirection, such as Cats Effect. Or if you want to keep dependencies small, create a tiny layer of indirection for just the features you need. This layer won't help you reason or test code, but it will help you address the full functional Scala market, which will improve adoption of your library.
+1. **Stay the Course**. If you're in a small, stable, high-skilled team that's already using and benefiting from tagless-final due to a working social contract, then _keep using tagless-final_. Long-time functional programmers may "forget" how to program procedurally and instinctively confine themselves to a functional subset of Scala, which makes enforcement of the contract easier. Consider abandoning tagless-final (or building a compiler plug-in) if the team starts scaling.
+2. **Build a Library**. If you're building an open source library that doesn't take advantage of effect-specific features, then use an existing layer of indirection, such as Cats Effect. Or if you want to keep dependencies small, create a tiny layer of indirection for just the features you need. This layer may not help you reason about or test code, but it will help you support the full functional Scala market, which will improve adoption of your library.
 3. **Ditch Tagless-Final**. In all other cases, I recommend picking a concrete effect type (ZIO, Cats IO, or Monix). If you decide to switch later, you'll pay a one-time cost for the (straightforward) refactor. Encourage coding to _interfaces_, not implementations. This social contract doesn't scale either, but at least many Java developers are already indoctrinated in the practice. This will give you testability, it can be done incrementally, and it can give you the same (discipline-powered) reasoning benefits as tagless-final, if employed to the same extent.
-4. **Minimize Effectful Code**. Consider minimizing code that models side-effects. Look for real abstractions in your domain, which are equipped with algebraic laws that help you reason generically about polymorphic code. Prefer declarative code instead of imperative code. Avoid monads whenver you can&mdash;they are the engine of imperative programming. Don't think your `State` monad code is any better than its `IO` equivalent (it's not).
+4. **Minimize Effectful Code**. Consider minimizing effectful code. Look for real abstractions in your domain, which are equipped with algebraic laws that help you reason generically about polymorphic code. Prefer declarative code instead of imperative (monadic) code. Don't presume your `State` monad code is any better than its `IO` equivalent (it's not). Prefer data types whose operations have denotational semantics.
 
 # Summary
 
-Tagless-final has a winning sales pitch. It promises to future-proof our code to changes in concrete effect types. It promises us testability. It promises us the ability to reason about effects using parametric polymorphism.
+Tagless-final has a brilliant sales pitch. It promises to future-proof our code to changes in concrete effect types. It promises us testability. It promises us the ability to reason about effects using parametric polymorphism.
 
-Unfortunately, the reality of tagless-final hasn't lived up to the pitch:
+Unfortunately, the reality of tagless-final doesn't live up to the hype:
 
  * Tagless-final does insulate us from an effect type, but that's a maintenance burden and deprives us of useful principled operations and type-safety.
  * Tagless-final doesn't provide us any testability, per se, and many common type classes prevent testability; it's only coding to an interface that provides us with testability, which can be done with or without tagless-final.
- * Tagless-final doesn't constrain effects, since Scala has no way to restrict side-effects; type signatures can tell us which side-effects are executed or modeled by a method.
+ * Tagless-final doesn't constrain effects, since Scala has no way to restrict side-effects; type signatures alone cannot tell us which side-effects are executed or modeled by a method.
 
-Beyond the failed promises of tagless-final, real world tagless-final is littered with _sync bloat_, which can't help us with unit testing or reasoning even if we are disciplined and diligent about enforcing a social contract that restricting side-effects.
+Beyond these drawbacks, real world tagless-final is littered with _sync bloat_, which can't help us with unit testing or reasoning even if we are disciplined and diligent about restricting side-effects.
 
-Worse still, since most tagless-final type classes have zero laws, we can't reason generically about code that uses them. True generic reasoning requires _abstractions_, defined by lawful sets of operations, and tagless-final doesn't give us abstractions, only collections of ad hoc operations with unspecified behavior.
+Further, since most tagless-final type classes are completely lawless, we can't reason generically about code that uses them. True generic reasoning requires _abstractions_, defined by lawful sets of operations, and tagless-final doesn't give us abstractions, only collections of ad hoc operations with unspecified semantics.
 
-Tagless-final, far from being a pancea to managing functional effects, imposes great pedagogical and institutional costs. Many claim the technique renders Scala code bases impenetrable and unmaintainable. While debatable, there is no question that the learning curve for tagless-final is steep, and the ergonomics of the technique are quite poor.
+Tagless-final, far from being a pancea to managing functional effects, imposes great pedagogical and institutional costs. Many claim the technique renders Scala code bases impenetrable and unmaintainable. While an exaggeration, there is no question that the learning curve for tagless-final is steep, and the ergonomics of the technique are poor.
 
 Ultimately, in my opinion, the benefits of tagless-final do not pay for the costs&mdash;at least not in most cases, and not with the current Scala compiler and tooling.
 
 Small, stable teams that are already using tagless-final with a working social contract should probably keep using tagless-final, at least if they have found the benefits to outweigh the costs (and some teams have).
 
-Developers of open source libraries can surely benefit from a layer of indirection around effect types, because even though indirection can't help with reasoning or testability, it can increase the addressable market share.
+Developers of open source libraries can surely benefit from a layer of indirection around effect types, because even though indirection may not help with reasoning or testability, it can increase addressable market share.
 
-Finally, other teams should probably ditch tagless-final, and instead embrace the age-old best practice of coding to an interface, not an implementation. While still just a social contract that relies on discipline, the practice is widely known, doesn't require any fancy training, and can be used with more ergonomic approaches to testability and reasoning, including traditional dependency injection, module-oriented programming, and the reader monad.
+Finally, other teams should probably avoid using tagless-final for managing effects, and embrace the age-old best practice of _coding to an interface_. While still just a social contract that relies on discipline, the practice is widely known, doesn't require any fancy training, and can be used with more ergonomic approaches to testability and reasoning, including traditional dependency injection, module-oriented programming, and the reader monad.
 
