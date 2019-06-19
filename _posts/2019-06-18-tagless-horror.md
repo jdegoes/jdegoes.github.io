@@ -401,6 +401,26 @@ Similarly, you can combine the reader monad with manual inspection of every line
 
 Both tagless-final and the reader monad (and many other approaches) can indeed provide "guarantees" about effects, but it's not really the _techniques_ that are providing the guarantees, but the _programmers_ who are manually reviewing and merging every line of code. These "guarantees" come from discipline, not from the Scala compiler.
 
+Take the following snippet of tagless-final:
+
+{% highlight scala %}
+def console[F[_]: Monad: Console]: F[Unit] = ???
+{% endhighlight %}
+
+The only way we "know" this function does not interact with databases or perform random number generation or do anything else is if we or our colleagues have inspected every line of code, and manually certified that it doesn't break our social contract about where side-effects can be run and modeled.
+
+The compiler doesn't provide any assistance with this, and this "knowledge" is not related to effect polymorphism.
+
+Similarly, take the following snippet of monomorphic code:
+
+{% highlight scala %}
+def console(c: Console): Task[Unit] = ???
+{% endhighlight %}
+
+The only way we "know" this function does not interact with the database or perform random number generation or do anything else is if we or our colleagues have inspected every line of code, and manually certified that it doesn't break our social contract about coding to interfaces, and not to implementations.
+
+As with taglesss-final, the compiler doesn't provide any assistance. Both these approaches and others to reasoning about side-effects come down to social contracts, powered by discipline and vigilence.
+
 Another vague objection I have heard is that tagless-final is somehow more principled than other approaches, or that it somehow lends itself better to designing composable functional APIs. 
 
 In reality, principled, composable, functional code has everything to do with whether the operations of your domain satisfy algebraic laws. As practiced in Scala, tagless-final has no relation to principled functional programming. 
