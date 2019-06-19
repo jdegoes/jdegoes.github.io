@@ -8,13 +8,13 @@ tags:         [type classes, haskell, purescript, scala, cats, scalaz, mtl, tagl
 
 Tagless-final is a technique originally used to [embed domain-specific languages](http://okmij.org/ftp/tagless-final/index.html) into a host language, without the use of Generalized Algebraic Data Types.
 
-In the Haskell community, _tagless-final_ still refers to a way of creating polymorphic programs in some DSL that are interpreted by instantiating them to a concrete data type. In the Scala community, however, tagless-final is used almost exclusively for monadic, effectful DSLs. Usage of the term in Scala is closest to what Haskeller's mean by _MTL-style_, but without the algebraic laws that govern MTL type classes.
+In the Haskell community, _tagless-final_ still refers to a way of creating polymorphic programs in a custom DSL that are interpreted by instantiating them to a concrete data type. In the Scala community, however, tagless-final is used almost exclusively for monadic, effectful DSLs. Usage of the term in Scala is closest to what Haskeller's mean by _MTL-style_, but without the algebraic laws that govern MTL type classes.
 
 In Scala, tagless-final has become almost synonymous with types of kind `* -> *`, leading to the infamous `F[_]` higher-kinded type parameter that is so pervasively associated with the phrase _tagless-final_.
 
-In this post, I will argue that the many claims made about tagless-final in Scala are not _entirely_ true, and that the actual benefits of tagless-final stem mostly from _discipline_, not from so-called _effect polymorphism_.
+In this post, I will argue that the many claims made about tagless-final in Scala are not _entirely_ true, and that the actual benefits of tagless-final come mostly from _discipline_, not from so-called _effect polymorphism_.
 
-After this detailed analysis, I will conclude the post by providing a list of concrete recommendations for developers who are developing functional Scala libraries and applications.
+After this detailed analysis, I will conclude the post by providing a list of concrete recommendations for developers who are building functional Scala libraries and applications.
 
 ## Tagless-Final 101
 
@@ -31,7 +31,7 @@ trait Console[F[_]] {
 }
 {% endhighlight %}
 
-Or, we could create the following type class to describe the persistence capabilities of `User` objects in our domain:
+Or, we could create the following type class to describe persistence capabilities for `User` objects:
 
 {% highlight scala %}
 trait UserRepository[F[_]] {
@@ -50,7 +50,7 @@ def consoleProgram[F[_]: Console]: F[Unit] =
   implicitly[Console[F]].putStrLn("Hello World!")
 {% endhighlight %}
 
-Combined with type classes like `Monad`, we can build entire programs using the tagless-final approach:
+Combined with type classes like `Monad` (which allows chaining effects), we can build entire programs using the tagless-final approach:
 
 {% highlight scala %}
 def consoleProgram[F[_]: Console: Monad]: F[String] = {
@@ -66,7 +66,7 @@ def consoleProgram[F[_]: Console: Monad]: F[String] = {
 }
 {% endhighlight %}
 
-Because such programs are polymorphic in the effect type `F[_]`, this means we can _instantiate_ these polymorphic programs to any concrete effect type that provides their set of required capabilities.
+Because such programs are polymorphic in the effect type `F[_]`, we can _instantiate_ these polymorphic programs to any concrete effect type that provides whatever they require.
 
 For example, if we are using ZIO `Task` (a type alias for `ZIO[Any, Throwable, A]`), we can instantiate our program to this concrete effect type with the following code snippet:
 
@@ -74,7 +74,7 @@ For example, if we are using ZIO `Task` (a type alias for `ZIO[Any, Throwable, A
 val taskProgram: Task[String] = consoleProgram[Task]
 {% endhighlight %}
 
-Typically, the _instantiation_ of a polymorphic tagless-final value to a concrete effect type is deferred as long as possible, ideally to the entry points of the application or test suite.
+Typically, the _instantiation_ of a polymorphic tagless-final value to a concrete effect type is deferred as long as possible, preferrably to the entry points of the application or test suite.
 
 With this introduction, let's talk about the reasons you might want to use tagless-final...the _pitch_ for the tagless-final technique, if you will.
 
@@ -82,11 +82,13 @@ With this introduction, let's talk about the reasons you might want to use tagle
 
 Tagless-final has a seductive pitch that appeals to every aspiring functional programmer.
 
-In the functional programming community, we are taught (with good reason) that monomorphic code can't be reused, and leads to more bugs. We are taught that generic code not only enables reuse, but it pushes more information into the types, where the compiler can help us verify and maintain correctness.
+In the functional programming community, we are taught (with good reason) that monomorphic code can't be reused much, and leads to more bugs. 
+
+We are taught that generic code not only enables reuse, but it pushes more information into the types, where the compiler can help us verify and maintain correctness.
 
 We are taught the _principle of least power_, which tells us that our functions should require as little as necessary to do their job.
 
-I have helped develop, motivate, and teach these principles and others in my _Functional Scala_ workshops, helping train new generations of Scala developers in the functional way of thinking and developing software.
+I have helped develop, motivate, and teach these and other principles in my _Functional Scala_ workshops, helping train new generations of Scala developers in the functional way of thinking and developing software.
 
 In this context, functional programmers are _primed_ for the tagless-final pitch; I know this, because I have _given_ the tagless-final pitch, and even helped _craft_ its modern day incarnation. 
 
@@ -98,7 +100,7 @@ Ready? Here we go!
 
 ### 1. Effect Type Indirection
 
-As of this writing, there are [several mainstream effect types](/posts/zio-cats-effect), including ZIO, Monix, and Cats IO, all of which ship with [Cats Effect](https://github.com/typelevel/cats-effect) instances, and which can be used interchangeably in libraries like FS2, Doobie, and http4s.
+As of this writing, there are [several mainstream effect types](/posts/zio-cats-effect), including ZIO, Monix, and Cats IO, all of which ship with [Cats Effect](https://github.com/typelevel/cats-effect) instances, and which can be used more or less interchangeably in libraries like FS2, Doobie, and http4s.
 
 Tagless-final lets you insulate your code from the decision of _which_ effect type to use. Rather than pick one of these concrete implementations, using tagless-final lets you write _effect type-agnostic_ code, which can be _instantiated_ to any concrete effect type that provides Cats Effect instances.
 
@@ -108,11 +110,13 @@ For example, our preceding console program can just as easily be instantiated to
 val ioProgram = consoleProgram[cats.effect.IO]
 {% endhighlight %}
 
-With tagless-final, you can defer the decision of which effect type to use _indefinitely_ (or at least, to the edge of your program), isolating your application from changes in the evolving ecosystem.
+With tagless-final, you can defer the decision of which effect type to use _indefinitely_ (or at least, to the edge of your program), isolating your application from changes in an evolving ecosystem.
+
+Tagless-final lets you future-proof your code!
 
 ### 2. Effect Testability
 
-Tagless-final, because it provides a strong layer of indirection between your application, and the concrete effect type that models effects, makes your code fully testable.
+Tagless-final, because it provides a strong layer of indirection between your application, and the concrete effect type that models effects, enables your code to be fully testable.
 
 In the preceding console implementation, it is easy to define a test instance of the `Console` type class:
 
@@ -162,11 +166,11 @@ For example, take the following code snippet:
 def consoleProgram[F[_]: Console: Applicative]: F[String] = ???
 {% endhighlight %}
 
-Although we don't know what the implementation of this function is without looking, we know that it requires `F[_]` to support both `Console` and `Applicative`.
+Although we don't know what the implementation of this function is without looking, we know that it requires `F[_]` to provide both `Console` and `Applicative` instances.
 
-Because `F[_]` is only `Applicative` and not `Monad`, we know that while `consoleProgram` can have a sequential chain of console effects, no subsequent effect can depend on the runtime value of a predecessor effect (that would require `bind` from `Monad`).
+Because `F[_]` is only `Applicative` and not `Monad`, we know that although `consoleProgram` can have a sequential chain of console effects, no subsequent effect can depend on the runtime value of a predecessor effect (that capability would require `bind` from `Monad`).
 
-We would not be surprised if we learned the implementation is as follows:
+We would not be surprised if we saw the implementation were as follows:
 
 {% highlight scala %}
 def consoleProgram[F[_]: Console: Applicative]: F[String] = {
@@ -190,7 +194,7 @@ Not only does it enable abstraction over effects, so programmers can change thei
 
 Sold yet on tagless-final? I am!!! Well, _somewhat_, anyway. 
 
-There's an element of truth in _every_ argument that I've made. Although as you might suspect, a more nuanced, sophisticated look reveals that a less cheery picture of tagless-final.
+There's an element of truth in _every_ argument that I've made. Although as you might suspect, a more nuanced, sophisticated look reveals a less positive picture of tagless-final.
 
 Let's take a look at all the fine print in the next few sections.
 
@@ -212,11 +216,11 @@ A refactoring from one effect type to another only happens needs to happen once,
 
 Beyond the cost of coding to an indirection layer that may never be used, there are substantial _opportunity costs_ to premature indirection. In the case of ZIO, for example, the core effect type has hundreds of additional operations that are not available on a polymorphic `F[_]`. 
 
-These methods, like additional methods on Monix Task, are discoverable by IDEs; their types guide users to correct solutions; they have great inline Scaladoc; error messages are concrete and actionable; and type-inference is nearly flawless.
+These methods, like many additional methods on Monix Task, are discoverable by IDEs; their types guide users to correct solutions; they have great inline Scaladoc; error messages are concrete and actionable; and type-inference is nearly flawless.
 
-If you _commit to not committing_, you're stuck with the weakest `F[_]`, which means that much of the power of an effect system remains inaccessible. The frustration of knowing a method is right there, but just out of reach, has prompted many to introduce custom type classes designed to access specific features of the underlying effect type.
+If you _commit to not committing_, you're stuck with the weakest `F[_]`, which means much of the power of an effect system remains inaccessible. The frustration of knowing a method is right _there_, but just out of reach, has prompted many to introduce custom type classes designed to access specific features of the underlying effect type.
 
-The opportunity cost is even greater for ZIO than Monix, because ZIO features polymorphic reader and error effects, which provide new operations and allow parametric reasoning about dependencies and error behavior, and which are currently unsupported in Cats Effect (the leading library for effect indirection).
+The opportunity cost is even greater for ZIO than Monix, because ZIO features polymorphic reader and error effects, which provide new operations and allow parametric reasoning about dependencies and error handling, and which are currently unsupported in Cats Effect (the leading library for effect indirection).
 
 In my opinion, only library authors have a compelling argument for effect type indirection. In order to maximize market share (which is critical for the adoption, retention, and growth of open source libraries), they need to support all major effect types, or risk losing market share to the libraries that do. 
 
@@ -247,7 +251,7 @@ trait Console {
 
 If your program uses this interface to perform console input/output, then it can be tested, even with a monomorphic effect type. The key insight is that your program must be _written to an interface_, rather than a concrete implementation. Unfortunately, numerous widely-used tagless-final interfaces (like `Sync`, `Async`, `LiftIO`, `Concurrent`, `Effect`, and `ConcurrentEffect`) encourage you to code to an _implementation_.
 
-Using tagless-final doesn't provide any inherent benefits to testability. The testability of your application is completely orthogonal to its use of tagless-final, and comes down to whether or not you follow best practices&mdash;which you can do with or without tagless-final.
+Using tagless-final doesn't provide any inherent benefits to testability. The testability of your application is completely orthogonal to its use of tagless-final, and comes down to whether or not you follow best practices&mdash;which you can do _with_ or _without_ tagless-final.
 
 ### 3. No Effect Polymorphic Reasoning
 
@@ -265,7 +269,7 @@ I argued we could know something about what this function does by observing its 
 
 Unfortunately, this argument rests on a premise that is _false_. Namely, it rests on the premise that implicit parameters somehow _constrain_ the side-effects executed or modeled by the function.
 
-Scala does not track side-effects, no matter how much we would like otherwise. We can perform console effects anywhere, even without the provided `Console[F]`, as shown in the following snippet:
+Scala does not track side-effects, no matter how much we wish otherwise. We can perform console effects anywhere, even without the provided `Console[F]`, as shown in the following snippet:
 
 {% highlight scala %}
 def consoleProgram[F[_]: Applicative]: F[String] = {
@@ -285,31 +289,31 @@ def consoleProgram[F[_]: Applicative]: F[String] =
   }
 {% endhighlight %}
 
-This is legal, type-safe Scala code, and varaints of it appear pervasively in real world Scala. Not even the most aggressive IntelliJ IDEA lint settings will report any problems with this code snippet, except perhaps a warning about the use of higher-kinded types.
+This is legal, type-safe Scala code, and variations of this code appear pervasively in real world Scala. Not even the most aggressive IntelliJ IDEA lint settings will report any problems with this code snippet (except perhaps a warning about the use of higher-kinded types).
 
-In tagless-final, "constraints"&mdash;in the form of parameter values like `Applicative[F]` or `Console[F]`&mdash;do not actually constrain, they _unconstrain_, giving us more ways of constructing values. And in Scala, because side-effects are already _totally unconstrained_, adding more values to parameter lists doesn't change anything.
+In tagless-final, "constraints"&mdash;parameter values like `Applicative[F]` or `Console[F]`&mdash;do not actually constrain, they _unconstrain_, giving us more ways of constructing values. And in Scala, because side-effects are already _totally unconstrained_, adding more values to parameter lists doesn't change anything.
 
 Stated more forcefully and for Scala code, **effect parametric reasoning is a lie**.
 
-Now, as highly-skilled and highly-disciplined functional programmers, we can agree amongst ourselves to reject merging such code into our projects. This requires that we inspect every line of code to ensure that side-effects are captured only in appropriate places, where _appropriate_ is defined by a social contract between us and our fellow colleagues.
+Now, as highly-skilled and highly-disciplined functional programmers, we can agree amongst ourselves to reject merging such code into our projects. We can inspect every line of code in our application to ensure that side-effects are captured only in "appropriate" places, where we all agree on some definition of _appropriate_.
 
 A social contract, powered by good-will, skill, discipline, and indoctrination of new hires, can be quite useful. Nearly _all_ best practices are social contracts, and they undoubtedly help us write better code. But social contracts should not be confused with compile-time constraints. 
 
-If we _assume_ a working social contract around effects in Scala, then we can assume restrictions on the effects in the preceding definition of `consoleProgram`, but these restrictions do not come from effect polymorphism (which does not exist in a language without effect tracking!), but from diligence and discipline in enforcing the social contract.
+If we _assume_ a working social contract to restrict side-effects in Scala, then we can assume restrictions on the effects in the preceding definition of `consoleProgram`, but these restrictions do not come from effect polymorphism (which does not exist in a language without effect tracking!). Rather, the restrictions come from diligence and discipline in enforcing the social contract&mdash;the line-by-line review of every new pull request.
 
 If we are going to rely on a social contract to give us reasoning benefits, however, then we should consider other social contracts, such as _always code to an interface, not an implementation_. 
 
-Other social contracts can give us the exact same "reasoning benefits", but with potentially better ergonomics. Stated differently, "reasoning benefits" is not a reason to prefer tagless-final over any other approach, because those benefits derive only from discipline (not from tagless-final), and discipline works for other approaches too.
+Other social contracts can give us the exact same "reasoning benefits", but with potentially better ergonomics. Stated differently, "reasoning benefits" is not a reason to prefer tagless-final over any other approach, because those benefits derive only from discipline (not from effect polymorphism), and discipline works for other approaches too.
 
 These are hard limits on _effect parametric polymorphism_ in Scala, which&mdash;short of inventing a compiler plug-in that overlays a new, effect-tracked language onto Scala&mdash;cannot be circumvented.
 
 ### 4. Sync Bloat
 
-Even if we ignore the fact that effect parametric polymorphism doesn't exist in Scala (reasoning benefits come from discipline, not from tagless-final), we have a problem that I term _sync bloat_.
+Even if we ignore the fact that effect parametric polymorphism doesn't exist in Scala (reasoning benefits come from discipline, not from tagless-final), we have a major problem that I term _sync bloat_.
 
-In Scala, the Cats Effect type class hierarchy provides numerous type classes that are _explicitly designed_ to capture side-effecting code. These type classes include `Sync`, `Async`, `LiftIO`, `Concurrent`, `Effect`, and `ConcurrentEffect`. 
+In Scala, the Cats Effect type class hierarchy provides many type classes that are _explicitly designed_ to capture side-effecting code. These type classes include `Sync`, `Async`, `LiftIO`, `Concurrent`, `Effect`, and `ConcurrentEffect`. 
 
-A method that requires one of these type classes can literally do _anything_ it wants, without constraints, even assuming a working social contract. These methods nullify the power of discipline, depriving us of any benefits to reasoning and testability, resulting in opaque blobs of side-effecting, untestable procedural code.
+Methods that require one of these type classes can literally do _anything_ they wants, without constraints, even assuming a working social contract. These methods nullify the power of discipline, depriving us of any benefits to reasoning and testability, resulting in opaque blobs of side-effecting, untestable procedural code.
 
 Nearly all tagless-final code (including some of the [best open source functional Scala I know of](http://github.com/slamdata/quasar/search?q=Sync&unscoped_q=Sync)) makes liberal use of these type classes, freely embedding side-effects in numerous methods sprawled across the code base.
 
@@ -428,7 +432,7 @@ Tagless-final, far from being a pancea to managing functional effects, imposes g
 
 Ultimately, in my opinion, the benefits of tagless-final do not pay for the costs&mdash;at least not in most cases, and not with the current Scala compiler and tooling.
 
-Small, stable teams that are already using tagless-final with a working social contract should probably keep using tagless-final, at least if they have found the benefits outweigh the costs.
+Small, stable teams that are already using tagless-final with a working social contract should probably keep using tagless-final, at least if they have found the benefits to outweigh the costs (and some teams have).
 
 Developers of open source libraries can surely benefit from a layer of indirection around effect types, because even though indirection can't help with reasoning or testability, it can increase the addressable market share.
 
