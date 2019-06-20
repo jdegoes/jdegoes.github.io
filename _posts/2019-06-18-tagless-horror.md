@@ -123,12 +123,15 @@ In the preceding console implementation, it is easy to define a test instance of
 {% highlight scala %}
 final case class ConsoleData(input: List[String], output: List[String])
 
-final case class ConsoleTest[A](run: ConsoleData => (ConsoleData, A)) {
-  def putStrLn(line: String): ConsoleTest[Unit] = 
-    ConsoleTest(data => (data.copy(output = line :: data.output), ()))
+final case class ConsoleTest[A](run: ConsoleData => (ConsoleData, A))
+object ConsoleTest {
+  implicit def ConsoleConsoleTest: Console[ConsoleTest] = new Console[ConsoleTest] { 
+    def putStrLn(line: String): ConsoleTest[Unit] = 
+      ConsoleTest(data => (data.copy(output = line :: data.output), ()))
 
-  val getStrLn: ConsoleTest[String] =
-    ConsoleTest(data => (data.copy(input = data.input.drop(1)), data.input.head))
+    val getStrLn: ConsoleTest[String] =
+      ConsoleTest(data => (data.copy(input = data.input.drop(1)), data.input.head))
+  }
 }
 {% endhighlight %}
 
@@ -389,7 +392,7 @@ I've [talked about these drawbacks](/posts/zio-environment) at length in the pas
 
 ## Objections
 
-Some functional programmers, when presented with these drawbacks, immediately counter with the objection that _other approaches_ (including the [reader monad](/posts/zio-envioronment)) can't constrain side-effects in Scala, either.
+Some functional programmers, when presented with these drawbacks, immediately counter with the objection that _other approaches_ (including the [reader monad](/posts/zio-environment)) can't constrain side-effects in Scala, either.
 
 This is true, but also entirely beside the point.
 
