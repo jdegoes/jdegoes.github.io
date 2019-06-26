@@ -148,7 +148,7 @@ Once all this machinery is in place, it becomes fairly straightforward to define
 {% highlight scala %}
 case class TestData(input: List[String], output: List[String])
 case class TestIO[A](run: TestData => (TestData, A)) { s =>
-  def map[B](f: A => B): TestIO[B] = flatMap(TestIO.value(_))
+  def map[B](f: A => B): TestIO[B] = flatMap(a => TestIO.value(f(a)))
   def flatMap[B](f: A => TestIO[B]): TestIO[B] = 
     TestIO(d => 
       (s run d) match { case (d, a) => f(a) run d })
