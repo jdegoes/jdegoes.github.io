@@ -141,14 +141,14 @@ Since this program is _polymorphic_ in the effect type, you can _instantiate_ it
 val programIO: IO[String] = program[IO]
 {% endhighlight %}
 
-(This assumes a sutiable instance of some `Monad` type class has been defined for `IO`, which is required because Scala's `for` comprehension desugars to `map` and `flatMap`.)
+(This assumes a suitable instance of some `Monad` type class has been defined for `IO`, which is required because Scala's `for` comprehension desugars to `map` and `flatMap`.)
 
 Once all this machinery is in place, it becomes fairly straightforward to define a data type just for testing:
 
 {% highlight scala %}
 case class TestData(input: List[String], output: List[String])
 case class TestIO[A](run: TestData => (TestData, A)) { s =>
-  def map[B](f: A => B): TestIO[B] = flatMap(TestIO.value(_))
+  def map[B](f: A => B): TestIO[B] = flatMap(a => TestIO.value(f(a)))
   def flatMap[B](f: A => TestIO[B]): TestIO[B] = 
     TestIO(d => 
       (s run d) match { case (d, a) => f(a) run d })
@@ -632,7 +632,7 @@ val program: ZIO[Console, IOException, String] =
   } yield name
 {% endhighlight %}
 
-Again notice the simplicy of this definition. Without any of the final tagless machinery, a basic understanding of functional effects and `for` comprehensions is all that's necessary to write code like this.
+Again notice the simplicity of this definition. Without any of the final tagless machinery, a basic understanding of functional effects and `for` comprehensions is all that's necessary to write code like this.
 
 Now when we need to unsafely interpret this data structure into the effect that it represents, we will generally first provide its required environment using the `ZIO#provide` method. Since this effect only requires `Console`, and since we have already written an implementation in `Console.Live`, we can easily provide our program its production environment:
 
@@ -719,7 +719,7 @@ In this case, Scala will infer the environment to be `Console with Persistence w
 
 Not only can Scala infer the type, but if you give an explicit type annotation, but it's incorrect, the hints that Scala provides will eventually lead you to the correct type signature.
 
-Even if you believe in providing top-level type signatures, being able to infer local signatures, have your IDE insert the top-level signatures, or just ask Scala for the corret type (by intentionally inserting the wrong type) is a tremendous benefit to productivity and makes working with ZIO effects an extremely pleasant experience.
+Even if you believe in providing top-level type signatures, being able to infer local signatures, have your IDE insert the top-level signatures, or just ask Scala for the correct type (by intentionally inserting the wrong type) is a tremendous benefit to productivity and makes working with ZIO effects an extremely pleasant experience.
 
 #### Concise
 
@@ -754,7 +754,7 @@ Type synonyms like this, especially when combined with associated companion obje
 
 #### Modular
 
-With ZIO Environment, there is no need to build up a monolothic environment. Rather, individual layers of the application can supply local environments to lower layers. 
+With ZIO Environment, there is no need to build up a monolithic environment. Rather, individual layers of the application can supply local environments to lower layers. 
 
 An example of this technique is shown below:
 
@@ -816,17 +816,17 @@ ZIO Environment lets us make _pinpoint_ changes, and pay for _only_ the cost of 
 
 ## Summary
 
-Functional effects can be enormously beneficial to solving modern business problems. Yet as we've seen in this approach, because of the way functional effects are implemented, we don't gain all the beneifts of pure functional code.
+Functional effects can be enormously beneficial to solving modern business problems. Yet as we've seen in this approach, because of the way functional effects are implemented, we don't gain all the benefits of pure functional code.
 
 While functional effects give us the ability to abstract over our programs and to refactor them without changing their meaning, we can't easily test functional effects, because we don't have a way to compare two effects for equality.
 
 Solutions like tagless-final help us re-introduce testability into our functional applications (along with other benefits, like parametric reasoning). However, they come with a massive ramp up curve, they don't integrate well into Scala, and their ergonomics, boilerplate, and ceremony can be unpleasant and further alienating to developers.
 
-The new approach pioneered in ZIO Environment allows us to regain testability, but without any additional ramp up time(beyond the ramp up required for functional effects). It's friendly to beginning functional programmers, and unlike tagless-final, the new approach is fully inferable, modular, and can be used incrementally, just where we need it.
+The new approach pioneered in ZIO Environment allows us to regain testability, but without any additional ramp up time (beyond the ramp up required for functional effects). It's friendly to beginning functional programmers, and unlike tagless-final, the new approach is fully inferable, modular, and can be used incrementally, just where we need it.
 
 For the first time, it feels like Scala has an idiomatic solution for testable functional effects. Something that's fast, fully inferable, with a low barrier to entry.
 
-If you'd like to give it a try, head over to the [ZIO project page](https://github.com/scalaz/scalaz-zio), where you will find the [ZIO microsite](https://scalaz.github.io/scalaz-zio/)and the [Gitter chatroom](https://gitter.im/scalaz/scalaz-zio). 
+If you'd like to give it a try, head over to the [ZIO project page](https://github.com/scalaz/scalaz-zio), where you will find the [ZIO microsite](https://scalaz.github.io/scalaz-zio/) and the [Gitter chatroom](https://gitter.im/scalaz/scalaz-zio). 
 
 As of today, the first release candidate (RC) for ZIO 1.0 has been published, which means a (nearly) stable API and a focus on documentation, polish, and performance. It's my hope that ZIO 1.0 will be released sometime in March, and that the 1.x line will enjoy at least a full year of backward-compatible tweaks, fine-tunings, and enhancements to the microsite.
 

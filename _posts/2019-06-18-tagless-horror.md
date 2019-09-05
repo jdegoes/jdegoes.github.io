@@ -1,7 +1,7 @@
 ---
 layout:       post
 title:        "The False Hope of Managing Effects with Tagless-Final in Scala"
-description:  "Using agless-final to manage effects has seen some buy-in in the Scala community, but the benefits are questionable and the drawbacks significant"
+description:  "Using tagless-final to manage effects has seen some buy-in in the Scala community, but the benefits are questionable and the drawbacks significant"
 category:     articles
 tags:         [type classes, haskell, purescript, scala, cats, scalaz, mtl, tagless-final, functional programming, fp]
 ---
@@ -100,7 +100,7 @@ Ready? Here we go!
 
 ### 1. Effect Type Indirection
 
-As of this writing, there are [several mainstream effect types](/posts/zio-cats-effect), including ZIO, Monix, and Cats IO, all of which ship with [Cats Effect](https://github.com/typelevel/cats-effect) instances, and which can be used more or less interchangeably in libraries like FS2, Doobie, and http4s.
+As of this writing, there are [several mainstream effect types](/articles/zio-cats-effect), including ZIO, Monix, and Cats IO, all of which ship with [Cats Effect](https://github.com/typelevel/cats-effect) instances, and which can be used more or less interchangeably in libraries like FS2, Doobie, and http4s.
 
 Tagless-final lets you insulate your code from the decision of _which_ effect type to use. Rather than pick one of these concrete implementations, using tagless-final lets you write _effect type-agnostic_ code, which can be _instantiated_ to any concrete effect type that provides Cats Effect instances.
 
@@ -215,7 +215,7 @@ In most cases, overall application costs would be _substantially lower_ picking 
 
 The cost of refactoring from one effect type to another is not related to the cost of changing types from `IO[_]` to `Task[_]`, or swapping one set of methods for another. Rather, it is related to the _semantic_ differences between operations on these effect types. Yet a layer of indirection helps us only when semantic differences are relatively small. If they are small, then the cost of refactoring is relatively low.
 
-A refactoring from one effect type to another only happens needs to happen once, and only if is actually necessary (which it might not be). But the cost of coding to a layer of indirection has to be paid indefinitely, and it must be paid regardless of whether or not the indirection will ever be used.
+A refactoring from one effect type to another only needs to happen once, and only if actually necessary (which it might not be). But the cost of coding to a layer of indirection has to be paid indefinitely, and it must be paid regardless of whether or not the indirection will ever be used.
 
 Beyond the cost of coding to an indirection layer that may never be used, there are substantial _opportunity costs_ to premature indirection. In the case of ZIO, for example, the core effect type has hundreds of additional operations that are not available on a polymorphic `F[_]`. 
 
@@ -388,11 +388,11 @@ Beyond just not living up to the hype, tagless-final has a number of serious dra
 1. Tagless-final has significant pedagogical costs, because of the huge number of concepts it requires a team to master (parametric polymorphism, higher-kinded types, higher-kinded parametric polymorphism, type classes, higher-kinded type classes, the functor hierarchy, etc.).
 2. Tagless-final has significant institutional costs, because of the level of ceremony and boilerplate involved (type classes, type class instances, instance summoners, syntax extensions, higher-kinded implicit parameter lists, non-inferrable types, compiler plug-ins, etc.).
 
-I've [talked about these drawbacks](/posts/zio-environment) at length in the past, and I encourage readers to investigate for themselves the drawbacks of tagless-final in Scala.
+I've [talked about these drawbacks](/articles/zio-environment) at length in the past, and I encourage readers to investigate for themselves the drawbacks of tagless-final in Scala.
 
 ## Objections
 
-Some functional programmers, when presented with these drawbacks, immediately counter with the objection that _other approaches_ (including the [reader monad](/posts/zio-environment)) can't constrain side-effects in Scala, either.
+Some functional programmers, when presented with these drawbacks, immediately counter with the objection that _other approaches_ (including the [reader monad](/articles/zio-environment)) can't constrain side-effects in Scala, either.
 
 This is true, but also entirely beside the point.
 
