@@ -50,9 +50,9 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Domain-Specific Language (DSL)**. A _domain-specific language_ (DSL) is a "mini-language" that is designed to solve a certain subproblem in an application. In functional programming, DSLs are generally _embedded_, which means users of these DSL use data types and operators, defined in the host language, to construct programs in the DSL.
 
-**Existential Quantification**. _Existential quantification_ asserts that a statement or type holds for some value of a given variable. For example, the value `list: List[_]` is existentially quantified over the type parameter, asserting that there exists some (unknown) type that describes the type of elements in the list.
+**Existential Quantification**. _Existential quantification_ asserts that a statement or type holds for some value of a given variable. For example, the value `list: List[_]` is existentially quantified over the `List` type parameter, asserting that there exists some (unknown) type that describes the type of elements in the list, without specifying what this type is.
 
-**Existential Type**. An _existential type_ is a type that is existentially quantified over.
+**Existential Type**. An _existential type_ is a specific, definite type, which is unknown to code interacting with the type. In Scala, abstract type members are always existential types.
 
 **Expression**. An _expression_ is a value constructed from the application of functions or operators to other values. The parameters to the functions or operators are called the _terms_ of the expression. For example, `a + b` is an expression, which computes the result of adding the term `a` to the term `b`.
 
@@ -64,7 +64,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Free Structure**. A _free structure_ is a data structure that _reifies_ operations of some algebra into a tree-like data structure. Later, the data structure can be traversed, and the operations applied to concrete values&mdash;a process called _interpretation_ of the free structure. An example free structure is `List` (`[]`), which is a free monoid for any type `A`; that is, for any type `A`, `List[A]` (`[a]`) provides both a neutral value (the empty list) and an append operation (list concatenation). Another example is `Free`, which provides a free monad for any type constructor `F[_]` (`f : * -> *`).
 
-**Function**. A mathematical _function_ `f : A => B` (`f :: a -> b`) is a mapping from one set `A`, called the _domain_, to another set `B`, called the _codomain_, such that for every `a` inside `A`, `f(a)` is inside `B`. In programming languages, the domains and codomains of value-level functions are types, and all such functions are _total_, _deterministic_, and _pure_.
+**Function**. A mathematical _function_ `f : A => B` (`f :: a -> b`) associates every value in a set `A` (called the _domain_) with a single value in a set `B` (called the _codomain_). For a given function, this mapping is static (it does not change). In programming languages, the domains and codomains of value-level functions are types, and all such functions are _total_ (they map every input to some output), _deterministic_ (they map the same input to the same output), and _pure_ (they only map inputs to outputs).
 
 **Functional Effect**. A _functional effect_ is an immutable data type that describes (or _models_) the computation of one or more values, where the computation may require an additional feature like optionality, logging, access to context (like configuration), errors, state, or input/output. Using effect-specific operations, functional effects can be transformed and composed to model solutions to complex problems out of solutions to smaller problems. Every functional effect forms a DSL that permits whatever capabilities are provided for by the operations of the functional effect. Frequently, functional effects are _run_ or _interpreted_ into plain values or into other functional effects. Common functional effects include `Option` (`Maybe`), which models missing values; `Either`, which models failure; and `ZIO` (`IO`), which models side-effects, including asynchronous side-effects.
 
@@ -190,7 +190,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Universal Quantification**. _Universal quantification_ asserts that a statement or type holds for all possible values of a given variable. For example, the function `def empty[A]: List[A]` (`empty :: [a]`) is universally quantified over the type parameter `A`, asserting that for any element type, the function can produce a list of that element type (namely, the empty list).
 
-**Universal Type**. A _universal type_ is a type that is universally quantified over.
+**Universal Type**. A _universal type_ is a type that is universally quantified over. In programming languages, all type parameters of functions and data types are universal types.
 
 **Value**. A _value_ is information that exists at runtime, stored in the computer's memory as the program is executing. Values are used to hold and transmit information within a program, and across process boundaries, to the operating system, file system, network, and beyond. In programming languages, values are constructed from literals or from _expressions_.
 
