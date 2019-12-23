@@ -14,6 +14,8 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Abstraction**. An _abstraction_ is a precise description of the ways in which different data types share common structure. Abstraction allows different data types to participate in _generic programming_. In functional programming, abstractions are defined by _algebraic structure_, and are usually encoded in a programming language using _type classes_. Common examples of abstractions include monoids, functors, and monads.
 
+**Ad Hoc Polymorphism**. _Ad hoc polymorphism_ is any language feature that allows overloading functions and operators (providing multiple implementations for the same symbol) in such a fashion that the compiler or runtime can automatically select which implementation to call based on the types involved in the function application. Examples of ad hoc polymorphism include method overloading and _type classes_.
+
 **Algebra**. An _algebra_ is a set of _objects_ together with a set of _operations_ on those objects. The operations of an algebra are defined by _algebraic laws_, which give the operations meaning by relating all of them to each other. For example, addition on integers forms a very simple algebra, where the objects are integers, and the sole operation is addition, which satisfies assocative and commutative laws.
 
 **Algebraic Data Type (ADT)**. An _algebraic data type_ is any data type composed from _product types_ (records) and _sum types_ (enumerations). In functional programming, algebraic data types are used for _data modeling_.
@@ -36,13 +38,13 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Contravariant Functor**. A `Contravariant` Functor is a type class that allows transforming the input type to some _functional effect_ using a function. Contravariant functors are often formed by polymorphic types that accept input (such as functions, or stages in a pipeline). 
 
-**Data Modeling**. _Data modeling_ is the act of constructing a data model of domain objects (such as people, products, schedules, etc.). A goal of data modeling in statically-typed functional programming is to construct a data model so precise, it is impossible to construct bad data.
+**Data Modeling**. _Data modeling_ is the act of constructing a data model of domain objects (such as people, products, schedules, etc.). A goal of data modeling in statically-typed functional programming is to construct a data model so precise, it is impossible to construct bad data, a process sometimes called, _making illegal states unrepresentable_.
 
 **Declarative Programming**. _Declarative programming_ is a style of programming in which solutions are constructed by specifying goals, rather than specifying the sequential steps necessary to achieve these goals (_what_ instead of _how_). Declarative programming is the opposite of imperative programming. Some languages, such as SQL and Datalog, are inherently declarative; but declarative programming can be practiced in any programming language, typically by defining declarative DSLs atop imperative implementations.
 
 **Dependency Injection**. _Dependency injection_ refers to a framework, library, language feature, or architectural pattern that facilitates threading dependencies throughout an application, and wiring up those dependencies for different scenarios. Dependency injection is one of the primary architectural needs of large-scale, complex applications.
 
-**Dependent Typing**. _Dependent typing_ is a method of defining types that permits types to depend on values. In dependently typed programming languages, one can define the type of vectors whose length is equal to some value. Examples of dependently typed programming languages include Idris, Coq, and Agda.
+**Dependent Typing**. _Dependent typing_ is a method of defining types that permits types to depend on values. For example, in dependently typed programming languages, one can define the type of vectors whose length is equal to some value. Examples of dependently typed programming languages include Idris, Coq, and Agda. Dependently typed programming languages allow proving more properties about programs at compile-time, albeit at increased development cost.
 
 **Deterministic**. A _deterministic_ procedure returns the same output for the same input.
 
@@ -64,7 +66,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Function**. A mathematical _function_ `f : A => B` (`f :: a -> b`) is a mapping from one set `A`, called the _domain_, to another set `B`, called the _codomain_, such that for every `a` inside `A`, `f(a)` is inside `B`. In programming languages, the domains and codomains of value-level functions are types, and all such functions are _total_, _deterministic_, and _pure_.
 
-**Functional Effect**. A _functional effect_ is an immutable data type that describes (or _models_) some feature useful for programming, such as optionality, errors, state, or input/output. Every functional effect is a kind of DSL, which allows expressing solutions to certain kinds of problems. Common functional effects include `Option` (`Maybe`), which models missing values; `Either`, which models failure; and `ZIO` (`IO`), which primarily models side-effects, including asynchronous side-effects.
+**Functional Effect**. A _functional effect_ is an immutable data type that describes (or _models_) the computation of one or more values, where the computation may require an additional feature like optionality, logging, access to context (like configuration), errors, state, or input/output. Using effect-specific operations, functional effects can be transformed and composed to model solutions to complex problems out of solutions to smaller problems. Every functional effect forms a DSL that permits whatever capabilities are provided for by the operations of the functional effect. Frequently, functional effects are _run_ or _interpreted_ into plain values or into other functional effects. Common functional effects include `Option` (`Maybe`), which models missing values; `Either`, which models failure; and `ZIO` (`IO`), which models side-effects, including asynchronous side-effects.
 
 **Functional Programming**. _Functional programming_ is a style of programming in which solutions are constructed by defining and applying (mathematical) _functions_. Many programs are not "purely" functional, but contain parts that are written in a functional style, as well as parts that are written in a procedural style. Functional programming can be practiced in statically-typed as well as untyped programming languages.
 
@@ -127,6 +129,8 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 **Parametric Polymorphism**. Sometimes called _generics_, _parametric polymorphism_ is a feature of some programming languages that allows _universally quantifying_ a function or a data type over one or more type parameters. Such _polymorphic functions_ and _polymorphic data types_ are said to be _parameterized_ by those type parameters. Parametric polymorphism allows the creation of generic code, which works across many different data types; and also the creation of generic data types (like collections).
 
 **Parametric Reasoning**. _Parametric reasoning_ is a type of reasoning that enables one to state facts about an implementation of a polymorphic function or polymorphic data type based only on type signatures. Parametric reasoning is typically accomplished using _flow analysis_ on polymorphic declarations.
+
+**Partial Function**. A _partial function_ is a function that is only defined for a subset of its domain. Partial functions can be modeled as total functions by expanding the codomain to include at least one new value, which indicates the function did not handle some input.
 
 **Polymorphism**. _Polymorphism_ is a feature of programming languages that allows a variable or function to take on many different forms. Common types of polymorphism include _parametric polymorphism_, _subtype polymorphism_, and _ad hoc polymorphism_.
 
