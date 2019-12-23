@@ -18,7 +18,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Algebraic Data Type (ADT)**. An _algebraic data type_ is any data type composed from _product types_ (records) and _sum types_ (enumerations). In functional programming, algebraic data types are used for _data modeling_.
 
-**Algebraic Law**. An _algebraic law_ is a universally quantified statement that asserts a relationship between the _operations_ of an _algebra_. For example, an algebraic law for addition could assert that `(a + b) + c` is equal to `a + (b + c)` (_associativity_). In mainstream programming languages, algebraic laws are usually tested using _property-based testing_.
+**Algebraic Law**. An _algebraic law_ is a _universally quantified_ statement that asserts a relationship between the _operations_ of an _algebra_. For example, an algebraic law for addition could assert that `(a + b) + c` is equal to `a + (b + c)` (_associativity_). In mainstream programming languages, algebraic laws are usually tested using _property-based testing_.
 
 **Algebraic Structure**. _Algebraic structure_ is any _structure_ that is defined using an _algebra_.
 
@@ -42,9 +42,15 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Dependency Injection**. _Dependency injection_ refers to a framework, library, language feature, or architectural pattern that facilitates threading dependencies throughout an application, and wiring up those dependencies for different scenarios. Dependency injection is one of the primary architectural needs of large-scale, complex applications.
 
+**Dependent Typing**. _Dependent typing_ is a method of defining types that permits types to depend on values. In dependently typed programming languages, one can define the type of vectors whose length is equal to some value. Examples of dependently typed programming languages include Idris, Coq, and Agda.
+
 **Deterministic**. A _deterministic_ procedure returns the same output for the same input.
 
 **Domain-Specific Language (DSL)**. A _domain-specific language_ (DSL) is a "mini-language" that is designed to solve a certain subproblem in an application. In functional programming, DSLs are generally _embedded_, which means users of these DSL use data types and operators, defined in the host language, to construct programs in the DSL.
+
+**Existential Quantification**. _Existential quantification_ asserts that a statement or type holds for some value of a given variable. For example, the value `list: List[_]` is existentially quantified over the type parameter, asserting that there exists some (unknown) type that describes the type of elements in the list.
+
+**Existential Type**. An _existential type_ is a type that is existentially quantified over.
 
 **Expression**. An _expression_ is a value constructed from the application of functions or operators to other values. The parameters to the functions or operators are called the _terms_ of the expression. For example, `a + b` is an expression, which computes the result of adding the term `a` to the term `b`.
 
@@ -118,7 +124,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Orthogonal**. Roughly speaking, a set of operators is _orthogonal_ when no operator performs the function of any other operator. This is the functional programming analogue of _Single Responsibility Principle_ (SRP). More precisely, a set of operators `S` is _orthogonal_ if there exists no other factoring of the operators `S1` such that any operator in `S` can be expressed as a composition of two or more operators in `S1`.
 
-**Parametric Polymorphism**. Sometimes called _generics_, _parametric polymorphism_ is a feature of some programming languages that allows universally quantifying a function or a data type over one or more type parameters. Such _polymorphic functions_ and _polymorphic data types_ are said to be _parameterized_ by those type parameters. Parametric polymorphism allows the creation of generic code, which works across many different data types; and also the creation of generic data types (like collections).
+**Parametric Polymorphism**. Sometimes called _generics_, _parametric polymorphism_ is a feature of some programming languages that allows _universally quantifying_ a function or a data type over one or more type parameters. Such _polymorphic functions_ and _polymorphic data types_ are said to be _parameterized_ by those type parameters. Parametric polymorphism allows the creation of generic code, which works across many different data types; and also the creation of generic data types (like collections).
 
 **Parametric Reasoning**. _Parametric reasoning_ is a type of reasoning that enables one to state facts about an implementation of a polymorphic function or polymorphic data type based only on type signatures. Parametric reasoning is typically accomplished using _flow analysis_ on polymorphic declarations.
 
@@ -162,6 +168,8 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Structure**. The _structure_ of a data type is the set of statements we know to be true about the data type. Parametrically polymorphic types (as well as `Any` in Scala) have *no* structure, but we can add structure by requiring these types have _instances_ for one or more _type classes_.
 
+**Subtyping**. _Subtyping_ is a method of defining types that permits "subset" relations, where one type is defined to be a subset or superset of another type. For example, all dogs are animals, and a type system with subtyping can recognize the fact that a `Dog` type is a subset of an `Animal` type.
+
 **Sum Type**. A _sum type_ is the composition of `n` types together in an enumeration type, where each case of the enumeration is referred to as a _term_ in the sum type. A value from a sum type contains a value from exactly one of its terms. For example, a value of a `Suite` enumeration is either `Hearts`, `Diamonds`, `Spades`, or `Clubs`. In Scala 2.x, enumerations are emulated with `sealed trait`, where the terms of the sum type are subtypes of the `sealed trait`.
 
 **Tagless-Final**. _Tagless-final_ refers to a way of encoding the interpretation of a DSL using parametric polymorphism. In tagless-final, code written in a DSL is polymorphic in the data type used for interpretation. This polymorphic code is interpreted in different ways by instantiating it to concrete evaluation types. In Scala, _tagless-final_ refers almost exclusively to using _indirection_ to provide ad hoc operations across polymorphic effect types.
@@ -175,6 +183,10 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 **Type Class**. A _type class_ is a language-level encoding of an _abstraction_. Type classes can be viewed as functions from some type to an _algebraic structure_ for that type. For example, an `Ord` type class might encode the algebraic structure of total ordering, and might allow us to access ordering operations for types that have this algebraic structure.
 
 **Type Constructors**. A _type constructor_ is a type that is itself parameterized by other types. To construct a type, the type constructor must be _fully applied_ to all of its parameters, which then results in a type. For example, `List` (`[]`) is a type constructor. Given a type, such as `Int` (`Integer`), then "passing" that type to the `List` type constructor then constructs a type: namely, the type of lists with that specified element type.
+
+**Universal Quantification**. _Universal quantification_ asserts that a statement or type holds for all possible values of a given variable. For example, the function `def empty[A]: List[A]` (`empty :: [a]`) is universally quantified over the type parameter `A`, asserting that for any element type, the function can produce a list of that element type (namely, the empty list).
+
+**Universal Type**. A _universal type_ is a type that is universally quantified over.
 
 **Value**. A _value_ is information that exists at runtime, stored in the computer's memory as the program is executing. Values are used to hold and transmit information within a program, and across process boundaries, to the operating system, file system, network, and beyond. In programming languages, values are constructed from literals or from _expressions_.
 
