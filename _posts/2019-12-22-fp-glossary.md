@@ -12,17 +12,20 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 ## Glossary
 
+<a name="Abstraction"></a>
 **Abstraction**. An _abstraction_ is a precise description of the ways in which different data types share common structure. Abstraction allows different data types to participate in _generic programming_. In functional programming, abstractions are defined by _algebraic structure_, and are usually encoded in a programming language using _type classes_. Common examples of abstractions include monoids, functors, and monads.
 
+<a name="Ad-Hoc-Polymorphism">
 **Ad Hoc Polymorphism**. _Ad hoc polymorphism_ is any language feature that allows overloading functions and operators (providing multiple implementations for the same symbol) in such a fashion that the compiler or runtime can automatically select which implementation to call based on the types involved in the function application. Examples of ad hoc polymorphism include method overloading and _type classes_.
 
+<a name="Algebra">
 **Algebra**. An _algebra_ is a set of _objects_ together with a set of _operations_ on those objects. The operations of an algebra are defined by _algebraic laws_, which give the operations meaning by relating all of them to each other. For example, addition on integers forms a very simple algebra, where the objects are integers, and the sole operation is addition, which satisfies assocative and commutative laws.
 
 **Algebraic Data Type (ADT)**. An _algebraic data type_ is any data type composed from _product types_ (records) and _sum types_ (enumerations). In functional programming, algebraic data types are used for _data modeling_.
 
-**Algebraic Law**. An _algebraic law_ is a _universally quantified_ statement that asserts a relationship between the _operations_ of an _algebra_. For example, an algebraic law for addition could assert that `(a + b) + c` is equal to `a + (b + c)` (_associativity_). In mainstream programming languages, algebraic laws are usually tested using _property-based testing_.
+**Algebraic Law**. An _algebraic law_ is a _universally quantified_ statement that asserts a relationship between the _operations_ of an [_algebra_](#Algebra). For example, an algebraic law for addition could assert that `(a + b) + c` is equal to `a + (b + c)` (_associativity_). In mainstream programming languages, algebraic laws are usually tested using _property-based testing_.
 
-**Algebraic Structure**. _Algebraic structure_ is any _structure_ that is defined using an _algebra_.
+**Algebraic Structure**. _Algebraic structure_ is any _structure_ that is defined using an [_algebra_](#Algebra).
 
 **Applicative**. An `Applicative` Functor is an `Apply` Functor that allows taking a value and converting it into a _functional effect_ that succeeds with the specified value. Under the view of functors as DSLs, `Applicative` adds a "pure return" statement to the DSL.
 
@@ -56,13 +59,13 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Expression**. An _expression_ is a value constructed from the application of functions or operators to other values. The parameters to the functions or operators are called the _terms_ of the expression. For example, `a + b` is an expression, which computes the result of adding the term `a` to the term `b`.
 
-**F-Algebra**. An F-algebra is a generalization of algebraic structure that comes from category theory, which makes it possible to represent algebraic laws without universal quantification, using only morphisms. In functional programming, F-algebras appear more directly as interpreters for both tagless-final and free monadic programs (*natural transformations*), and as algebras and coalgebras in recursion schemes.
+**F-Algebra**. An F-algebra is a generalization of algebraic structure that comes from category theory, which makes it possible to represent algebraic laws without universal quantification, using only morphisms. In functional programming, F-algebras appear more directly as interpreters for both tagless-final and free monadic programs (*natural transformations*), and as [algebras](#Algebra) and coalgebras in recursion schemes.
 
 **First-Class**. _First-class_ constructs are those which can be created, manipulated, and abstracted over using the most powerful machinery a language exposes for these tasks. For most programming language, _first-class_ means the construct is a _value_. First-class constructs give programmers much more power than second-class constructs.
 
 **Flow analysis**. Type-directed _flow analysis_ is a process whereby the flow of information in the declaration of a data type or a function is analyzed using type information alone. Performing flow analysis can yield useful information about the implementation of polymorphic declarations. For example, for a function `def foo[A](a: A): A` (`foo :: a -> a`), one can tell using flow analysis that the output of the function must have come from its single input parameter, because there is no other way for the function to return a value of the polymorphic type.
 
-**Free Structure**. A _free structure_ is a data structure that _reifies_ operations of some algebra into a tree-like data structure. Later, the data structure can be traversed, and the operations applied to concrete values&mdash;a process called _interpretation_ of the free structure. An example free structure is `List` (`[]`), which is a free monoid for any type `A`; that is, for any type `A`, `List[A]` (`[a]`) provides both a neutral value (the empty list) and an append operation (list concatenation). Another example is `Free`, which provides a free monad for any type constructor `F[_]` (`f : * -> *`).
+**Free Structure**. A _free structure_ is a data structure that _reifies_ operations of some [algebra](#Algebra) into a tree-like data structure. Later, the data structure can be traversed, and the operations applied to concrete values&mdash;a process called _interpretation_ of the free structure. An example free structure is `List` (`[]`), which is a free monoid for any type `A`; that is, for any type `A`, `List[A]` (`[a]`) provides both a neutral value (the empty list) and an append operation (list concatenation). Another example is `Free`, which provides a free monad for any type constructor `F[_]` (`f : * -> *`).
 
 **Function**. A mathematical _function_ `f : A => B` (`f :: a -> b`) associates every value in a set `A` (called the _domain_) with a single value in a set `B` (called the _codomain_). For a given function, this mapping is static (it does not change). In programming languages, the domains and codomains of value-level functions are types, and all such functions are _total_ (they map every input to some output), _deterministic_ (they map the same input to the same output), and _pure_ (they only map inputs to outputs).
 
@@ -70,7 +73,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Functional Programming**. _Functional programming_ is a style of programming in which solutions are constructed by defining and applying (mathematical) _functions_. Many programs are not "purely" functional, but contain parts that are written in a functional style, as well as parts that are written in a procedural style. Functional programming can be practiced in statically-typed as well as untyped programming languages.
 
-**Functional-Imperative**. _Functional-imperative_ is a hybrid style of programming that uses higher-order functions to embed an imperative model of computation inside functional code. Functional-imperative style relies on _monads_ or an equally powerful abstraction.
+**Functional-Imperative**. _Functional-imperative_ is a hybrid style of programming that uses higher-order functions to embed an imperative model of computation inside functional code. Functional-imperative style relies on _monads_ or an equally powerful [abstraction](#Abstraction).
 
 **Functor**. A `Functor` is a type class that allows transforming the success value of some _functional effect_ with a function. Every functor can be regarded as a type of DSL, where the terms in the functor sum type correspond to different instructions in the DSL. Under this view of functors as DSLs, `Functor` provides a way to change the success value of a program into some other success value, by applying a specified function.
 
@@ -132,7 +135,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Partial Function**. A _partial function_ is a function that is only defined for a subset of its domain. Partial functions can be modeled as total functions by expanding the codomain to include at least one new value, which indicates the function did not handle some input.
 
-**Polymorphism**. _Polymorphism_ is a feature of programming languages that allows a variable or function to take on many different forms. Common types of polymorphism include _parametric polymorphism_, _subtype polymorphism_, and _ad hoc polymorphism_.
+**Polymorphism**. _Polymorphism_ is a feature of programming languages that allows a variable or function to take on many different forms. Common types of polymorphism include _parametric polymorphism_, _subtype polymorphism_, and [_ad hoc polymorphism_](#Ad-Hoc-Polymorphism).
 
 **Prisms**. _Prisms_ are _optics_ that allow getting and setting terms in _sum types_. For example, a prism could allow getting and setting the `Left` term inside objects of type `Either[A, B]` (`Either a b`). In the functional context, _setting_ a term in a sum means creating a new sum, given the new value for the term.
 
@@ -184,7 +187,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Type**. A _type_ is information that exists at compile-time, stored in the computer's memory as the program is compiling. Types are used by the compiler to describe the structure of variables and functions, to ensure programs are sound (well-defined, being free of contradictions). Informally, a type can be regarded as a mathematical set of values; the type `Boolean`, for example, contains the values _true_ and _false_.
 
-**Type Class**. A _type class_ is a language-level encoding of an _abstraction_. Type classes can be viewed as functions from some type to an _algebraic structure_ for that type. For example, an `Ord` type class might encode the algebraic structure of total ordering, and might allow us to access ordering operations for types that have this algebraic structure.
+**Type Class**. A _type class_ is a language-level encoding of an [_abstraction_](#Abstraction). Type classes can be viewed as functions from some type to an _algebraic structure_ for that type. For example, an `Ord` type class might encode the algebraic structure of total ordering, and might allow us to access ordering operations for types that have this algebraic structure.
 
 **Type Constructors**. A _type constructor_ is a type that is itself parameterized by other types. To construct a type, the type constructor must be _fully applied_ to all of its parameters, which then results in a type. For example, `List` (`[]`) is a type constructor. Given a type, such as `Int` (`Integer`), then "passing" that type to the `List` type constructor then constructs a type: namely, the type of lists with that specified element type.
 
