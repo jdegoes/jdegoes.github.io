@@ -50,6 +50,8 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Domain-Specific Language (DSL)**. A _domain-specific language_ (DSL) is a "mini-language" that is designed to solve a certain subproblem in an application. In functional programming, DSLs are generally _embedded_, which means users of these DSL use data types and operators, defined in the host language, to construct programs in the DSL.
 
+**Effect Rotation**. _Effect rotation_ refers to the construction of highly polymorphic data types (typically _indexed monads_) that simultaneously support multiple _functional effects_. Each effect supported by the data type is represented with a different type parameter, and each effect may be introduced or eliminated using certain operations. Effect rotation provides much of the benefit of monad transformers, but with substantially improved performance, and in some languages like Scala, significantly better type inference.
+
 **Existential Quantification**. _Existential quantification_ asserts that a statement holds for some choice of a given variable. For example, the value `list: List[_]` is existentially quantified over the `List` type parameter, asserting that there exists some (unknown) type that describes the type of elements in the list, without specifying what this type is.
 
 **Existential Type**. An _existential type_ is a specific, definite type, which is unknown to code interacting with the type. In programming languages, existential types are used to "forget" information that need not be carried around in type parameters. In Scala, abstract type members are always existential types.
@@ -88,6 +90,8 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Imperative Programming**. _Imperative programming_ is a style of programming in which solutions are constructed from step-by-step instructions, where later instructions can depend on the result of previous instructions. In procedural programming, imperative programming is typically done with side-effecting statements, whereas in functional programming, imperative programming is typically done with _monads_.
 
+**Indexed Monad**. An _indexed monad_ is a generalization of `Monad` for highly polymorphic data types having multiple type parameters, which form ordinary `Monad` instances for any possible choice of the extra type parameters. Indexed monads allow increased type precision, and allow operations that cannot be expressed with non-indexed monads. Examples of indexed monads included indexed state and `RIO` (in Haskell), and `ZIO` (in Scala).
+
 **Indirection**. _Indirection_ is any programming language feature (interfaces, type classes, records of functions, module definitions) that allows multiple implementations of some required functionality to be defined and provided to code that requires these capabilities. Indirection facilitates testability, code reuse, and modularity, both in functional programming, and in other paradigms.
 
 **Isomorphism**. An _isomorphism_ is an equivalence between two data types that have the same information. An isomorphism is defined by two functions: one to translate from the first data type to the second; and one to translate from the second data type to the first. These functions must satisfy "roundtrip" laws in order for them to form an isomorphism, which demonstrate the two representations contain the same information. In functional programming, many things are considered equal _up to isomorphism_. For example, `(A, Unit)` and `A` are _equal up to isomorphism_, meaning these two different types have the same information.
@@ -111,6 +115,8 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 **Modular**. A factoring of a solution to a problem is _modular_ when it has been divided into independent concerns called _modules_, such that each module knows no more than necessary about other modules. Modularity helps tame the complexity of large-scale software development.
 
 **Monad**. A `Monad` is an `Applicative` Functor that allows combining a first _functional effect_, together with a function that takes the success value of the first effect and returns a second effect (_continuation_). Monads represent the essence of imperative programming: do a first thing, and then do this second thing, which depends on the value computed by the first thing. Under the view of functors as DSLs, `Monad` adds sequential "statements", where subsequent statements depend on previous ones.
+
+**Monad Transformer**. A _monad transformer_ is a data type that adds one functional effect atop any other functional effect. For example, the `OptionT` (`MaybeT`) monad transformer adds the effect of optionality to any other functional effect. A monad transformer, when "stacked" atop a monad, itself forms a monad, which allows building up large stacks of monad transformers, each layer adding some desired functional effect. Monad transformers have significant performance overhead in languages like Scala. An alternative to monad transformers is _effect rotation_.
 
 **Monoid**. A monoid is a semigroup equipped with a _neutral element_ (often called _zero_), such that appending the neutral element to any other element (on either side) returns that same element unchanged. 
 
