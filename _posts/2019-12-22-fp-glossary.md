@@ -86,7 +86,7 @@ In this post, I'll share those definitions with you, in my first ever, *Glossary
 
 **Higher-Order**. _Higher-order_ refers to higher-order functions, which are functions that accept functions as input, or return functions as output. For example, `map` on a list is a higher-order function, because it accepts a function as one of its parameters; similarly, the `Monad` type class is a higher-order type class, because the kind of its type parameter is `(* => *) => *`, which is a higher-order type-level function.
 
-**Homomorphism**. _Homomorphisms_ are a special type of function `f : A => B` that preserve a given _algebraic structure_. For example, the absolute value function (which returns the absolute value of some number) is a semigroup homomorphism, because it preserves additive and multiplicative semigroups.
+**Homomorphism**. _Homomorphisms_ are a special type of function `f : A => B` that preserve a given _algebraic structure_. For example, the square function (which returns its input multiplied by itself) is a semigroup homomorphism, because it preserves, for example, the multiplicative semigroup.
 
 **Imperative Programming**. _Imperative programming_ is a style of programming in which solutions are constructed from step-by-step instructions, where later instructions can depend on the result of previous instructions. In procedural programming, imperative programming is typically done with side-effecting statements, whereas in functional programming, imperative programming is typically done with _monads_.
 
