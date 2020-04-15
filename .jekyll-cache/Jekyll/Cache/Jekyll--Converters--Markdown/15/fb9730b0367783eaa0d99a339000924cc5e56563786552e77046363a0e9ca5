@@ -1,0 +1,143 @@
+I"�9<p>Many of my readers know I have promoted and contributed to <a href="https://github.com/scalaz/">Scalaz</a> for a little over two years now.</p>
+
+<p>After many wonderful collaborations with some of the most talented Scala developers I know, I have decided to step back from Scalaz, and pull <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>, my most significant work, into a separate organization—one that is not associated with Scalaz in any way.</p>
+
+<p>I hope this post make it clear why I am doing this, and what it means for the future of functional programming in Scala.</p>
+
+<h2 id="community-build-controversy">Community Build Controversy</h2>
+
+<p>As most of the functional Scala community knows by now, all projects in the Scalaz organization, as well as some that depend on Scalaz, were <a href="https://github.com/scala/community-builds/commit/be8d3f07832c78044a65d3840a9338dc05943af7">recently removed from the Scala community build</a>.</p>
+
+<p>The community build is used as a regression suite for the Scalac compiler, and helps ensure that changes to the compiler do not break innovative or widely-used libraries in the Scala ecosystem.</p>
+
+<p>When I was made aware of this event, I <a href="https://github.com/scala/community-builds/issues/896">requested more information</a> and asked for a reversal.</p>
+
+<p>When it became clear to me there would be no reversal or official explanation, I made a <a href="https://contributors.scala-lang.org/t/coc-compatible-community-builds/3097/240?u=jdegoes">final statement</a>, which expressed my disappointment and desire for better community stewardship, even while assuming good-faith all around.</p>
+
+<p>Ultimately, some good came out of the discussions:</p>
+
+<ul>
+  <li>The build is now more faithfully rebranded as the <a href="https://github.com/scala/community-builds/commit/df5a1c44f7e69f26737d09ffcefbc387c8bb1b97">Lightbend build</a>;</li>
+  <li>It is clear that which projects are included is entirely at the <a href="https://github.com/scala/community-builds/wiki/Eligibility/_compare/2d2b7e7e77f0d305452cd62fd5b27437eefc8571">discretion of Lightbend employees</a>, without input from the community.</li>
+  <li>There is a chance that ZIO (which did not depend on Scalaz, but lived inside the Scalaz organization), will eventually make it back into the Lightbend build, helping protect against compiler regression.</li>
+</ul>
+
+<p>While not the outcome I hoped for, these steps do represent progress toward more transparency, and I would hope only the Lightbend project be relocated to the <a href="https://github.com/lightbend">Lightbend organization</a> at some point in the future, to better convey the fact the build does not reflect what the Scala community uses or necessarily wishes to include in the build.</p>
+
+<h2 id="the-birth-of-zio">The Birth of ZIO</h2>
+
+<p>ZIO is a library for asynchronous and concurrent programming in Scala. While not dependent on Scalaz, the library has been hosted inside the Scalaz organization on Github, and has therefore been affected by the decision to remove all Scalaz projects from the Lightbend build.</p>
+
+<p>ZIO was hosted inside Scalaz for historical reasons.</p>
+
+<p>In early 2017, Vincent Marquez, a friend of mine and fellow functional Scala developer, asked me if I would be willing to contribute to the next version of Scalaz (Scalaz 8), which had a long tradition of pushing the boundaries of functional programming in Scala.</p>
+
+<p>I said yes, and began looking for something interesting to work on.</p>
+
+<p>For many years, I’ve been interested in how functional programming can improve asynchronous and concurrent programming. Having written several versions of <code class="highlighter-rouge">Future</code>, in several programming languages, and having authored the first version of <code class="highlighter-rouge">Aff</code> (the de facto asynchronous effect system for PureScript), working on the next-generation Scalaz effect system seemed like a good fit.</p>
+
+<p>So I signed up to work on the <em>Scalaz 8 IO monad</em>.</p>
+
+<p>I had heretical ideas about how such an effect type should be designed: I wanted built-in concurrency powered by fibers; I wanted resource-safety with iron-clad guarantees; I wanted fine-grained interruption (termed <em>async exceptions</em> in Haskell); and I wanted performance to radically improve on last-generation effect types.</p>
+
+<p>While my ideas were extremely controversial at the time, I presented my work at Scala IO 2017 and Scale by the Bay 2017, and the reception was so overwhelmingly positive that it went on to permanently change the direction of the Cats IO data type and Cats Effect type class hierarchy.</p>
+
+<p>Development of the Scalaz 8 effect system proceeded quickly, much faster than development of Scalaz 8 itself. Meanwhile, both Scalaz 7.x and Cats developers were interested in using the effect system even while still early in development. The demand was so high that other developers pulled the effect type out into a standalone project called <code class="highlighter-rouge">ioeffect</code>—which happened in about 24 hours and without any help from me.</p>
+
+<p>When this happened, it became clear to me the best way to help the entire functional Scala community was to pull the effect system out of Scalaz 8, and make it a proper standalone project, without any dependencies on Scalaz or Cats, but with full support for both libraries in separate modules.</p>
+
+<p>On June 11, 2018, <em>ZIO</em> was officially born.</p>
+
+<h2 id="zio-drifts-from-scalaz">ZIO Drifts from Scalaz</h2>
+
+<p>Over the coming months, ZIO got its own chat room on Gitter, its own set of contributors (most of whom did not use Scalaz, and some of whom used Cats!), and its own unique culture—which is overwhelmingly positive, supportive, and focused on mentoring and growing Scala developers.</p>
+
+<p>ZIO was becoming its own thing, independent of Scalaz, even while it lived on within the same organization.</p>
+
+<h2 id="the-scalaz-connection">The Scalaz Connection</h2>
+
+<p>Having contributed to Scalaz, and worked (mostly on ZIO) within the Scalaz organization for more than two years, I can say unreservedly there are some amazing things about the Scalaz community.</p>
+
+<p>Firstly, many of the <em>people</em> who work on Scalaz are very gifted, selfless individuals, who prize community service above all else. For example, Kenji Yoshida, Tomas Mikula, and others.</p>
+
+<p>Secondly, there is a culture of technical excellence in Scalaz. Technical discussions are encouraged, even if they are critical. Contributors understand that <em>they are not their code</em>, and they welcome suggestions to improve their work.</p>
+
+<p>Yet regardless of these cultural highlights, it is impossible to ignore the controversial history of the project. And at the center of this controversy is the project’s founder, <em>Tony Morris</em>.</p>
+
+<p>Tony Morris is a long-time functional programmer, an accomplished teacher who has donated countless hours to developers, patiently teaching them everything from the elementary to the advanced (I remember him writing 50 lines of code to explain to me how <code class="highlighter-rouge">List</code> is a free monoid!).</p>
+
+<p>Yet, while many (including myself) will attest to Tony’s generous assistance and mentorship over the years, there are others who have been offended or hurt by Tony’s communication style, or have found his relentless critiques of Scala to be emotionally draining.</p>
+
+<p>I have witnessed Tony insult others on a number of occassions—not just critique their work, mind you, but engage in ad hominem. While, as far as I have seen, this was always in response to (more subtle and socially sanctioned) ad hominem, it does not mitigate the very real hurt caused by Tony’s actions.</p>
+
+<p>The effects of this over time are twofold:</p>
+
+<ol>
+  <li>Scalaz <em>proper</em> contributors are not easily offended and are much more direct (<em>selection bias</em>);</li>
+  <li>A few people refuse to interact with the Scalaz project because they have been hurt or are afraid of being hurt.</li>
+</ol>
+
+<p>Tony Morris is not the only person to scare developers away from Scala communities, of course. Some developers publicly refuse to contribute to Typelevel projects (and others, privately, so I am told), citing the actions of Lars Hupel or—before they “stepped down” from Typelevel—the actions of Travis Brown and Stew O’Connor, who still show up in the chat rooms and comment on project issues.</p>
+
+<p>I’m not privy to everything, but as far as I can tell, Tony’s actions have been more publicly visible than those of Lars, Travis, or Stew, and have led to more public backlash.</p>
+
+<h2 id="modern-day-scalaz">Modern Day Scalaz</h2>
+
+<p>With the Scalaz mentorship program I led last year, the organization saw a huge influx of new contributors, who knew nothing about the history of the project or Tony’s communication style.</p>
+
+<p>Most of the new contributors now work in the ZIO project, which is isolated from the main Scalaz project, but there are other Scalaz projects that work in their own silos (Parsers, Schema, etc.).</p>
+
+<p>Although Tony Morris stopped contributing to Scalaz years ago (after he gave up on Scala), his ghost still haunts the halls of Scalaz to this day.</p>
+
+<p>Tony is no longer present in the day-to-day, but he still shows up occassionally in the Scalaz chat room. Very rarely, he comments on issues in the Scalaz project. And, as he will likely do for many years to come, Tony continues to heavily criticize Scala on technical grounds.</p>
+
+<p>For better or worse, the project founded by Tony Morris will probably always be associated with Tony Morris.</p>
+
+<h2 id="zio--scalaz">ZIO != Scalaz</h2>
+
+<p>I believe that every project and every community needs to be judged based on its own merits, and with the community build controversy, it has become clear to me this is not happening right now.</p>
+
+<p>ZIO is not Scalaz, and I am not Tony Morris.</p>
+
+<p>Many first-time contributors and users of ZIO have stated in public or in private that ZIO has one of the friendliest, most welcoming, and most supportive environments of <em>any</em> open source community.</p>
+
+<p>The project has attracted more than a hundred diverse contributors from all around the world, some of whom chose ZIO to be their first contribution to the world of open source software.</p>
+
+<p>I strongly believe that ad hominem will never help, but will make every situation worse. I believe that rather than trade barbs, leaders of a community should turn the other cheek (which may not be <em>fair</em> but it is <em>noble</em>), using empathy and nonviolent communication to heal and bind together.</p>
+
+<p>It is not up to me to force my own personal communication philosophy on the open source projects of others. But it <em>is</em> up to me to follow my own path, and create the kind of communities I want to see in this world.</p>
+
+<p>So in that spirit, and for both social as well as technical reasons, on April 29th I announced that ZIO would be leaving the Scalaz organization, and moving to a new <a href="https://github.com/zio">ZIO</a> organization on Github.</p>
+
+<p>This is a brand new start for an exciting young project that will henceforth be judged on its own merits, for its own culture.</p>
+
+<h2 id="life-after-scalaz">Life After Scalaz</h2>
+
+<p>With ZIO moving outside of Scalaz, I hope to continue to build upon the culture we have created, mentoring new generations of functional Scala developers, and building an environment where everyone feels supported and empowered to become the best version of themselves.</p>
+
+<p>I hope also to retain the many positive aspects of the Scalaz culture, such as a commitment to technical excellence, and a willingness to hear technical critiques and act on them without ego (easier said than done!).</p>
+
+<p>I hope to continue the Scalaz tradition of questioning dogma.</p>
+
+<p>For example, unlike many of my functional Scala comrades, I believe the key to making functional programming in Scala feel natural is to embrace all of Scala’s features, including subtyping, intersection types, and variance (without compromising purity); and to reject many Haskellisms, such as monad transformers, which have poor ergonomics and performance in Scala.</p>
+
+<p>I believe that functional Scala programmers need to roll up their sleeves and help make Scala even better at functional programming, rather than criticize from the side-lines (something I have been guilty of myself!).</p>
+
+<p>I do not anticipate contributing significantly to the current versions of Scalaz or Cats. Rather, I hope, and will encourage, a unification between Cats and Scalaz—a single base of contributors all collectively working toward making functional Scala wildly successful in industry.</p>
+
+<p>As you might suspect, I have a few (heretical) ideas about what a unified architecture could look like, and I think it quite likely these ideas will materialize, in an appropriate way, and at a suitable time.</p>
+
+<h2 id="closing-thoughts">Closing Thoughts</h2>
+
+<p>I’m very grateful for the chance to participate in the development of the Scalaz library—a great library that first made functional programming in Scala viable.</p>
+
+<p>I’m grateful that many of the relationships I’ve made in the Scalaz community will continue to live on, even as I step back from the project to focus on the new ZIO organization, and surrounding ecosystem.</p>
+
+<p>I wish both Scalaz and Cats contributors the best of luck helping programmers derive value from functional programming. And I want to express my sincere hope that we find a way to bring together the whole functional Scala community, with a culture that’s positive, inclusive, supportive, and professional.</p>
+
+<p>With work and a little luck, I believe that we can heal past hurt, mend trust, build bridges not walls, and end up doing something amazing that will be remembered for a generation of programmers.</p>
+
+<p>See you all online at <a href="https://twitter.com/jdegoes">@jdegoes</a> or in the new <a href="https://gitter.im/zio/core">ZIO Chat Room</a>!</p>
+
+<p><em><strong>Addendum</strong>: I want to make it clear that Tony Morris and I have been and remain friends, and that despite different goals and philosophies, I highly respect his expertise and contributions to functional programming, and I welcome his positive contributions to any conferences, events, or projects I’m involved with, subject to the same criteria as anyone else. I also acknowledge in writing this post that it is an incomplete picture, and if you’re interested in the full story of why Tony communicates in the way he does, you should talk to Tony.</em></p>
+:ET

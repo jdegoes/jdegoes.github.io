@@ -16,7 +16,7 @@ The occasion? Scalaz 8 IO has a new bifunctor design that challenges our assumpt
 
 Scalaz 8's greenfield design presents a unique opportunity to re-examine every assumption about functional programming in Scala. The bifunctor design joins other innovations in the effect system (such as fine-grained interruption, resource safety, and fiber concurrency), as well as a [growing number of novel features](https://www.slideshare.net/jdegoes/scalaz-8-a-whole-new-game) intended to radically improve FP in Scala.
 
-Fibers and interruption were hotly debated when I first introduced them at Scala IO and [Scale by the Bay](https://www.youtube.com/watch?v=wi_vLNULh9Y), but now [even competitive libraries](http://github.com/typelevel/cats-effect) have moved in the direction of Scalaz 8 IO.
+Fibers and interruption were hotly debated when I first introduced them at Scala IO and [Scale by the Bay](https://www.youtube.com/watch?v=wi_vLNULh9Y), but now [even competitive libraries](https://github.com/typelevel/cats-effect) have moved in the direction of Scalaz 8 IO.
 
 What of bifunctor IO? Is this design going to change the way we manage errors in Scala effect types? Or will it be an interesting footnote in the history of functional programming in Scala?
 
@@ -114,7 +114,7 @@ While error management changes only in minor ways, the resulting ramifications t
 
 There are two classes of errors in applications:
 
- 1. **Recoverable Errors**. Recoverable errors refer to the errors we expect to happen occasionally. For example, when we perform an HTTP request, we expect that sometimes, it will not succeed because the server is down or there are network issues. Because we expect these errors to happen, we want to build our code in a way that acknowledges the failure scenarios. We want graceful fallbacks at some level of the application (perhaps not locally, but at the edges).
+ 1. **Recoverable Errors**. Recoverable errors refer to the errors we expect to happen occasionally. For example, when we perform an https request, we expect that sometimes, it will not succeed because the server is down or there are network issues. Because we expect these errors to happen, we want to build our code in a way that acknowledges the failure scenarios. We want graceful fallbacks at some level of the application (perhaps not locally, but at the edges).
  2. **Non-Recoverable Errors**. Non-recoverable errors refer to the errors we do not expect to happen. For example, if a user has configured the JRE with 10k of memory for the stack, then a lot of ordinary (non-recursive) code will stack overflow, producing a `StackOverflowError`. This is not a normal error we expect to happen, nor is there a sane way to recover from it.
 
 In Java, the convention is to use `Exception` for recoverable errors, and `Error` for non-recoverable errors. Both of these are subclasses of `Throwable`, which is the only error type supported by the JVM.
@@ -322,7 +322,7 @@ case class RuntimeError(function: String) extends EvaluationError
 
 Others still may prefer to use type-level sets to represent errors, because this makes it very easy to add and subtract errors, while still providing the ability to handle some or all errors.
 
-The [Mitigation library](https://twitter.com/propensive/status/993422307388424192) by [Jon Pretty](http://twitter.com/propensive), based on Totalitarian, provides a convenient and powerful solution for managing sets of errors. Look for `scalaz-mitigation` in the near future! (Bug Jon and me about it until we do something!)
+The [Mitigation library](https://twitter.com/propensive/status/993422307388424192) by [Jon Pretty](https://twitter.com/propensive), based on Totalitarian, provides a convenient and powerful solution for managing sets of errors. Look for `scalaz-mitigation` in the near future! (Bug Jon and me about it until we do something!)
 
 ### Myth 2: You Don't Recover From Errors Often
 
@@ -354,7 +354,7 @@ Let's take the following API:
 def read(id: String): IO[FileNotFoundException, ByteVector]
 {% endhighlight %}
 
-This API states that `read` can fail with `FileNotFoundException`. However, we may want to abstract over different ways of reading a resource (in-memory versus over HTTP, for example). If we want to abstract over reading, then `FileNotFoundException` is a poor way to represent failure. Instead, we should design the API as follows:
+This API states that `read` can fail with `FileNotFoundException`. However, we may want to abstract over different ways of reading a resource (in-memory versus over https, for example). If we want to abstract over reading, then `FileNotFoundException` is a poor way to represent failure. Instead, we should design the API as follows:
 
 {% highlight scala %}
 def read(id: String): IO[ResourceNotFound, ByteVector]
@@ -425,9 +425,9 @@ To "reflect the runtime" in the `IO` data type, it would be necessary to avoid u
 
 Additionally, the JVM uses `null` for optionality, not `Option` or `Maybe`. *Reflecting the runtime* would argue for embracing `null` for optionality, and expecting `null` everywhere in the interface to `IO`.
 
-Doing functional programming, [even in languages like Haskell](http://www.cse.chalmers.se/~nad/publications/danielsson-et-al-popl2006.pdf), requires a set of assumptions. In Scala, these assumptions include no runtime reflection, no coercion, no exceptions, no side effects, no null, and so forth.
+Doing functional programming, [even in languages like Haskell](https://www.cse.chalmers.se/~nad/publications/danielsson-et-al-popl2006.pdf), requires a set of assumptions. In Scala, these assumptions include no runtime reflection, no coercion, no exceptions, no side effects, no null, and so forth.
 
-Without these assumptions (often called the [Scalazzi subset](http://www.lihaoyi.com/post/StrategicScalaStylePracticalTypeSafety.html#scalazzi-scala) of Scala, after Scalaz), you would program fearfully, constantly checking the runtime class of every value, testing to make sure no values are null, obsessively try/catching, and fearing that a function like `def identity[A](a: A): A` may generate a novel `A` through runtime reflection.
+Without these assumptions (often called the [Scalazzi subset](https://www.lihaoyi.com/post/StrategicScalaStylePracticalTypeSafety.html#scalazzi-scala) of Scala, after Scalaz), you would program fearfully, constantly checking the runtime class of every value, testing to make sure no values are null, obsessively try/catching, and fearing that a function like `def identity[A](a: A): A` may generate a novel `A` through runtime reflection.
 
 Principled development requires sane assumptions, and pragmatic development requires we know when these assumptions go wrong. The Scalaz 8 error model provides both in a single package, because even though the design assumes you work in Scalazzi, if you don't, your defects will be captured and reported to supervisors.
 
@@ -452,7 +452,7 @@ This myth states that bifunctor IO is unnecessary, since we can already achieve 
 There are two flaws in this argument:
 
 1. For older effect types `F[_]` (such as Monix `Task`, cats-effect `IO`, and Scalaz 7.2 `IO` / `Task`), `EitherT[IO, E, ?]` has two error channels, overlapping instances for `MonadError` (one having an error type fixed to `Throwable`), two conflicting ways of failing, and two conflicting ways of recovering from failures. Contrast this to `IO[E, A]`, which has a single error channel.
-2. Scalaz 8 bifunctor IO is functionally equivalent to `EitherT[UIO, E, A]` for some infallible effect type `UIO`. Although Scalaz 8 IO could be redesigned to be infallible, this would mean as much as a *5x performance penalty* for recapturing error handling using an `EitherT` monad transformer. As discussed in my [last blog post](http://degoes.net/articles/effects-without-transformers), monad transformers are not practical in Scala.
+2. Scalaz 8 bifunctor IO is functionally equivalent to `EitherT[UIO, E, A]` for some infallible effect type `UIO`. Although Scalaz 8 IO could be redesigned to be infallible, this would mean as much as a *5x performance penalty* for recapturing error handling using an `EitherT` monad transformer. As discussed in my [last blog post](https://degoes.net/articles/effects-without-transformers), monad transformers are not practical in Scala.
 
 Scalaz 8 IO brings something genuinely new to the table over `EitherT`: a clean, typed, single error channel, and high-performance, wrapped in a package that generalizes over all existing effect types.
 

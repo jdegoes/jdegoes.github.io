@@ -1,0 +1,428 @@
+I"u�<p>Tagless-final is a technique originally used to <a href="https://okmij.org/ftp/tagless-final/index.html">embed domain-specific languages</a> into a host language, without the use of Generalized Algebraic Data Types.</p>
+
+<p>In the Haskell community, <em>tagless-final</em> still refers to a way of creating polymorphic programs in a custom DSL that are interpreted by instantiating them to a concrete data type. In the Scala community, however, tagless-final is used almost exclusively for monadic, effectful DSLs. Usage of the term in Scala is closest to what Haskeller’s mean by <em>MTL-style</em>, but without the algebraic laws that govern MTL type classes.</p>
+
+<p>In Scala, tagless-final has become almost synonymous with types of kind <code class="highlighter-rouge">* -&gt; *</code>, leading to the infamous <code class="highlighter-rouge">F[_]</code> higher-kinded type parameter that is so pervasively associated with the phrase <em>tagless-final</em>.</p>
+
+<p>In this post, I will argue that the many claims made about tagless-final in Scala are not <em>entirely</em> true, and that the actual benefits of tagless-final come mostly from <em>discipline</em>, not from so-called <em>effect polymorphism</em>.</p>
+
+<p>After this detailed analysis, I will conclude the post by providing a list of concrete recommendations for developers who are building functional Scala libraries and applications.</p>
+
+<h2 id="tagless-final-101">Tagless-Final 101</h2>
+
+<p>In Scala, tagless-final involves creating <em>type classes</em>, which describe capabilities of a generic effect <code class="highlighter-rouge">F[_]</code>.</p>
+
+<p><em>Note: There is an alternate, and (I’d argue) superior encoding of tagless-final that involves not type classes, but effect-polymorphic interfaces, which are passed as ordinary parameters; but this alternate encoding doesn’t substantially change my arguments, so I won’t discuss it here.</em></p>
+
+<p>For example, we can create the following type class to describe console-related capabilities of some effect <code class="highlighter-rouge">F[_]</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Console</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">putStrLn</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> 
+  <span class="k">val</span> <span class="nv">getStrLn</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Or, we could create the following type class to describe persistence capabilities for <code class="highlighter-rouge">User</code> objects:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">UserRepository</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">getUserById</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">UserID</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">User</span><span class="o">]</span>
+
+  <span class="k">def</span> <span class="nf">getUserProfile</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">UserProfile</span><span class="o">]</span> 
+
+  <span class="k">def</span> <span class="nf">updateUserProfile</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">,</span> <span class="n">profile</span><span class="k">:</span> <span class="kt">UserProfile</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>These type classes allow us to create methods that are <em>polymorphic</em> in the effect type <code class="highlighter-rouge">F[_]</code>, but which have access to required capabilities. For example, we could describe a program that uses the <code class="highlighter-rouge">Console</code> interface as follows:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Console</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> 
+  <span class="n">implicitly</span><span class="o">[</span><span class="kt">Console</span><span class="o">[</span><span class="kt">F</span><span class="o">]].</span><span class="py">putStrLn</span><span class="o">(</span><span class="s">"Hello World!"</span><span class="o">)</span></code></pre></figure>
+
+<p>Combined with type classes like <code class="highlighter-rouge">Monad</code> (which allows chaining effects), we can build entire programs using the tagless-final approach:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Console:</span> <span class="kt">Monad</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">console</span> <span class="k">=</span> <span class="n">implicitly</span><span class="o">[</span><span class="kt">Console</span><span class="o">[</span><span class="kt">F</span><span class="o">]]</span>
+
+  <span class="k">import</span> <span class="nn">console._</span>
+
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="k">_</span>     <span class="k">&lt;-</span> <span class="nf">putStrLn</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">)</span>
+    <span class="n">name</span>  <span class="k">&lt;-</span> <span class="n">getStrLn</span>
+    <span class="k">_</span>     <span class="k">&lt;-</span> <span class="nf">putStrLn</span><span class="o">(</span><span class="n">s</span><span class="s">"Hello, $name, good to meet you!"</span><span class="o">)</span>
+  <span class="o">}</span> <span class="k">yield</span> <span class="n">name</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Because such programs are polymorphic in the effect type <code class="highlighter-rouge">F[_]</code>, we can <em>instantiate</em> these polymorphic programs to any concrete effect type that provides whatever they require.</p>
+
+<p>For example, if we are using ZIO <code class="highlighter-rouge">Task</code> (a type alias for <code class="highlighter-rouge">ZIO[Any, Throwable, A]</code>), we can instantiate our program to this concrete effect type with the following code snippet:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">taskProgram</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="n">consoleProgram</span><span class="o">[</span><span class="kt">Task</span><span class="o">]</span></code></pre></figure>
+
+<p>Typically, the <em>instantiation</em> of a polymorphic tagless-final value to a concrete effect type is deferred as long as possible, preferrably to the entry points of the application or test suite.</p>
+
+<p>With this introduction, let’s talk about the reasons you might want to use tagless-final…the <em>pitch</em> for the tagless-final technique, if you will.</p>
+
+<h2 id="the-pitch-for-tagless-final">The Pitch for Tagless-Final</h2>
+
+<p>Tagless-final has a seductive pitch that appeals to every aspiring functional programmer.</p>
+
+<p>In the functional programming community, we are taught (with good reason) that monomorphic code can’t be reused much, and leads to more bugs.</p>
+
+<p>We are taught that generic code not only enables reuse, but it pushes more information into the types, where the compiler can help us verify and maintain correctness.</p>
+
+<p>We are taught the <em>principle of least power</em>, which tells us that our functions should require as little as necessary to do their job.</p>
+
+<p>I have helped develop, motivate, and teach these and other principles in my <em>Functional Scala</em> workshops, helping train new generations of Scala developers in the functional way of thinking and developing software.</p>
+
+<p>In this context, functional programmers are <em>primed</em> for the tagless-final pitch; I know this, because I have <em>given</em> the tagless-final pitch, and even helped <em>craft</em> its modern day incarnation.</p>
+
+<p>In one video, I unintentionally convinced <a href="https://www.youtube.com/watch?v=sxudIMiOo68">several companies to adopt tagless-final</a>, despite an explicit disclaimer stating the techniques would be overkill for many applications!</p>
+
+<p>In the next few sections, I’m going to give you this pitch, and try to convince you that tagless-final is the best thing ever. Moreover, I’m going to use only arguments that have an element of truth.</p>
+
+<p>Ready? Here we go!</p>
+
+<h3 id="1-effect-type-indirection">1. Effect Type Indirection</h3>
+
+<p>As of this writing, there are <a href="/articles/zio-cats-effect">several mainstream effect types</a>, including ZIO, Monix, and Cats IO, all of which ship with <a href="https://github.com/typelevel/cats-effect">Cats Effect</a> instances, and which can be used more or less interchangeably in libraries like FS2, Doobie, and http4s.</p>
+
+<p>Tagless-final lets you insulate your code from the decision of <em>which</em> effect type to use. Rather than pick one of these concrete implementations, using tagless-final lets you write <em>effect type-agnostic</em> code, which can be <em>instantiated</em> to any concrete effect type that provides Cats Effect instances.</p>
+
+<p>For example, our preceding console program can just as easily be instantiated to Cats IO:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">ioProgram</span> <span class="k">=</span> <span class="n">consoleProgram</span><span class="o">[</span><span class="kt">cats.effect.IO</span><span class="o">]</span></code></pre></figure>
+
+<p>With tagless-final, you can defer the decision of which effect type to use <em>indefinitely</em> (or at least, to the edge of your program), isolating your application from changes in an evolving ecosystem.</p>
+
+<p>Tagless-final lets you future-proof your code!</p>
+
+<h3 id="2-effect-testability">2. Effect Testability</h3>
+
+<p>Tagless-final, because it provides a strong layer of indirection between your application, and the concrete effect type that models effects, enables your code to be fully testable.</p>
+
+<p>In the preceding console implementation, it is easy to define a test instance of the <code class="highlighter-rouge">Console</code> type class:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ConsoleData</span><span class="o">(</span><span class="n">input</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">],</span> <span class="n">output</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span>
+
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ConsoleTest</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">run</span><span class="k">:</span> <span class="kt">ConsoleData</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="nc">ConsoleData</span><span class="o">,</span> <span class="n">A</span><span class="o">))</span>
+<span class="k">object</span> <span class="nc">ConsoleTest</span> <span class="o">{</span>
+  <span class="k">implicit</span> <span class="k">def</span> <span class="nf">ConsoleConsoleTest</span><span class="k">:</span> <span class="kt">Console</span><span class="o">[</span><span class="kt">ConsoleTest</span><span class="o">]</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Console</span><span class="o">[</span><span class="kt">ConsoleTest</span><span class="o">]</span> <span class="o">{</span> 
+    <span class="k">def</span> <span class="nf">putStrLn</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">ConsoleTest</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> 
+      <span class="nc">ConsoleTest</span><span class="o">(</span><span class="n">data</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="nv">data</span><span class="o">.</span><span class="py">copy</span><span class="o">(</span><span class="n">output</span> <span class="k">=</span> <span class="n">line</span> <span class="o">::</span> <span class="nv">data</span><span class="o">.</span><span class="py">output</span><span class="o">),</span> <span class="o">()))</span>
+
+    <span class="k">val</span> <span class="nv">getStrLn</span><span class="k">:</span> <span class="kt">ConsoleTest</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
+      <span class="nc">ConsoleTest</span><span class="o">(</span><span class="n">data</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="nv">data</span><span class="o">.</span><span class="py">copy</span><span class="o">(</span><span class="n">input</span> <span class="k">=</span> <span class="nv">data</span><span class="o">.</span><span class="py">input</span><span class="o">.</span><span class="py">drop</span><span class="o">(</span><span class="mi">1</span><span class="o">)),</span> <span class="nv">data</span><span class="o">.</span><span class="py">input</span><span class="o">.</span><span class="py">head</span><span class="o">))</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Now, assuming we define an appropriate <code class="highlighter-rouge">Monad</code> instance for our data type (which is easy to do!), we can instantiate our polymorphic <code class="highlighter-rouge">consoleProgram</code> to the new type:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">testProgram</span> <span class="k">=</span> <span class="n">consoleProgram</span><span class="o">[</span><span class="kt">ConsoleTest</span><span class="o">]</span></code></pre></figure>
+
+<p>Tada! We can now unit test our console program with fast, deterministic unit tests, thereby reaping the full testability benefits of pure functional programming.</p>
+
+<h3 id="3-effect-parametric-reasoning">3. Effect Parametric Reasoning</h3>
+
+<p><em>Parametric reasoning</em> in statically-typed functional programming circles refers to the ability for us to reason generically about the implementation of a polymorphic function merely by looking at its type.</p>
+
+<p>For example, there is one possible implementation of the following function:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">identity</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">a</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>(Assuming no reflection, exceptions, or use of <code class="highlighter-rouge">null</code>.)</p>
+
+<p>Parametric reasoning allows us to save time when we are studying code. We can look at the types of a function, and even if we don’t know the exact implementation, we can place <em>bounds</em> on what the function can do.</p>
+
+<p>Parametric reasoning lets us more quickly and more reliably understand code bases, which is critical for safe maintenance of those code bases in response to new and changing business requirements.</p>
+
+<p>Moreover, parametric reasoning can reduce the need for unit testing: whatever is guaranteed by the type, does not need to be tested by unit tests. Types prove universal properties across all values, so they are strictly more powerful than tests, which prove existential properties across a few values.</p>
+
+<p>Since tagless-final is an example of (higher-kinded) parametric polymorphism, we can leverrage parametric polymorphism for effect types too.</p>
+
+<p>For example, take the following code snippet:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Console:</span> <span class="kt">Applicative</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>Although we don’t know what the implementation of this function is without looking, we know that it requires <code class="highlighter-rouge">F[_]</code> to provide both <code class="highlighter-rouge">Console</code> and <code class="highlighter-rouge">Applicative</code> instances.</p>
+
+<p>Because <code class="highlighter-rouge">F[_]</code> is only <code class="highlighter-rouge">Applicative</code> and not <code class="highlighter-rouge">Monad</code>, we know that although <code class="highlighter-rouge">consoleProgram</code> can have a sequential chain of console effects, no subsequent effect can depend on the runtime value of a predecessor effect (that capability would require <code class="highlighter-rouge">bind</code> from <code class="highlighter-rouge">Monad</code>).</p>
+
+<p>We would not be surprised if we saw the implementation were as follows:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Console:</span> <span class="kt">Applicative</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="nv">console</span> <span class="k">=</span> <span class="n">implicitly</span><span class="o">[</span><span class="kt">Console</span><span class="o">[</span><span class="kt">F</span><span class="o">]]</span>
+
+  <span class="k">import</span> <span class="nn">console._</span>
+
+  <span class="nf">putStrLn</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">)</span> <span class="o">*&gt;</span> <span class="n">getStrLn</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>By constraining the capabilities of the data type <code class="highlighter-rouge">F[_]</code>, tagless-final lets us reason about our effectful programs parametrically, which lets us spend less time studying code, and less time writing unit tests.</p>
+
+<h3 id="the-closer">The Closer</h3>
+
+<p>As we have seen, tagless-final is an incredible asset to functional Scala programmers everwhere.</p>
+
+<p>Not only does it enable abstraction over effects, so programmers can change their mind about which effect type to use, but the technique gives us full testability of effectful programs, and helps us reason about our effectful programs in new ways, which can reduce the need for studying code and cut down on unit tests.</p>
+
+<h2 id="the-fine-print">The Fine Print</h2>
+
+<p>Sold yet on tagless-final? I am!!! Well, <em>somewhat</em>, anyway.</p>
+
+<p>There’s an element of truth in <em>every</em> argument that I’ve made. Although as you might suspect, a more nuanced, sophisticated look reveals a less positive picture of tagless-final.</p>
+
+<p>Let’s take a look at all the fine print in the next few sections.</p>
+
+<h3 id="1-premature-indirection">1. Premature Indirection</h3>
+
+<p>It is absolutely true that adding a layer of indirection over an effect type can reduce the cost of switching to a different effect type, assuming similar underlying semantics.</p>
+
+<p>It is also true that adding a layer of indirection over Spark, Akka https, Slick, or a database-specific dialect of SQL, might reduce the cost of switching to different technologies.</p>
+
+<p>In my experience, however, the attempt to proactively add layers of indirection without a clear business mandate to do so, simply to mitigate the <em>possible</em> cost of future change, is an example of <em>premature indirection</em>.</p>
+
+<p>Premature indirection rarely pays for itself.</p>
+
+<p>In most cases, overall application costs would be <em>substantially lower</em> picking a specific technology, and then, if needs change, simply refactoring the code to a new technology.</p>
+
+<p>The cost of refactoring from one effect type to another is not related to the cost of changing types from <code class="highlighter-rouge">IO[_]</code> to <code class="highlighter-rouge">Task[_]</code>, or swapping one set of methods for another. Rather, it is related to the <em>semantic</em> differences between operations on these effect types. Yet a layer of indirection helps us only when semantic differences are relatively small. If they are small, then the cost of refactoring is relatively low.</p>
+
+<p>A refactoring from one effect type to another only needs to happen once, and only if actually necessary (which it might not be). But the cost of coding to a layer of indirection has to be paid indefinitely, and it must be paid regardless of whether or not the indirection will ever be used.</p>
+
+<p>Beyond the cost of coding to an indirection layer that may never be used, there are substantial <em>opportunity costs</em> to premature indirection. In the case of ZIO, for example, the core effect type has hundreds of additional operations that are not available on a polymorphic <code class="highlighter-rouge">F[_]</code>.</p>
+
+<p>These methods, like many additional methods on Monix Task, are discoverable by IDEs; their types guide users to correct solutions; they have great inline Scaladoc; error messages are concrete and actionable; and type-inference is nearly flawless.</p>
+
+<p>If you <em>commit to not committing</em>, you’re stuck with the weakest <code class="highlighter-rouge">F[_]</code>, which means much of the power of an effect system remains inaccessible. The frustration of knowing a method is right <em>there</em>, but just out of reach, has prompted many to introduce custom type classes designed to access specific features of the underlying effect type.</p>
+
+<p>The opportunity cost is even greater for ZIO than Monix, because ZIO features polymorphic reader and error effects, which provide new operations and allow parametric reasoning about dependencies and error handling, and which are currently unsupported in Cats Effect (the leading library for effect indirection).</p>
+
+<p>In my opinion, only library authors have a compelling argument for effect type indirection. In order to maximize market share (which is critical for the adoption, retention, and growth of open source libraries), they need to support all major effect types, or risk losing market share to the libraries that do.</p>
+
+<p>While this is a compelling argument for open source libraries, it is completely inapplicable to the closed source applications that make up the majority of Scala software development.</p>
+
+<h3 id="2-untestable-effects">2. Untestable Effects</h3>
+
+<p>Tagless-final provides a <em>path</em> to testability, but tagless-final programs are not <em>inherently</em> testable. In fact, they are testable <em>only to the degree their tagless-final type classes are testable</em>.</p>
+
+<p>For example, while we can create a testable version of the <code class="highlighter-rouge">Console</code> type class, many others, including popular type classes in the tagless-final community, are inherently <em>untestable</em>.</p>
+
+<p>The majority of applications written in the tagless-final style make heavy use of a type class in Cats Effect called <code class="highlighter-rouge">Sync</code>, or its more powerful versions, including <code class="highlighter-rouge">Async</code>, <code class="highlighter-rouge">LiftIO</code>, <code class="highlighter-rouge">Concurrent</code>, <code class="highlighter-rouge">Effect</code> and <code class="highlighter-rouge">ConcurrentEffect</code>.</p>
+
+<p>These type classes are designed to capture side-effects—for example, random number generation, API calls, and database queries. Any code that utilizes these type classes, or others like them, cannot be unit tested even in theory, because it interacts with partial, non-deterministic, and side-effecting code.</p>
+
+<p>While such code can be tested with integration and system tests, <em>any code at all</em> can be tested with integration and system tests, including the worst possible procedural code!</p>
+
+<p>Ultimately, the testability of tagless-final programs requires they <em>code to an interface, not an implementation</em>. Yet, if applications follow this principle, they can be tested even <em>without</em> tagless-final!</p>
+
+<p>Here is a monomorphic version of the <code class="highlighter-rouge">Console</code> type class, for example:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Console</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">putStrLn</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> 
+  <span class="k">val</span> <span class="nv">getStrLn</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>If your program uses this interface to perform console input/output, then it can be tested, even with a monomorphic effect type. The key insight is that your program must be <em>written to an interface</em>, rather than a concrete implementation. Unfortunately, numerous widely-used tagless-final interfaces (like <code class="highlighter-rouge">Sync</code>, <code class="highlighter-rouge">Async</code>, <code class="highlighter-rouge">LiftIO</code>, <code class="highlighter-rouge">Concurrent</code>, <code class="highlighter-rouge">Effect</code>, and <code class="highlighter-rouge">ConcurrentEffect</code>) encourage you to code to an <em>implementation</em>.</p>
+
+<p>Using tagless-final doesn’t provide any inherent benefits to testability. The testability of your application is completely orthogonal to its use of tagless-final, and comes down to whether or not you follow best practices—which you can do <em>with</em> or <em>without</em> tagless-final.</p>
+
+<h3 id="3-no-effect-polymorphic-reasoning">3. No Effect Polymorphic Reasoning</h3>
+
+<p>The most insidious claim that tagless-final makes is that it provides <em>effect polymorphic reasoning</em>.</p>
+
+<p>According to this claim—which is not entirely without merit—we can look at a polymorphic function signature, and know the effects it performs merely by examining constraints.</p>
+
+<p>Previously, we looked at the following example:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Console:</span> <span class="kt">Applicative</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>I argued we could know something about what this function does by observing its use of <code class="highlighter-rouge">Applicative</code> and <code class="highlighter-rouge">Console</code>. In theory, these constraints provides us the ability to <em>partially</em> understand the behavior of the function without examining the implementation.</p>
+
+<p>Unfortunately, this argument rests on a premise that is <em>false</em>. Namely, it rests on the premise that implicit parameters somehow <em>constrain</em> the side-effects executed or modeled by the function.</p>
+
+<p>Scala does not track side-effects, no matter how much we wish otherwise. We can perform console effects anywhere, even without the provided <code class="highlighter-rouge">Console[F]</code>, as shown in the following snippet:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Applicative</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="nf">println</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">)</span>
+  <span class="k">val</span> <span class="nv">name</span> <span class="k">=</span> <span class="nv">scala</span><span class="o">.</span><span class="py">io</span><span class="o">.</span><span class="py">StdIn</span><span class="o">.</span><span class="py">readLine</span><span class="o">()</span>
+  <span class="nc">Applicative</span><span class="o">[</span><span class="kt">F</span><span class="o">].</span><span class="py">pure</span><span class="o">(</span><span class="n">name</span><span class="o">)</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Not only can we perform any effects anywhere inside the body of the method without even so much as a compiler warning, but we can embed these effects into any <code class="highlighter-rouge">Applicative</code> functor, even one with a strict definition of <code class="highlighter-rouge">pure</code> / <code class="highlighter-rouge">point</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Applicative</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nc">Applicative</span><span class="o">[</span><span class="kt">F</span><span class="o">].</span><span class="py">pure</span><span class="o">(()).</span><span class="py">map</span> <span class="o">{</span> <span class="k">_</span> <span class="k">=&gt;</span>
+    <span class="k">val</span> <span class="nv">_</span> <span class="k">=</span> <span class="nf">println</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">)</span>
+    <span class="nv">scala</span><span class="o">.</span><span class="py">io</span><span class="o">.</span><span class="py">StdIn</span><span class="o">.</span><span class="py">readLine</span><span class="o">()</span>
+  <span class="o">}</span></code></pre></figure>
+
+<p>This is legal, type-safe Scala code, and variations of this code appear pervasively in real world Scala. Not even the most aggressive IntelliJ IDEA lint settings will report any problems with this code snippet (except perhaps a warning about the use of higher-kinded types).</p>
+
+<p>In tagless-final, “constraints”—parameter values like <code class="highlighter-rouge">Applicative[F]</code> or <code class="highlighter-rouge">Console[F]</code>—do not actually constrain, they <em>unconstrain</em>, giving us more ways of constructing values. And in Scala, because side-effects are already <em>totally unconstrained</em>, adding more values to parameter lists doesn’t change anything.</p>
+
+<p>Stated more forcefully and for Scala code, <strong>effect parametric reasoning is a lie</strong>.</p>
+
+<p>Now, as highly-skilled and highly-disciplined functional programmers, we can agree amongst ourselves to reject merging such code into our projects. We can inspect every line of code in our application to ensure that side-effects are captured only in “appropriate” places, where we all agree on some definition of <em>appropriate</em>.</p>
+
+<p>A social contract, powered by good-will, skill, discipline, and indoctrination of new hires, can be quite useful. Nearly <em>all</em> best practices are social contracts, and they undoubtedly help us write better code. But social contracts should not be confused with compile-time constraints.</p>
+
+<p>If we <em>assume</em> a working social contract to restrict side-effects in Scala, then we can assume restrictions on the effects in the preceding definition of <code class="highlighter-rouge">consoleProgram</code>, but these restrictions do not come from effect polymorphism (which does not exist in a language without effect tracking!). Rather, the restrictions come from diligence and discipline in enforcing the social contract—the line-by-line review of every new pull request.</p>
+
+<p>If we are going to rely on a social contract to give us reasoning benefits, however, then we should consider other social contracts, such as <em>always code to an interface, not an implementation</em>.</p>
+
+<p>Other social contracts can give us the exact same “reasoning benefits”, but with potentially better ergonomics. Stated differently, “reasoning benefits” is not a reason to prefer tagless-final over any other approach, because those benefits derive only from discipline (not from effect polymorphism), and discipline works for other approaches too.</p>
+
+<p>These are hard limits on <em>effect parametric polymorphism</em> in Scala, which—short of inventing a compiler plug-in that overlays a new, effect-tracked language onto Scala—cannot be circumvented.</p>
+
+<h3 id="4-sync-bloat">4. Sync Bloat</h3>
+
+<p>Even if we ignore the fact that effect parametric polymorphism doesn’t exist in Scala (reasoning benefits come from discipline, not from tagless-final), we have a major problem that I term <em>sync bloat</em>.</p>
+
+<p>In Scala, the Cats Effect type class hierarchy provides many type classes that are <em>explicitly designed</em> to capture side-effecting code. These type classes include <code class="highlighter-rouge">Sync</code>, <code class="highlighter-rouge">Async</code>, <code class="highlighter-rouge">LiftIO</code>, <code class="highlighter-rouge">Concurrent</code>, <code class="highlighter-rouge">Effect</code>, and <code class="highlighter-rouge">ConcurrentEffect</code>.</p>
+
+<p>Methods that require one of these type classes can literally do <em>anything</em> they wants, without constraints, even assuming a working social contract. These methods nullify the power of discipline, depriving us of any benefits to reasoning and testability, resulting in opaque blobs of side-effecting, untestable procedural code.</p>
+
+<p>Nearly all tagless-final code (including some of the <a href="https://github.com/slamdata/quasar/search?q=Sync&amp;unscoped_q=Sync">best open source functional Scala I know of</a>) makes liberal use of these type classes, freely embedding side-effects in numerous methods sprawled across the code base.</p>
+
+<p>In a perfect world, perhaps programmers would create hundreds or thousands of fine-grained, testable type classes to represent separate concerns. But in the real world, the vast majority of programmers using tagless-final (even high-skilled, expert-level functional programmers!) are not doing this. Instead, they’re requiring type classes like <code class="highlighter-rouge">Sync</code> that encourage embedding arbitrary side-effects everywhere.</p>
+
+<p>The pervasive phenomenon of <em>sync bloat</em> means that even if we have a working social contract, powered by discipline and diligence, we <em>still</em> aren’t gaining any benefits of effect parametricity.</p>
+
+<h3 id="5-fake-abstraction">5. Fake Abstraction</h3>
+
+<p>As I teach in <em>Functional Scala</em>, abstractions are sets of operations that satisfy algebraic laws, encoded using type classes. Abstractions allow us to describe common structure across a range of distinct data types.</p>
+
+<p>Abstraction is the means by which we can write <em>principled</em> polymorphic code.</p>
+
+<p>Without lawful operations, there is no abstraction, only layers of indirection masquerading as abstraction.</p>
+
+<p>As practiced in Scala, tagless-final encourages a form of <em>fake abstraction</em>. To see this, let’s take a closer look at the <code class="highlighter-rouge">Console[F]</code> type class defined previously:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Console</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">putStrLn</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> 
+  <span class="k">val</span> <span class="nv">getStrLn</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>This trait has two operations, called <code class="highlighter-rouge">putStrLn</code> and <code class="highlighter-rouge">getStrLn</code>. We can provide implementations of these two different operations for many different data types.</p>
+
+<p>Unfortunately, these operations satisfy no algebraic laws—none whatsoever! This means when we are writing polymorphic code, we have no way to reason generically about <code class="highlighter-rouge">putStrLn</code> and <code class="highlighter-rouge">getStrLn</code>.</p>
+
+<p>For all we know, these operations could be launching threads, creating or deleting files, running a large number of individual side-effects in sequence, and so on.</p>
+
+<p>This contrasts quite dramatically with type classes like <code class="highlighter-rouge">Ord</code>, which we can use to build a generic sorting algorithm that will <em>always</em> be correct if the algebraic laws of <code class="highlighter-rouge">Ord</code> are satisfied for the element type (<em>this</em> is principled functional programming).</p>
+
+<p>The implications of this are profound. Consider the following type signature:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">consoleProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Console:</span> <span class="kt">Applicative</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>Because <code class="highlighter-rouge">Console[F]</code> is lawless, we cannot reason generically about the side-effects modeled by the returned <code class="highlighter-rouge">F[Unit]</code>. These side-effects are unconstrained precisely because there are no algebraic laws that govern the operations provided to us by <code class="highlighter-rouge">Console[F]</code>.</p>
+
+<p>Two different implementations of <code class="highlighter-rouge">Console[F]</code> could do totally different things, without breaking any laws, so we cannot actually reason <em>generically</em> about the correctness of code using <code class="highlighter-rouge">Console[F]</code>. Our code may be correct for some <code class="highlighter-rouge">Console[F]</code>, and incorrect for other <code class="highlighter-rouge">Console[F]</code>.</p>
+
+<p>Keep in mind that <code class="highlighter-rouge">Console[F]</code> is just a toy example. A realistic tagless-final type class would be far larger and more complex, containing numerous operations, which are ad hoc, unlawful, and impossible to reason about generically. If we write code using this type class, it will be highly coupled to unspecified implementation details.</p>
+
+<p><em>Real</em> generic reasoning applies only to <em>real</em> abstractions, like <code class="highlighter-rouge">Monoid</code>, <code class="highlighter-rouge">Monad</code>, and type classes from functional programming. The moment we introduce ad hoc, unspecified, implementation-specific operations like <code class="highlighter-rouge">putStrLn</code> or <code class="highlighter-rouge">getStrLn</code>, we can no longer reason generically about the behavior of our code in any principled way.</p>
+
+<p>What this means is that even if we grant that Scala has effect parametric polymorphism (which it doesn’t!), and even if we assume that developers won’t use type classes like <code class="highlighter-rouge">Sync</code> (which they will!), the ad hoc nature of tagless-final type classes means we don’t actually have <em>useful generic reasoning</em> across these type classes.</p>
+
+<p>If only <code class="highlighter-rouge">Applicative[F]</code> is required, we can tell that <code class="highlighter-rouge">bind</code> is not used, but we cannot tell how many individual side-effects are chained together to make up a single operation like <code class="highlighter-rouge">putStrLn</code>. The limited reasoning we can do is <em>useless</em> (a parlor trick, at best!), precisely because of all the reasoning we <em>cannot</em> do.</p>
+
+<p>Does <code class="highlighter-rouge">putStrLn</code> print a line of text to a console? Or does it launch a multithreaded <code class="highlighter-rouge">main</code> function with the whole application? Who knows. The types and laws don’t tell you anything.</p>
+
+<p>Adding <code class="highlighter-rouge">Console[F]</code> to a type signatue is at best a prayer that whoever gives us a <code class="highlighter-rouge">Console[F]</code> will abide by an unspecified contract that has something to do with console input/output and will make our “generic” code work correctly.</p>
+
+<p>Polymorphic code that we can reason about generically is an awesome benefit of statically-typed functional programming. But generic reasoning requires abstractions, which must always have algebraic laws. The moment we create fake abstractions (operations without laws), we aren’t doing principled functional programming anymore.</p>
+
+<h2 id="the-tagless-final-hit-list">The Tagless-Final Hit List</h2>
+
+<p>Tagless-final in Scala doesn’t entirely live up to the hype, as I’ve argued in this post:</p>
+
+<ol>
+  <li><strong>Premature Indirection</strong>. For applications, using tagless-final to guard against the possibility of changing effect types is usually <em>overengineering</em> (premature indirection). Your application doesn’t add indirection layers for Akka Streams, Slick, Future, or even the dialect of SQL you’re using—because in most cases, the cost of building and maintaining that layer of indirection is <em>unending</em>. In the case of tagless-final effects, you also deprive yourself of many lawful operations and added type safety.</li>
+  <li><strong>Untestable Effects</strong>. Many popular tagless-final type classes encourage capturing side-effects. Even if we are disciplined and diligent, these type classes destroy our ability to reason about and unit test applications built using them. In the end, testability is not a property of tagless-final code; testability requires you code to an interface, which you can do with or without tagless-final.</li>
+  <li><strong>No Effect Parametric Polymorphism</strong>. Scala doesn’t constrain side-effects, and implicit parameters don’t change this. If you want to <em>constrain</em> side-effects, you need a <em>social contract</em>, enforced by discipline and diligence. In this case, reasoning benefits (such as they are) come only from painstaking review of every line of code, not from effect polymorphism. Yet other approaches that require discipline, like ensuring programmers only code to an interface, can provide similar benefits, but without the drawbacks of tagless-final.</li>
+  <li><strong>Sync Bloat</strong>. In Scala, real world tagless-final code tends not to use custom type classes, but rather, a few type classes that allow the unrestricted capture of side-effects. These <code class="highlighter-rouge">Sync</code> code bases do not confer any benefits to reasoning or testability, even if we are disciplined and diligent during code review. They combine the ceremony and boilerplate of tagless-final with the untestable, unreasonable nature of the worst procedural code.</li>
+  <li><strong>Fake Abstraction</strong>. Reasoning about generic code requires abstractions, which come equipped with algebraic laws. Algebraic laws precisely define common structure across different data types, and they let us reason generically about the correctness of polymorphic code. Yet most tagless-final type classes do not have any laws. Any code that uses “fake abstractions” is not actually generic, but instead, is closely wedded to unspecified implementation details.</li>
+</ol>
+
+<p>Beyond just not living up to the hype, tagless-final has a number of serious drawbacks:</p>
+
+<ol>
+  <li>Tagless-final has significant pedagogical costs, because of the huge number of concepts it requires a team to master (parametric polymorphism, higher-kinded types, higher-kinded parametric polymorphism, type classes, higher-kinded type classes, the functor hierarchy, etc.).</li>
+  <li>Tagless-final has significant institutional costs, because of the level of ceremony and boilerplate involved (type classes, type class instances, instance summoners, syntax extensions, higher-kinded implicit parameter lists, non-inferrable types, compiler plug-ins, etc.).</li>
+</ol>
+
+<p>I’ve <a href="/articles/zio-environment">talked about these drawbacks</a> at length in the past, and I encourage readers to investigate for themselves the drawbacks of tagless-final in Scala.</p>
+
+<h2 id="objections">Objections</h2>
+
+<p>Some functional programmers, when presented with these drawbacks, immediately counter with the objection that <em>other approaches</em> (including the <a href="/articles/zio-environment">reader monad</a>) can’t constrain side-effects in Scala, either.</p>
+
+<p>This is true, but also entirely beside the point.</p>
+
+<p>There are <em>zero</em> approaches to statically constraining effects in Scala, because Scala cannot statically constrain effects. This means that when comparing two different approaches to managing effects in Scala, there is no dimension for “constraining effects”.</p>
+
+<p>You can combine tagless-final with manual inspection of every line of code in an application, to ensure it satisfies the social contract that side-effects will only be executed and captured in “approved” places. This combination, which is powered by discipline (not effect polymorphism), provides both testability and reasoning benefits.</p>
+
+<p>Similarly, you can combine the reader monad with manual inspection of every line of code in an application, to ensure it satisfies a social contract that logic will be written to interfaces, not implementations. As with tagless final, this combination is powered by discipline, and provides both testability and reasoning benefits.</p>
+
+<p>Both tagless-final and the reader monad (and many other approaches) can indeed provide “guarantees” about effects, but it’s not really the <em>techniques</em> that are providing the guarantees, but the <em>programmers</em> who are manually reviewing and merging every line of code. These “guarantees” come from discipline, not from the Scala compiler.</p>
+
+<p>Take the following snippet of tagless-final:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">console</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Monad:</span> <span class="kt">Console</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>The only way we “know” this function does not interact with databases or perform random number generation or do anything else is if we or our colleagues have inspected every line of code, and manually certified that it doesn’t break our social contract about where side-effects can be run and modeled.</p>
+
+<p>The compiler doesn’t provide any assistance with this, and this “knowledge” is not related to effect polymorphism.</p>
+
+<p>Similarly, take the following snippet of monomorphic code:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">console</span><span class="o">(</span><span class="n">c</span><span class="k">:</span> <span class="kt">Console</span><span class="o">)</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>The only way we “know” this function does not interact with the database or perform random number generation or do anything else is if we or our colleagues have inspected every line of code, and manually certified that it doesn’t break our social contract about coding to interfaces, and not to implementations.</p>
+
+<p>As with taglesss-final, the compiler doesn’t provide any assistance. Both these approaches and others to reasoning about side-effects come down to social contracts, powered by discipline and vigilence.</p>
+
+<p>Another vague objection I have heard is that tagless-final is somehow more principled than other approaches, or that it somehow lends itself better to designing composable functional APIs.</p>
+
+<p>In reality, principled, composable, functional code has everything to do with whether the operations of your domain satisfy algebraic laws. As practiced in Scala, tagless-final has no relation to principled functional programming.</p>
+
+<p>The use of higher-kinded parametric polymorphism may provide an illusion of “rigor”, but it’s just a thin veneer on what is typically unprincipled imperative code. All the effect type polymorphism in the world can’t change this.</p>
+
+<h2 id="recommendations">Recommendations</h2>
+
+<p>In light of this analysis of tagless-final, I have some concrete recommendations for different situations:</p>
+
+<ol>
+  <li><strong>Stay the Course</strong>. If you’re in a small, stable, high-skilled team that’s already using and benefiting from tagless-final due to a working social contract, then <em>keep using tagless-final</em>. Long-time functional programmers may “forget” how to program procedurally and instinctively confine themselves to a functional subset of Scala, which makes enforcement of the contract easier. Consider abandoning tagless-final (or building a compiler plug-in) if the team starts scaling.</li>
+  <li><strong>Build a Library</strong>. If you’re building an open source library that doesn’t take advantage of effect-specific features, then use an existing layer of indirection, such as Cats Effect. Or if you want to keep dependencies small, create a tiny layer of indirection for just the features you need. This layer may not help you reason about or test code, but it will help you support the full functional Scala market, which will improve adoption of your library.</li>
+  <li><strong>Ditch Tagless-Final</strong>. In all other cases, I recommend picking a concrete effect type (ZIO, Cats IO, or Monix). If you decide to switch later, you’ll pay a one-time cost for the (straightforward) refactor. Encourage coding to <em>interfaces</em>, not implementations. This social contract doesn’t scale either, but at least many Java developers are already indoctrinated in the practice. This will give you testability, it can be done incrementally, and it can give you the same (discipline-powered) reasoning benefits as tagless-final, if employed to the same extent.</li>
+  <li><strong>Minimize Effectful Code</strong>. Consider minimizing effectful code. Look for real abstractions in your domain, which are equipped with algebraic laws that help you reason generically about polymorphic code. Prefer declarative code instead of imperative (monadic) code. Don’t presume your <code class="highlighter-rouge">State</code> monad code is any better than its <code class="highlighter-rouge">IO</code> equivalent (it’s not). Prefer data types whose operations have denotational semantics.</li>
+</ol>
+
+<h1 id="summary">Summary</h1>
+
+<p>Tagless-final has a brilliant sales pitch. It promises to future-proof our code to changes in concrete effect types. It promises us testability. It promises us the ability to reason about effects using parametric polymorphism.</p>
+
+<p>Unfortunately, the reality of tagless-final doesn’t live up to the hype:</p>
+
+<ul>
+  <li>Tagless-final does insulate us from an effect type, but that’s a maintenance burden and deprives us of useful principled operations and type-safety.</li>
+  <li>Tagless-final doesn’t provide us any testability, per se, and many common type classes prevent testability; it’s only coding to an interface that provides us with testability, which can be done with or without tagless-final.</li>
+  <li>Tagless-final doesn’t constrain effects, since Scala has no way to restrict side-effects; type signatures alone cannot tell us which side-effects are executed or modeled by a method.</li>
+</ul>
+
+<p>Beyond these drawbacks, real world tagless-final is littered with <em>sync bloat</em>, which can’t help us with unit testing or reasoning even if we are disciplined and diligent about restricting side-effects.</p>
+
+<p>Further, since most tagless-final type classes are completely lawless, we can’t reason generically about code that uses them. True generic reasoning requires <em>abstractions</em>, defined by lawful sets of operations, and tagless-final doesn’t give us abstractions, only collections of ad hoc operations with unspecified semantics.</p>
+
+<p>Tagless-final, far from being a pancea to managing functional effects, imposes great pedagogical and institutional costs. Many claim the technique renders Scala code bases impenetrable and unmaintainable. While an exaggeration, there is no question that the learning curve for tagless-final is steep, and the ergonomics of the technique are poor.</p>
+
+<p>Ultimately, in my opinion, the benefits of tagless-final do not pay for the costs—at least not in most cases, and not with the current Scala compiler and tooling.</p>
+
+<p>Small, stable teams that are already using tagless-final with a working social contract should probably keep using tagless-final, at least if they have found the benefits to outweigh the costs (and some teams have).</p>
+
+<p>Developers of open source libraries can surely benefit from a layer of indirection around effect types, because even though indirection may not help with reasoning or testability, it can increase addressable market share.</p>
+
+<p>Finally, other teams should probably avoid using tagless-final for managing effects, and embrace the age-old best practice of <em>coding to an interface</em>. While still just a social contract that relies on discipline, the practice is widely known, doesn’t require any fancy training, and can be used with more ergonomic approaches to testability and reasoning, including traditional dependency injection, module-oriented programming, and the reader monad.</p>
+
+:ET

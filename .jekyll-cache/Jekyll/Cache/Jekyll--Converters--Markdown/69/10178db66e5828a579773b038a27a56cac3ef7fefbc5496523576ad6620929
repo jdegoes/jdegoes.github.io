@@ -1,0 +1,480 @@
+I"
+�<p>Cats Effect has become the <a href="https://www.reactive-streams.org">“Reactive Streams”</a> of the functional Scala world, enabling a diverse ecosystem of libraries to work together.</p>
+
+<p>Many great libraries like http4s, FS2, and Doobie are built on the Cats Effect type classes, and effect libraries like <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> and Monix provide instances of these type classes for their effect types.</p>
+
+<p>Although not without a few drawbacks, many of which will be <a href="https://github.com/typelevel/cats-effect/issues/321">rectified in 3.0</a>, the Cats Effect library is helping many open source contributors economically support the whole functional Scala ecosystem.</p>
+
+<p>Application developers who use Cats Effect face a far more difficult choice: which of the major effect types they will use to build their applications.</p>
+
+<p>Application developers have three major choices:</p>
+
+<ul>
+  <li>Cats IO, the reference implementation in Cats Effect</li>
+  <li>Monix, with its <code class="highlighter-rouge">Task</code> data type and associated reactive machinery</li>
+  <li>More recently, ZIO, with its <code class="highlighter-rouge">ZIO</code> data type and concurrent machinery</li>
+</ul>
+
+<p>In this post, I’m going to argue that if you are building a Cats Effect application, then ZIO provides a compelling choice, one with design choices and features quite different than the Cats IO reference implementation.</p>
+
+<p>Without further ado, let’s take a look at my top 12 reasons why ZIO and Cats Effect are a match made in heaven!</p>
+
+<h1 id="1-better-mtl--tagless-final">1. Better MTL / Tagless-Final</h1>
+
+<p>MTL, which stands for <em>Monad Transformers Library</em>, is a style of programming where functions are <em>polymorphic</em> in their effect type, expressing their requirements through <em>type class constraints</em>.</p>
+
+<p>In Scala, this is often called the <em>tagless-final</em> style (although they are not exactly the same thing), especially when the type classes have no laws.</p>
+
+<p>It is well-known that it is impossible to define global instances for such classic MTL type classes as <em>Writer</em> and <em>State</em> for effect types like Cats IO.</p>
+
+<p>The reason is that the instances of these type classes for effect types requires access to mutable state, which cannot be created globally, because the creation of mutable state is effectful.</p>
+
+<p>For <a href="/articles/effects-without-transformers">performance reasons</a>, however, it’s critical to avoid monad transformers, and provide an implementation of <em>Writer</em> and <em>State</em> directly atop the underlying effect type.</p>
+
+<p>To accomplish this, functional Scala developers use a trick: they effectfully (but purely) create instances at the top level of their program, and then provide them downstream as local implicits:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">Ref</span><span class="o">.</span><span class="py">make</span><span class="o">[</span><span class="kt">AppState</span><span class="o">](</span><span class="n">initialAppState</span><span class="o">).</span><span class="py">flatMap</span><span class="o">(</span><span class="n">ref</span> <span class="k">=&gt;</span>
+  <span class="k">implicit</span> <span class="k">val</span> <span class="nv">monadState</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">MonadState</span><span class="o">[</span><span class="kt">Task</span>, <span class="kt">AppState</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">AppState</span><span class="o">]</span> <span class="k">=</span> <span class="nv">ref</span><span class="o">.</span><span class="py">get</span> 
+
+    <span class="k">def</span> <span class="nf">set</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">AppState</span><span class="o">)</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="nv">ref</span><span class="o">.</span><span class="py">set</span><span class="o">(</span><span class="n">s</span><span class="o">).</span><span class="py">unit</span>
+  <span class="o">}</span>
+
+  <span class="n">myProgram</span>
+<span class="o">)</span></code></pre></figure>
+
+<p>Although this trick is useful, it is also a hack. In a perfect world, all type class instances would be globally coherent (<em>one instance per type</em>)—not created locally and effectfully and then magically turned into implicit values to feed downstream methods.</p>
+
+<p>A remarkable property about MTL / tagless-final is that you can <em>directly</em> define most instances atop the ZIO data type, by using <a href="/articles/zio-environment">ZIO Environment</a>.</p>
+
+<p>Here’s one way to create a global definition of <code class="highlighter-rouge">MonadState</code> for the ZIO data type:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">State</span><span class="o">[</span><span class="kt">S</span><span class="o">]</span>
+  <span class="nc">def</span> <span class="n">state</span><span class="k">:</span> <span class="kt">Ref</span><span class="o">[</span><span class="kt">S</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">implicit</span> <span class="k">def</span> <span class="nf">ZIOMonadState</span><span class="o">[</span><span class="kt">S</span>, <span class="kt">R</span> <span class="k">&lt;:</span> <span class="kt">State</span><span class="o">[</span><span class="kt">S</span><span class="o">]</span>, <span class="kt">E</span><span class="o">]</span><span class="k">:</span> <span class="kt">MonadState</span><span class="o">[</span><span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">S</span><span class="o">]</span> <span class="k">=</span>
+  <span class="k">new</span> <span class="nc">MonadState</span><span class="o">[</span><span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">S</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">S</span><span class="o">]</span> <span class="k">=</span> <span class="nv">ZIO</span><span class="o">.</span><span class="py">accessM</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">state</span><span class="o">.</span><span class="py">get</span><span class="o">)</span>
+
+    <span class="k">def</span> <span class="nf">set</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">S</span><span class="o">)</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="nv">ZIO</span><span class="o">.</span><span class="py">accessM</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">state</span><span class="o">.</span><span class="py">set</span><span class="o">(</span><span class="n">s</span><span class="o">).</span><span class="py">unit</span><span class="o">)</span>
+  <span class="o">}</span></code></pre></figure>
+
+<p>This instance is now defined globally for any environment that supports at least <code class="highlighter-rouge">State[S]</code>.</p>
+
+<p>Similarly for <code class="highlighter-rouge">FunctorListen</code>, otherwise known as <code class="highlighter-rouge">MonadWriter</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Writer</span><span class="o">[</span><span class="kt">W</span><span class="o">]</span>
+  <span class="nc">def</span> <span class="n">writer</span><span class="k">:</span> <span class="kt">Ref</span><span class="o">[</span><span class="kt">W</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">implicit</span> <span class="k">def</span> <span class="nf">ZIOFunctorListen</span><span class="o">[</span><span class="kt">W:</span> <span class="kt">Semigroup</span>, <span class="kt">R</span> <span class="k">&lt;:</span> <span class="kt">Writer</span><span class="o">[</span><span class="kt">W</span><span class="o">]</span>, <span class="kt">E</span><span class="o">]</span><span class="k">:</span> <span class="kt">FunctorListen</span><span class="o">[</span><span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">W</span><span class="o">]</span> <span class="k">=</span>
+  <span class="k">new</span> <span class="nc">FunctorListen</span><span class="o">[</span><span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">W</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">listen</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">fa</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="o">(</span><span class="kt">A</span>, <span class="kt">W</span><span class="o">)]</span> <span class="k">=</span> 
+      <span class="nv">ZIO</span><span class="o">.</span><span class="py">accessM</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">state</span><span class="o">.</span><span class="py">get</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="n">w</span> <span class="k">=&gt;</span> <span class="nv">fa</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="n">a</span> <span class="k">=&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">w</span><span class="o">)))</span>
+
+    <span class="k">def</span> <span class="nf">tell</span><span class="o">(</span><span class="n">w</span><span class="k">:</span> <span class="kt">W</span><span class="o">)</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">W</span><span class="o">]</span> <span class="k">=</span> 
+      <span class="nv">ZIO</span><span class="o">.</span><span class="py">accessM</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">state</span><span class="o">.</span><span class="py">update</span><span class="o">(</span><span class="k">_</span> <span class="o">|+|</span> <span class="n">w</span><span class="o">).</span><span class="py">unit</span><span class="o">)</span>
+  <span class="o">}</span></code></pre></figure>
+
+<p>And of course, we can do the same for <code class="highlighter-rouge">MonadError</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">implicit</span> <span class="k">def</span> <span class="nf">ZIOMonadError</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span><span class="o">]</span><span class="k">:</span> <span class="kt">MonadError</span><span class="o">[</span><span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">E</span><span class="o">]</span> <span class="k">=</span> 
+  <span class="k">new</span> <span class="nc">MonadError</span><span class="o">[</span><span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">E</span><span class="o">]{</span>
+    <span class="k">def</span> <span class="nf">handleErrorWith</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">fa</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">A</span><span class="o">])(</span><span class="n">f</span><span class="k">:</span> <span class="kt">E</span> <span class="o">=&gt;</span> <span class="nc">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span> <span class="k">=</span> 
+      <span class="n">fa</span> <span class="n">catchAll</span> <span class="n">f</span>
+
+    <span class="k">def</span> <span class="nf">raiseError</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">e</span><span class="k">:</span> <span class="kt">E</span><span class="o">)</span><span class="k">:</span> <span class="kt">ZIO</span><span class="o">[</span><span class="kt">R</span>, <span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="nv">ZIO</span><span class="o">.</span><span class="py">fail</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+  <span class="o">}</span></code></pre></figure>
+
+<p>This technique is readily applicable to other type classes, including tagless-final type classes, whose instances may require effectfully-created state (mutable, configuration, etc.), testable effectful functions (combining environmental effects with tagless-final), or anything else that is readily accessible from the environment.</p>
+
+<p>So if you love using MTL-style, or find the benefits of tagless-final outweigh the costs, then using ZIO lets you easily define <em>global</em> instances for all your favorite type classes.</p>
+
+<p>No slow monad transformers, no effectfully created type class instances, no local implicits, and no hacks. Just straight up pure functional programming!</p>
+
+<h1 id="2-resource-safety-for-mortals">2. Resource-Safety for Mortals</h1>
+
+<p>An early defining feature of ZIO was <em>interruption</em>, the ability for the ZIO runtime to instantaneously cancel any executing effect, safely cleaning up all resources; and a course-grained version of this feature eventually made its way into Cats IO.</p>
+
+<p>This feature, called <em>async exceptions</em> in Haskell, allows composable and efficient timeouts, efficient parallel and race operations, and globally efficient computation.</p>
+
+<p>While extremely powerful, interruption poses unique challenges for resource safety.</p>
+
+<p>Programmers are mostly used to mentally tracking failure in their applications, or ZIO uses the type system to help track failure. But interruption is different. An effect composed from many other effects can be interrupted at <em>any</em> boundary.</p>
+
+<p>Take the following effect:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">for</span> <span class="o">{</span>
+  <span class="n">handle</span> <span class="k">&lt;-</span> <span class="nf">openFile</span><span class="o">(</span><span class="n">file</span><span class="o">)</span>
+  <span class="n">data</span>   <span class="k">&lt;-</span> <span class="nf">readFile</span><span class="o">(</span><span class="n">handle</span><span class="o">)</span>
+  <span class="k">_</span>      <span class="k">&lt;-</span> <span class="nf">closeFile</span><span class="o">(</span><span class="n">handle</span><span class="o">)</span>
+<span class="o">}</span> <span class="k">yield</span> <span class="n">data</span></code></pre></figure>
+
+<p>Most programmers would not be surprised that if <code class="highlighter-rouge">readFile</code> failed, then the <code class="highlighter-rouge">closeFile</code> would not be executed. Fortunately, effect systems have <code class="highlighter-rouge">ensuring</code> (called <code class="highlighter-rouge">guarantee</code> in Cats Effect) that lets you add a finalizer to an effect, similar to <code class="highlighter-rouge">finally</code>.</p>
+
+<p>So the main problem with the above effect can be fixed simply:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">for</span> <span class="o">{</span>
+  <span class="n">handle</span> <span class="k">&lt;-</span> <span class="nf">openFile</span><span class="o">(</span><span class="n">file</span><span class="o">)</span>
+  <span class="n">data</span>   <span class="k">&lt;-</span> <span class="nf">readFile</span><span class="o">(</span><span class="n">handle</span><span class="o">).</span><span class="py">ensuring</span><span class="o">(</span><span class="nf">closeFile</span><span class="o">(</span><span class="n">handle</span><span class="o">))</span>
+<span class="o">}</span> <span class="nf">yield</span> <span class="o">()</span></code></pre></figure>
+
+<p>Now the effect is <em>failure-proof</em>, in the sense that if <code class="highlighter-rouge">readFile</code> fails, then the file will be closed; and if <code class="highlighter-rouge">readFile</code> succeeds, the file will be closed; so in “all” cases, the file will be closed.</p>
+
+<p>Well, not quite <em>all</em>. <em>Interruption</em> means that the executing effect can be terminated anywhere, even <em>between</em> the <code class="highlighter-rouge">openFile</code> and the <code class="highlighter-rouge">readFile</code>. If this happens, then the opened resource will not be closed, and a leak will result.</p>
+
+<p>This pattern of acquiring and releasing a resource is so common, that ZIO introduced a <code class="highlighter-rouge">bracket</code> operator that made its way to Cats Effect 1.0.</p>
+
+<p>The <code class="highlighter-rouge">bracket</code> operator is <em>interruption-proof</em>: if the acquire succeeds, then release will be called, no matter what, even if the effect that uses the resource is interrupted. Further, neither the acquire nor release can be interrupted, providing a strong guarantee of resource safety.</p>
+
+<p>With <code class="highlighter-rouge">bracket</code>, the above example looks like this:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">openFile</span><span class="o">(</span><span class="n">file</span><span class="o">).</span><span class="py">bracket</span><span class="o">(</span><span class="nf">closeFile</span><span class="o">(</span><span class="k">_</span><span class="o">))(</span><span class="nf">readFile</span><span class="o">(</span><span class="k">_</span><span class="o">))</span></code></pre></figure>
+
+<p>Unfortunately, <code class="highlighter-rouge">bracket</code> only encapsulates one (particularly common) pattern of resource consumption; there are many others, especially with concurrent data structures, whose acquisition must be <em>interruptible</em> in order to avoid a different kind of leak.</p>
+
+<p>In general, when programming with interruption, there are two things we want to do:</p>
+
+<ul>
+  <li>Prevent interruption from happening in some region that is otherwise interruptible</li>
+  <li>Allow interruption to happen in some region that is otherwise uninterruptible</li>
+</ul>
+
+<p>ZIO has facilities to make both of these very easy. For example, we can implement our own version of <code class="highlighter-rouge">bracket</code> using lower-level features built into ZIO:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">ZIO</span><span class="o">.</span><span class="py">uninterruptible</span> <span class="o">{</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="n">a</span>    <span class="k">&lt;-</span> <span class="n">acquire</span>
+    <span class="n">exit</span> <span class="k">&lt;-</span> <span class="nv">ZIO</span><span class="o">.</span><span class="py">interruptible</span><span class="o">(</span><span class="nf">use</span><span class="o">(</span><span class="n">a</span><span class="o">)).</span><span class="py">run</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="n">exit</span> <span class="k">=&gt;</span> <span class="nf">release</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">exit</span><span class="o">).</span><span class="py">const</span><span class="o">(</span><span class="n">exit</span><span class="o">))</span>
+    <span class="n">b</span>    <span class="k">&lt;-</span> <span class="nv">ZIO</span><span class="o">.</span><span class="py">done</span><span class="o">(</span><span class="n">exit</span><span class="o">)</span>
+  <span class="o">}</span> <span class="k">yield</span> <span class="n">b</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>In this code, <code class="highlighter-rouge">use(a)</code> is the only part that can be interrupted, and the surrounding code takes care to execute <code class="highlighter-rouge">release</code> in any case.</p>
+
+<p>Interruptibility can be arbitrarily checked, turned off, or turned on, and only <em>two</em> primitive operations are necessary (all others are derived from these).</p>
+
+<p>This compositional, full-featured model of interruptibility allows not just a clean implementation of <code class="highlighter-rouge">bracket</code>, but clean implementations of other scenarios in resource handling, which carefully balance the tradeoffs inherit in interruptibility.</p>
+
+<p>Cats IO chose to provide only a <em>single</em> operation to manage interruptibility: a combinator called <code class="highlighter-rouge">uncancelable</code>. This makes a whole region uninterruptible. However, by itself the operation is of limited use, and can easily lead to code that wastes resources or deadlocks.</p>
+
+<p>While it turns out that one can define an operator that provides more control over interruption atop Cats IO, the (quite clever!) <a href="https://github.com/SystemFw/playground/blob/d84aebb5fc1d2ccc4328afdca7ec8e923ef5a288/src/main/scala/Playground.scala">implementation by Fabio Labella</a> is insanely complex and not performant.</p>
+
+<p>ZIO lets anyone write interruption-friendly code, operating at a high-level, with declarative, composable operators, and doesn’t force you to either choose between extreme complexity and poor performance on the one hand, and wasted resources and deadlocks on the other.</p>
+
+<p>Moreover, although not discussed in this post, the newly-added <a href="https://www.youtube.com/watch?list=PL8NC5lCgGs6MYG0hR_ZOhQLvtoyThURka&amp;v=d6WWmia0BPM">Software Transactional Memory</a> in ZIO lets users declaratively write data structures and code that is automatically asynchronous, concurrent, and safely interruptible.</p>
+
+<h1 id="3-guaranteed-finalizers">3. Guaranteed Finalizers</h1>
+
+<p>The <code class="highlighter-rouge">try</code> / <code class="highlighter-rouge">finally</code> construct in many programming languages provides us the robust guarantees we need to write synchronous code that doesn’t leak resources.</p>
+
+<p>In particular, the construct provides the following guarantee:</p>
+
+<ul>
+  <li>If the <code class="highlighter-rouge">try</code> block begins execution, then the <code class="highlighter-rouge">finally</code> block will begin execution when the <code class="highlighter-rouge">try</code> block stops execution</li>
+</ul>
+
+<p>This guarantee holds even if:</p>
+
+<ul>
+  <li>There are nested <code class="highlighter-rouge">try</code> / <code class="highlighter-rouge">finally</code> blocks</li>
+  <li>There are errors in the <code class="highlighter-rouge">try</code> block</li>
+  <li>There are errors in a nested <code class="highlighter-rouge">finally</code> block</li>
+</ul>
+
+<p>ZIO’s <code class="highlighter-rouge">ensuring</code> operation can be used exactly like <code class="highlighter-rouge">try</code> / <code class="highlighter-rouge">finally</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">effect2</span> <span class="k">=</span> <span class="nv">effect</span><span class="o">.</span><span class="py">ensuring</span><span class="o">(</span><span class="n">cleanup</span><span class="o">)</span></code></pre></figure>
+
+<p>ZIO provides the following guarantee on <code class="highlighter-rouge">effect.ensuring(finalizer)</code>:</p>
+
+<ul>
+  <li>If <code class="highlighter-rouge">effect</code> begins execution, then <code class="highlighter-rouge">finalizer</code> will begin execution when the <code class="highlighter-rouge">effect</code> stops execution</li>
+</ul>
+
+<p>Like <code class="highlighter-rouge">try</code> / <code class="highlighter-rouge">finally</code>, this guarantee holds even if:</p>
+
+<ul>
+  <li>There are nested <code class="highlighter-rouge">ensuring</code> compositions</li>
+  <li>There are errors in <code class="highlighter-rouge">effect</code></li>
+  <li>There are errors in any nested finalizer</li>
+</ul>
+
+<p>Moreover, the guarantee holds even if the effect is <em>interrupted</em> (the guarantees on <code class="highlighter-rouge">bracket</code> are similar, and in fact, <code class="highlighter-rouge">bracket</code> is implemented on <code class="highlighter-rouge">ensuring</code>).</p>
+
+<p>The Cats IO data type chose a different, weaker guarantee. For <code class="highlighter-rouge">effect.guarantee(finalizer)</code>, the guarantee is weakened as follows:</p>
+
+<ul>
+  <li>If <code class="highlighter-rouge">effect</code> begins execution, then <code class="highlighter-rouge">finalizer</code> will begin execution when the <code class="highlighter-rouge">effect</code> stops execution, <strong>unless</strong> problematic effects are composed into <code class="highlighter-rouge">effect</code></li>
+</ul>
+
+<p>This weakening also occurs for the Cats IO implementation of <code class="highlighter-rouge">bracket</code>.</p>
+
+<p>In order to leak resources, it is only necessary to compose, somewhere in the effect of <code class="highlighter-rouge">guarantee</code>, or inside the “use” effect of <code class="highlighter-rouge">bracket</code>, an effect similar to the following:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="c1">// Assume `interruptedFiber` is some fiber that is already interrupted:</span>
+<span class="k">val</span> <span class="nv">bigTrouble</span> <span class="k">=</span> <span class="nv">interruptedFiber</span><span class="o">.</span><span class="py">join</span></code></pre></figure>
+
+<p>When <code class="highlighter-rouge">bigTrouble</code> is so composed into another effect, the effect becomes <em>non-terminating</em>—neither finalizers installed with <code class="highlighter-rouge">guarantee</code> nor cleanup effects installed with <code class="highlighter-rouge">bracket</code> will be executed, leading to <em>resource leaks</em> and <em>skipped</em> finalization.</p>
+
+<p>For example, the finalizer in the following code will never begin execution:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="o">(</span><span class="nv">IO</span><span class="o">.</span><span class="py">unit</span> <span class="o">&gt;&gt;</span> <span class="n">bigTrouble</span><span class="o">).</span><span class="py">guarantee</span><span class="o">(</span><span class="nc">IO</span><span class="o">(</span><span class="nf">println</span><span class="o">(</span><span class="s">"Won't be executed!!!"</span><span class="o">)))</span></code></pre></figure>
+
+<p>Using local reasoning, it is not possible to know if an effect like <code class="highlighter-rouge">bigTrouble</code> is being composed somewhere in the “use” effect of bracket or inside of a finalizer.</p>
+
+<p>Therefore, you cannot know if a Cats IO program will leak resources or skip finalization without global program analysis. Global program analysis is a manual, error-prone process that cannot be checked by the compiler, and which must be repeated every time any relevant part of the code changes.</p>
+
+<p>ZIO has custom implementations of the Cats Effect <code class="highlighter-rouge">guarantee</code>, <code class="highlighter-rouge">guaranteeCase</code>, and <code class="highlighter-rouge">bracket</code> operations. The implementations use native ZIO semantics (not Cats IO semantics), which allow you to reason locally about resource safety, knowing that in all cases, finalizers <em>will</em> be run and resources <em>will</em> be freed.</p>
+
+<h1 id="4-stable-shifting">4. Stable Shifting</h1>
+
+<p>Cats Effect has an <code class="highlighter-rouge">evalOn</code> method of <code class="highlighter-rouge">ContextShift</code>, which allows moving the execution of some code to another execution context.</p>
+
+<p>This turns out to be quite handy for a number of reasons:</p>
+
+<ul>
+  <li>Many client libraries require you to do some work in their thread pool</li>
+  <li>UI libraries require some updates to be done on the UI thread</li>
+  <li>Some effects need to be isolated on thread pools tailored for their specific needs</li>
+</ul>
+
+<p>The <code class="highlighter-rouge">evalOn</code> operation is designed to execute an effect where it needs to be run, and then hop back to the original execution context. For example:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">cs</span><span class="o">.</span><span class="py">evalOn</span><span class="o">(</span><span class="n">kafkaContext</span><span class="o">)(</span><span class="n">kafkaEffect</span><span class="o">)</span></code></pre></figure>
+
+<p><em>Note</em>: Cats IO has a related construct called <code class="highlighter-rouge">shift</code> that allows you to “hop” over to another context without hopping back, but in practice, this behavior is almost never desired, so the <code class="highlighter-rouge">evalOn</code> variation is strongly preferred.</p>
+
+<p>ZIO’s implementation of <code class="highlighter-rouge">evalOn</code> (built on the ZIO primitive <code class="highlighter-rouge">lock</code>) provides a guarantee necessary for local reasoning about where effects are running:</p>
+
+<ul>
+  <li>The effect will always execute on the specified context</li>
+</ul>
+
+<p>Cats IO chose a different, weaker guarantee:</p>
+
+<ul>
+  <li>The effect will execute on the specified context <strong>until</strong> the first asynchronous operation or embedded shift</li>
+</ul>
+
+<p>Using just local reasoning, it is not possible to know if an asynchronous effect (or nested shift) is being composed into the effect being shifted, because asynchronicity is not reflected in types.</p>
+
+<p>Therefore, as with resource safety, knowing where a Cats IO effect will run requires global program analysis. In practice, and from my experience, users of Cats IO are quite surprised when they use <code class="highlighter-rouge">evalOn</code> with one context, and then later find out that most of the effect has been accidentally executed on some other context.</p>
+
+<p>ZIO lets you specify where effects should run and trust that will actually happen, in all cases, regardless of how effects are composed with other effects.</p>
+
+<h1 id="5-lossless-errors">5. Lossless Errors</h1>
+
+<p>Any effect type that supports concurrency, parallelism, or resource safety runs into an immediate problem with a linear error model: in general, errors don’t compose.</p>
+
+<p>This holds both for <code class="highlighter-rouge">Throwable</code>, the fixed error type baked into Cats IO, and for polymorphic error types, which are supported by ZIO.</p>
+
+<p>All the following situations can lead to multiple errors being produced:</p>
+
+<ul>
+  <li>A finalizer throwing an exception</li>
+  <li>Two (failing) effects being combined in parallel</li>
+  <li>Two (failing) effects being raced</li>
+  <li>An interrupted effect also failing before exiting an uninterruptible section</li>
+</ul>
+
+<p>Because errors do not compose, ZIO has a data structure called <code class="highlighter-rouge">Cause[E]</code>, which provides a free <em>semiring</em> (an abstraction from abstract algebra, which you can safely ignore if you haven’t heard about before!), which allows lossless composition of sequential and parallel errors for any arbitrary error type.</p>
+
+<p>During all operations (including cleanup for a failed or interrupted effect), ZIO aggregates errors into the <code class="highlighter-rouge">Cause[E]</code> data structure, which can be accessed at any time.</p>
+
+<p>As a result, ZIO never loses any errors: they can all be accessed at the value level, and then logged, inspected, or transformed, as dictated by business requirements.</p>
+
+<p>Cats IO chose to embrace a lossy error model. Wherever ZIO would compose two errors using <code class="highlighter-rouge">Cause[E]</code>, Cats IO “throws” one error away—for example, by calling <code class="highlighter-rouge">e.printStackTrace()</code> on the tossed error.</p>
+
+<p>For example, the finalizer error in this snippet will be “thrown away”:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">IO</span><span class="o">.</span><span class="py">raiseError</span><span class="o">(</span><span class="k">new</span> <span class="nc">Error</span><span class="o">(</span><span class="s">"Error 1"</span><span class="o">)).</span><span class="py">guarantee</span><span class="o">(</span><span class="nv">IO</span><span class="o">.</span><span class="py">raiseError</span><span class="o">(</span><span class="k">new</span> <span class="nc">Error</span><span class="o">(</span><span class="s">"Error 2"</span><span class="o">)))</span></code></pre></figure>
+
+<p>This lossy side-channel error reporting means there is no way to locally detect and respond to the full range of errors that can occur as effects are composed.</p>
+
+<p>ZIO lets you use any error type you want, including <code class="highlighter-rouge">Throwable</code> (or more specific subtypes of <code class="highlighter-rouge">Throwable</code>, like <code class="highlighter-rouge">IOException</code> or a custom exception hierarchy), giving you the guarantee that no errors will be lost during composition.</p>
+
+<h1 id="6-deadlock-free-async">6. Deadlock-Free Async</h1>
+
+<p>Both ZIO and Cats IO provide a constructor that allows one to take callback-based code, and lift it into an effect value.</p>
+
+<p>This capability is exposed via the <code class="highlighter-rouge">Async</code> type class in Cats Effect:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">effect</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">Data</span><span class="o">]</span> <span class="k">=</span> 
+  <span class="nc">Async</span><span class="o">[</span><span class="kt">Task</span><span class="o">].</span><span class="py">async</span><span class="o">(</span><span class="n">k</span> <span class="k">=&gt;</span> 
+    <span class="nf">getDataWithCallbacks</span><span class="o">(</span>
+      <span class="n">onSuccess</span> <span class="k">=</span> <span class="n">v</span> <span class="k">=&gt;</span> <span class="nf">k</span><span class="o">(</span><span class="nc">Right</span><span class="o">(</span><span class="n">v</span><span class="o">)),</span>
+      <span class="n">onFailure</span> <span class="k">=</span> <span class="n">e</span> <span class="k">=&gt;</span> <span class="nf">k</span><span class="o">(</span><span class="nc">Left</span><span class="o">(</span><span class="n">e</span><span class="o">))</span>
+    <span class="o">))</span></code></pre></figure>
+
+<p>This creates an asynchronous effect that, when executed, will suspend until the value is available, and then resume—all transparently to the user of the effect. This property is what makes functional effect systems so pleasing for asynchronous code.</p>
+
+<p>Notice that as the callback-code is being lifted into the effect, a callback function (here called <code class="highlighter-rouge">k</code>) is invoked. This callback function is provided with the success or error value.</p>
+
+<p>When this callback function is invoked, execution of the (suspended) effect resumes.</p>
+
+<p>ZIO provides the guarantee the effect will resume executing on either the runtime’s default thread pool, if the effect has not been locked to a specific context, or on the specific context the effect has been locked to.</p>
+
+<p>Cats IO chose to resume executing the effect on the thread invoking the callback.</p>
+
+<p>The difference between these decisions is quite profound. In general, the thread that is invoking the callback does not expect the callback code to continue indefinitely; it expects a short delay before control is returned to the caller.</p>
+
+<p>ZIO provides the guarantee that control is returned to the caller immediately, which can then resume execution normally.</p>
+
+<p>On the other hand, Cats IO provides no such guarantee, which means the caller thread invoking the callback may get “stuck” waiting indefinitely for control to be returned to it.</p>
+
+<p>Early versions of Cats Effect concurrent data structures (<code class="highlighter-rouge">Deferred</code>, <code class="highlighter-rouge">Semaphore</code>, etc.) resumed effects that did not promptly yield control back to the caller thread. As a result, they had problems with deadlocks and unfair scheduling. While all of these problems have been identified and fixed, they have only been fixed for <em>Cats Effect</em> concurrent data structures.</p>
+
+<p>User-land code that uses a similar pattern with Cats IO will run into similar issues, and because of the nondeterminism involved, they may manfiest only occassionally, at runtime, making diagnosing and solving the issues challenging.</p>
+
+<p>ZIO’s model provides deadlock safety and fairness by default, and forces users to opt into the Cats IO behavior explicitly (by, for example, using <code class="highlighter-rouge">unsafeRun</code> on a <code class="highlighter-rouge">Promise</code> that is completed from the resumed asynchronous effect).</p>
+
+<p>While neither choice is suitable in all cases, and while both ZIO and Cats IO provide enough flexibility to handle all cases (in different ways), the ZIO choice means worry-free use of <code class="highlighter-rouge">Async</code>, and pushes problematic code to <code class="highlighter-rouge">unsafeRun</code>, which is already a known deadlock-risk.</p>
+
+<h1 id="7-precise-future-interop">7. Precise Future Interop</h1>
+
+<p>Dealing with Scala’s <code class="highlighter-rouge">Future</code> is a reality for many code bases. ZIO ships with a <code class="highlighter-rouge">fromFuture</code> method that provides a ready-made execution context:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">ZIO</span><span class="o">.</span><span class="py">fromFuture</span><span class="o">(</span><span class="k">implicit</span> <span class="n">ec</span> <span class="k">=&gt;</span>
+  <span class="c1">// Create some Future using `ec`:</span>
+  <span class="o">???</span>
+<span class="o">)</span></code></pre></figure>
+
+<p>When this method is used to lift a <code class="highlighter-rouge">Future</code> into an effect, ZIO can manage where the <code class="highlighter-rouge">Future</code> is executed, and other methods like <code class="highlighter-rouge">evalOn</code> will correctly migrate the <code class="highlighter-rouge">Future</code> to the appropriate execution context.</p>
+
+<p>Cats IO chose to accept a <code class="highlighter-rouge">Future</code> that has already been constructed with an external <code class="highlighter-rouge">ExecutionContext</code>. This means that Cats IO has no way of shifting the execution of an embedded <code class="highlighter-rouge">Future</code> to conform with the semantics of <code class="highlighter-rouge">evalOn</code> or <code class="highlighter-rouge">shift</code>. Moreover, it burdens the user of the API to choose an execution context for the <code class="highlighter-rouge">Future</code>, which means a fixed choice and separate plumbing.</p>
+
+<p>Since one can always choose to ignore the provided <code class="highlighter-rouge">ExecutionContext</code>, the ZIO choice can be seen as a strict generalization of Cats IO capabilities, providing more seamless and precise interop with <code class="highlighter-rouge">Future</code> in the common case, but not preventing exceptions to the rule.</p>
+
+<h1 id="8-blocking-io">8. Blocking IO</h1>
+
+<p>As covered in <a href="/articles/zio-threads">Thread Pool Best Practices with ZIO</a>, server-side applications must have at least two separate thread pools for maximum efficiency:</p>
+
+<ul>
+  <li>A fixed thread pool for CPU / async effects</li>
+  <li>A dynamic, growing thread pool for blocking effects</li>
+</ul>
+
+<p>A choice to run all effects on a fixed thread pool will eventually lead to deadlock; while a choice to run all effects on a dynamic, growing thread pool will lead to gross inefficiency.</p>
+
+<p>On the JVM, ZIO provides two operators that provide direct support for blocking effects:</p>
+
+<ul>
+  <li>The <code class="highlighter-rouge">blocking(effect)</code> operator, which will shift execution of the specified effect to a blocking thread pool, which uses very good settings and can also be configured;</li>
+  <li>The <code class="highlighter-rouge">effectBlocking(effect)</code> operator, which translates side-effectful blocking code into a pure effect, whose interruption will interrupt a lot of blocking code.</li>
+</ul>
+
+<p>If you have an effect, and you need to make sure it’s executed on a blocking thread pool, then you can wrap it in <code class="highlighter-rouge">blocking</code>. On the other hand, if you are wrapping some side-effectful code that blocks, then you can wrap it in <code class="highlighter-rouge">effectBlocking</code>, and benefit from ZIO’s composable, pervasive, and safe interruption (where possible).</p>
+
+<p>Cats IO chose to adopt a more minimal core, and delegate such functionality to user-land code. While there are libraries that help provide the functionality of the <code class="highlighter-rouge">blocking</code> operator, they are based on <code class="highlighter-rouge">evalOn</code>, and therefore cannot actually guarantee execution on the blocking thread pool.</p>
+
+<p>Power users may very well want to configure their own custom blocking thread pool (which of course, you can do with ZIO), or create more than these two thread pools (for example, a thread pool for low-latency event dispatching), but these operations provide exactly the desired semantics for the vast majority of cases.</p>
+
+<h1 id="9-cost-free-effects">9. Cost-Free Effects</h1>
+
+<p>Many functional Scala applications end up using one or both of the following monad transformers:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">ReaderT</code> / <code class="highlighter-rouge">Kleisli</code>, which adds the effect of accessing an environment</li>
+  <li><code class="highlighter-rouge">EitherT</code>, which adds the effect of typed errors (or <code class="highlighter-rouge">OptionT</code>, which is a specialization of <code class="highlighter-rouge">EitherT</code> with <code class="highlighter-rouge">Unit</code> as the failure type)</li>
+</ul>
+
+<p>The pattern is so pervasive, whole libraries have been designed around one or the other (for example, <em>http4s</em> extensively uses <code class="highlighter-rouge">Kleisli</code> and <code class="highlighter-rouge">OptionT</code>).</p>
+
+<p>Using an advanced technique called <a href="/articles/rotating-effects">effect rotation</a>, ZIO provides both the <em>reader</em> and <em>typed error</em> capabilities directly in the <code class="highlighter-rouge">ZIO</code> data type.</p>
+
+<p>Because not every user will need reader and typed error capabilities, ZIO also provides a variety of type / companion synonyms that cover common cases. For example, <code class="highlighter-rouge">Task[A]</code> provides only the core primary capability, without reader or typed errors.</p>
+
+<p>This allows ZIO to provide the two most common (secondary) effects in functional applications without any runtime overhead whatsoever. In addition, supporting these effects directly in ZIO actually <em>reduced</em> the size of its runtime, allowing simpler code and pulling non-essential functionality out of the microkernel.</p>
+
+<p>Cats IO chose to provide just a primary effect. This means that users who need reader or typed errors, or just want hack-free implementations of state, writer, and other type classes, will likely find themselves using monad transformers.</p>
+
+<p>ZIO can be up to 8x faster than Cats IO with an equivalent effect stack. While the impact of effect overhead on application performance will depend on a great many factors, greater performance increases the number of applications for functional Scala, and allows developers to build their applications from fine-grained effects.</p>
+
+<h1 id="10-microkernel-architecture">10. Microkernel Architecture</h1>
+
+<p>ZIO utilizes a microkernel architecture, which pulls as much functionality as possible out of the runtime system, and into ordinary user-land code, written in pure functional Scala. Indeed, even parts of the microkernel are itself written in pure functional Scala, utilizing an even smaller core for bootstrapping.</p>
+
+<p>While the original ZIO kernel was roughly 2,000 lines of code, after introducing typed errors and environment, and eliminating redundancy and improving orthogonality, the entire microkernel is now 375 SLOC, in a single file.</p>
+
+<p>As the complexity of modern effect systems in Scala has grown, so has the potential for bugs. There are very few people in the world who understand how these systems work, and the potential for hidden bugs and edge cases is very high.</p>
+
+<p>Personally, I am a fan of microkernel effect systems for the following reasons:</p>
+
+<ul>
+  <li>The smaller code can be more easily inspected for correctness</li>
+  <li>There are fewer places for bugs and edge-cases to hide</li>
+  <li>It is cheaper, faster, and safer to respond to real world feedback</li>
+  <li>It is easier for new contributors to help out with core maintenance</li>
+</ul>
+
+<p>Monolithic kernels can in theory be much better optimized. However, due to the volunteer nature of open source, we only have finite resources for optimization.</p>
+
+<p>Due to these constraints, often you can either micro-optimize a <em>part</em> of a monolithic kernel, or micro-optimize the <em>whole</em> of a microkernel. The former can give you super high-performance in a few cases, while the latter can give you great performance across a wide range of complex cases.</p>
+
+<p>Of all the effect systems out there, the ZIO runtime is by far the smallest. As a reference implementation, Cats IO comes in second place, but its runtime is at least <em>twice</em> the size of the ZIO runtime (maybe <em>three</em> times, depending on how you count).</p>
+
+<h1 id="11-beginner-friendly">11. Beginner-Friendly</h1>
+
+<p>ZIO has made many decisions to increase usability for new users, without cutting corners or sacrificing principles for advanced users. For example:</p>
+
+<ul>
+  <li>Jargon-free naming. For example:
+    <ul>
+      <li><code class="highlighter-rouge">ZIO.succeed</code> instead of <code class="highlighter-rouge">Applicative[F].pure</code></li>
+      <li><code class="highlighter-rouge">zip</code> instead of <code class="highlighter-rouge">Apply[F].product</code></li>
+      <li><code class="highlighter-rouge">ZIO.foreach</code> instead of <code class="highlighter-rouge">Traverse[F].traverse</code></li>
+      <li>Etc.</li>
+    </ul>
+  </li>
+  <li>No use of higher-kinded types or type classes (Cats, Cats Effect, and Scalaz instances are available in optional modules)</li>
+  <li>No implicits that have to be imported or summoned (except for <code class="highlighter-rouge">Runtime</code>, which must be implicit for all Cats Effect projects, due to the current design of Cats Effect); implicits are a constant source of frustration for new Cats IO users</li>
+  <li>No required syntax classes</li>
+  <li>Auto-complete-friendly naming that groups similar methods by prefix. For example:
+    <ul>
+      <li><code class="highlighter-rouge">zip</code> / <code class="highlighter-rouge">zipPar</code></li>
+      <li><code class="highlighter-rouge">ZIO.foreach</code> / <code class="highlighter-rouge">ZIO.foreachPar</code></li>
+      <li><code class="highlighter-rouge">ZIO.succeed</code> / <code class="highlighter-rouge">ZIO.succeedLazy</code></li>
+      <li>etc.</li>
+    </ul>
+  </li>
+  <li>Concrete methods on concrete data types, which aids discoverability and traversability, and makes ZIO very usable in IDEs</li>
+  <li>Conversion from all Scala data types to the ZIO effect type
+    <ul>
+      <li><code class="highlighter-rouge">ZIO.fromFuture</code></li>
+      <li><code class="highlighter-rouge">ZIO.fromOption</code></li>
+      <li><code class="highlighter-rouge">ZIO.fromEither</code></li>
+      <li><code class="highlighter-rouge">ZIO.fromTry</code></li>
+      <li>etc.</li>
+    </ul>
+  </li>
+  <li>Full, out-of-the-box type inference for all data types and methods</li>
+</ul>
+
+<p>Anecdotally, I have seen people with no prior background in functional Scala successfully build prototypes using ZIO without any external assistance, and before there was any good documentation—unaware that by using ZIO, they were writing purely functional code.</p>
+
+<p>Cats IO chose to delegate most functionality, names, and decisions around type-inference to Cats. This keeps the reference implementation small, but may increase ramp-up time for developers new to functional programming, and result in well-known usability problems around discoverability, naming, implicits, and type inference.</p>
+
+<h1 id="12-batteries-included">12. Batteries Included</h1>
+
+<p>In a small, cross-platform package, ZIO provides a highly-integrated toolbox for building principled asynchronous and concurrent applications.</p>
+
+<p>This toolbox includes the following:</p>
+
+<ul>
+  <li>The most important concurrent data structures, including <code class="highlighter-rouge">Ref</code>, <code class="highlighter-rouge">Promise</code>, <code class="highlighter-rouge">Queue</code>, <code class="highlighter-rouge">Semaphore</code>, and a small <code class="highlighter-rouge">Stream</code> for file / socket / data streaming</li>
+  <li><a href="https://www.youtube.com/watch?list=PL8NC5lCgGs6MYG0hR_ZOhQLvtoyThURka&amp;v=d6WWmia0BPM">Software Transactional Memory</a> (STM), which can be used to simply build composable, asynchronous, concurrent, and interruptible data structures</li>
+  <li><code class="highlighter-rouge">Schedule</code>, which offers composable retries and repetitions</li>
+  <li>Tiny and testable <code class="highlighter-rouge">Clock</code>, <code class="highlighter-rouge">Random</code>, <code class="highlighter-rouge">Console</code>, and <code class="highlighter-rouge">System</code> services, which are used by nearly every application</li>
+  <li>Many helper methods on the effect type covering common use cases</li>
+</ul>
+
+<p>As a reference implementation, Cats IO has none of these features. This decision makes Cats IO more lightweight, but at the cost of adding more third-party dependencies (where they are available), or having to write more user-land code.</p>
+
+<h1 id="summary">Summary</h1>
+
+<p>Cats Effect has done great things for the Scala ecosystem, providing a growing roster of libraries that all work together.</p>
+
+<p>Application developers who are using Cats Effect libraries now face the difficult decision of choosing which of the major effect types to use with Cats Effect libraries: Cats IO, Monix, or ZIO.</p>
+
+<p>While different people will make different choices that are uniquely suited for them, if you value some of the design decisions described in this post, then I hope you will find that together, ZIO and Cats Effect make a killer combination!</p>
+:ET

@@ -130,4 +130,4 @@ Thanks to no implicit execution contexts, no implicit context shifts, no weird e
 
 Who said functional programming wasn't practical?
 
-_Thanks to [Wiem Zine Elabidine](http://twitter.com/wiemzin) for proofreading this post._
+_Thanks to [Wiem Zine Elabidine](https://twitter.com/wiemzin) for proofreading this post._

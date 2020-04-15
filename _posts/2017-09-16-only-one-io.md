@@ -26,7 +26,7 @@ In order of increasing purity:
  * [cats.effect.IO](https://github.com/typelevel/cats-effect/blob/master/core/shared/src/main/scala/cats/effect/IO.scala)
  * [scalaz.effect.IO](https://github.com/scalaz/scalaz/blob/series/7.3.x/effect/src/main/scala/scalaz/effect/IO.scala) (7.x)
 
-Solutions in the *purely functional* category expose only purely functional interfaces, including [Scalaz 8's IO](http://degoes.net/articles/scalaz8-is-the-future), which has no impure methods on `IO`, no impure execution contexts (implicit or otherwise), and no side-effecting combinators.
+Solutions in the *purely functional* category expose only purely functional interfaces, including [Scalaz 8's IO](https://degoes.net/articles/scalaz8-is-the-future), which has no impure methods on `IO`, no impure execution contexts (implicit or otherwise), and no side-effecting combinators.
 
 There are [lots](https://github.com/alexknvl/sio/blob/master/core/src/main/scala/sio/core/IO.scala) [of](https://github.com/aloiscochard/scato/tree/master/io/src/main/scala) [other](https://github.com/tel/scala-tk) [designs](https://github.com/ThoughtWorksInc/future.scala) in the wild at various stages of development and production usage.
 
@@ -189,7 +189,7 @@ In other words, no effect monad, no matter who wrote it, and no matter what it d
 
 ## Why Scalaz 8 IO?
 
-Some may wonder if the 17 LOC monad I introduced in this post is as expressive as any other, why I am [spending additional time developing Scalaz 8 IO](http://degoes.net/articles/scalaz8-is-the-future).
+Some may wonder if the 17 LOC monad I introduced in this post is as expressive as any other, why I am [spending additional time developing Scalaz 8 IO](https://degoes.net/articles/scalaz8-is-the-future).
 
 The answer is simple: although the `IO` monad introduced in this post is as *expressive* as any other, expressing features common to many Scala applications would introduce many additional allocations and virtual method invocations.
 

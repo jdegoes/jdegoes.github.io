@@ -14,7 +14,7 @@ FCOP attempts to set very clear boundaries for ad hoc professional communities, 
 
 In my biased opinion, and specifically for ad hoc professional communities, FCOP is better in every possible way to the other available choices. FCOP is far more precise, and offers better guarantees and protections for members of a community, as well as realistic obligations and sensible protections for leaders of a community.
 
-In this post, I'll compare [FCOP](https://github.com/fantasylandinst/fcop) with [Citizen COC](http://citizencodeofconduct.org) and [Contributor Covenant](https://www.contributor-covenant.org/version/1/4/code-of-conduct.html), two other options for those looking for a COC.
+In this post, I'll compare [FCOP](https://github.com/fantasylandinst/fcop) with [Citizen COC](https://citizencodeofconduct.org) and [Contributor Covenant](https://www.contributor-covenant.org/version/1/4/code-of-conduct.html), two other options for those looking for a COC.
 
 ## Broad Provisions
 

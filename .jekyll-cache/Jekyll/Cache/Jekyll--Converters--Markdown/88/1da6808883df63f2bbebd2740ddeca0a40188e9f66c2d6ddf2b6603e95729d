@@ -1,0 +1,174 @@
+I"V<p>Type classes are a powerful tool for abstraction in functional programming. But they are poorly understood, and often abused.</p>
+
+<p>In this post, I want to explain what a type class is—in a way that will be <em>quite</em> foreign to most readers—and offer my own personal recommendations on when you should use type classes to solve a problem, and when you should avoid them.</p>
+
+<p><em>Note: This post assumes you already know how to create and use type classes.</em></p>
+
+<h2 id="type-class-101">Type Class 101</h2>
+
+<p>In the simplest possible case, a <em>type class</em> is a function from a type to a set of lawful operations on values of that type.</p>
+
+<p>Let’s take this definition apart, one piece at a time:</p>
+
+<ol>
+  <li><em>A type class is a function …</em>. This is not a function in the <em>programming language</em> sense of the word, but rather, a function in the <em>mathematical</em> sense of the word. We give a type class some type, like <code class="highlighter-rouge">Int</code>, and we get back something (just <em>one</em> something). Moreover, when we give the type class the <em>same</em> type, we get back the <em>same</em> thing. How this function is encoded varies depending on the capabilities of the host language. For example, Scala and Haskell have quite different mechanisms for representing type classes.</li>
+  <li><em>…from a type…</em>. Technically, type classes can have multiple parameters, not just one; and technically, they may not be <em>types</em>, but rather, <em>type constructors</em>. But in the common case, type classes are functions that take one type. Some languages, like Java or Kotlin, don’t have higher-kinded type parameters.</li>
+  <li><em>…to a set…</em>. Like <em>function</em> above, this is not a <em>programming language</em> set, but rather, a <em>mathematical</em> set. Each operation in the set is unique (there are no duplicates). Like with “function” above, how the set is encoded varies depending on the programming language.</li>
+  <li><em>…of lawful operations…</em>.  The operations provided by the type class are governed by laws. Laws are rather like unit tests, except they apply in <em>all</em> cases, not just <em>some</em> cases. A few programming languages (like Idris) can express laws in a way the compiler will enforce, but most programming languages rely on manual use of property-checking to verify laws are satisfied as part of a test suite.</li>
+  <li><em>…on values of that type</em>. The operations provided by the type class are all operations on <em>values</em> that have the type described in (2).</li>
+</ol>
+
+<p>A type class <em>instance</em>, on the other hand, is a <em>piecewise definition</em> of the type class function for a given type. The type class function is not defined for <em>all</em> types, but only for <em>some</em> types, and those definitions are described by type class <em>instances</em>. A type class is not defined for a given type when there does not exist an instance of the type class for that type. On the other hand, if a type class is defined for some type, then the instance provides the definition of the operations for that type.</p>
+
+<p>Type classes compliment <em>parametric polymorphism</em>. Parametric polymorphism allows us to create data structures and functions that are <em>polymorphic</em> in a type <em>parameter</em>.</p>
+
+<p>Parametric polymorphism serves two useful functions:</p>
+
+<ol>
+  <li>It allows us to create reusable data structures and functions, which can be used across not just a single (monomorphic) type, but across lots of types;</li>
+  <li>It allows us to throw away information that is not relevant to a problem, constraining possible solutions, and improving guarantees of correctness.</li>
+</ol>
+
+<p>In the following code, we write <em>parametrically polymorphic</em> code that accesses the 2nd element of a tuple:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">snd</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">tuple</span><span class="k">:</span> <span class="o">(</span><span class="kt">A</span><span class="o">,</span> <span class="kt">B</span><span class="o">))</span><span class="k">:</span> <span class="kt">B</span> <span class="o">=</span> <span class="nv">tuple</span><span class="o">.</span><span class="py">_2</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">snd</span> <span class="o">::</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">b</span>
+<span class="n">snd</span> <span class="p">(</span><span class="kr">_</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">=</span> <span class="n">b</span></code></pre></figure>
+
+<p>This code can work for all types <code class="highlighter-rouge">A</code> and <code class="highlighter-rouge">B</code>, and can therefore work for all tuples of arity 2. It is very resuable, and doesn’t know more about the types than it needs to.</p>
+
+<p>While parametric polymorphism allows us to <em>throw away</em> structure, to make code more reusable and constraint implementations, sometimes it throws away <em>too much</em> structure to solve a given problem. In the above definition of <code class="highlighter-rouge">snd</code>, the function does not know <em>anything</em> about the types <code class="highlighter-rouge">A</code> and <code class="highlighter-rouge">B</code>, which is fine for this problem, but which is not fine for most problems.</p>
+
+<p>Most polymorphic functions will require <em>some</em> structure from a type: they will need the ability to do <em>something</em> with values of that type. For example, they might need to combine them, compare them, iterate over them, or construct them.</p>
+
+<p>To add structure to a type, to give us some <em>operations</em>, we use type classes. Type classes, being functions from types to a set of lawful operations on values of those types, give us the ability to operate with values of some unknown type. Although we may not know what the type is, thanks to type classes, we have enough structure to generically solve our problem.</p>
+
+<p>The final piece of the puzzle is called a <em>type class constraint</em>. Type class constraints are the mechanism by which a language allows us to <em>statically require</em> that some polymorphic type have an <em>instance</em> for a given type class.</p>
+
+<h3 id="example">Example</h3>
+
+<p>In the following example, we define a type class called <code class="highlighter-rouge">Ord</code>, which provides a single lawful operation for some type <code class="highlighter-rouge">A</code>.</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">Ordering</span>
+<span class="k">object</span> <span class="nc">Ordering</span> <span class="o">{</span>
+  <span class="k">object</span> <span class="nc">LT</span> <span class="k">extends</span> <span class="nc">Ordering</span>
+  <span class="k">object</span> <span class="nc">EQ</span> <span class="k">extends</span> <span class="nc">Ordering</span>
+  <span class="k">object</span> <span class="nc">GT</span> <span class="k">extends</span> <span class="nc">Ordering</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">Ord</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">compare</span><span class="o">(</span><span class="n">l</span><span class="k">:</span> <span class="kt">A</span><span class="o">,</span> <span class="n">r</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">Ordering</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">Ord</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">apply</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="k">implicit</span> <span class="n">A</span><span class="k">:</span> <span class="kt">Ord</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">Ord</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="n">A</span>
+<span class="o">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">Ordering</span> <span class="o">=</span> <span class="kt">LT</span> <span class="o">|</span> <span class="kt">EQ</span> <span class="o">|</span> <span class="kt">GT</span>
+<span class="kr">class</span> <span class="kt">Ord</span> <span class="n">a</span> <span class="kr">where</span> 
+  <span class="n">compare</span> <span class="o">::</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Ordering</span></code></pre></figure>
+
+<p>In Scala, if we wish to obtain the operation for some type <code class="highlighter-rouge">A</code>, let’s say <code class="highlighter-rouge">Int</code>, we utilize the expression <code class="highlighter-rouge">Ord[Int]</code>, which gives us the <em>instance</em> for the type <code class="highlighter-rouge">Int</code>. If such an instance has not been defined, then we will get a compile-time error.</p>
+
+<p>Similarly, in Scala, if we wish to add a <em>constraint</em> on some parametric parameter, we can use context bounds, which are how constraints are encoded in Scala:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">sort</span><span class="o">[</span><span class="kt">A:</span> <span class="kt">Ord</span><span class="o">](</span><span class="n">list</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span></code></pre></figure>
+
+<p>In Haskell, if we wish to obtain the operation for some type <code class="highlighter-rouge">A</code>, let’s say <code class="highlighter-rouge">String</code>, we cannot call the type class function directly, because instances are not first-class values in Haskell. However, we can use the type class operation, and Haskell will automatically “call” the type class function to retrieve the instance for that type. If such an instance has not been defined, we will get a compile-time error.</p>
+
+<p>In Haskell, if we wish to add a constraint, we use a type class constraint:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="n">sort</span> <span class="o">::</span> <span class="nc">Ord</span> <span class="n">a</span> <span class="k">=&gt;</span> <span class="o">[</span><span class="kt">a</span><span class="o">]</span> <span class="o">-&gt;</span> <span class="o">[</span><span class="kt">a</span><span class="o">]</span> <span class="o">-&gt;</span> <span class="o">[</span><span class="kt">a</span><span class="o">]</span></code></pre></figure>
+
+<p>In both of these examples, the use of parametric polymorphism allows us to throw away irrelevant details, making our sort function more generic, and constraining possible implementations, leading to stronger guarantees on correctness.</p>
+
+<p>With this background out of the way, let’s talk about when to use type classes, and more importantly, when to <em>not</em> use them!</p>
+
+<h2 id="type-class-best-practices">Type Class Best Practices</h2>
+
+<p>The purpose of type classes is to add <em>structure</em> to polymorphic types—just enough structure to allow us to solve our problem, but not more structure than necessary, so we can benefit from maximum code reuse, and maximally constrain our implementation.</p>
+
+<p>The word <em>structure</em> is critically important. By <em>structure</em>, I mean <em>algebraic structure</em>: the operations that a type class provides us with satisfy some properties (the <em>laws</em>) across <em>all types</em> for which there is an instance.</p>
+
+<p>Without a notion of <em>structure</em>, we cannot know the meaning of generic code. In the previous example of <code class="highlighter-rouge">sort</code>, our polymorphic function requires the ability too totally order the elements of the list it is sorting. Without a notion of <em>total order</em>, embedded into the laws of the <code class="highlighter-rouge">Ord</code> type class, we cannot meaningfully define what it is to “sort” elements.</p>
+
+<p>Structure allows <em>abstraction</em>: we can write code that is generic across a range of different types <em>precisely</em> because we can <em>define</em> the ways in which those types are similar. In the case of sorting, we can abstract over the element type, because we can define what it means to compare elements of a given type. Although <code class="highlighter-rouge">Int</code> and <code class="highlighter-rouge">String</code> are quite different, they both posess enough structure to provide a total ordering.</p>
+
+<p>Abstraction is <em>not</em> the same as <em>indirection</em>. <em>Indirection</em> provides a layer of insulation between our code and concrete data types, and is useful for testability and modularity.</p>
+
+<p>Indirection is not necessarily governed by laws (algebraic or otherwise). In object-oriented programming languages, interfaces are often used to provide <em>indirection</em>, where it is sometimes mistakenly called <em>abstraction</em>. In functional programming languages, records of functions or modules can be used to provide indirection.</p>
+
+<p><em>The structure that type classes provide is the foundation for writing well-defined generic code; without structure, there is no abstraction—only indirection.</em></p>
+
+<p>This leads to my rule of when to use type classes:</p>
+
+<blockquote>
+  <p><strong>Consider using type classes whenever you can identify enough common structure across a range of data types that is by itself wholly sufficient for writing well-defined generic code across these data types</strong></p>
+</blockquote>
+
+<p>Conversely, if you cannot identify common structure (through a set of well-defined algebraic laws), then you cannot write well-defined generic code across different data types. This is a strong sign that what you really want is <em>indirection</em>, not abstraction.</p>
+
+<p>This leads to my rule of when <strong>not</strong> to use type classes:</p>
+
+<blockquote>
+  <p><strong>Consider using indirection whenever you cannot identify enough common structure across a range of data types that is wholly sufficient for writing well-defined generic code</strong></p>
+</blockquote>
+
+<p>Now sometimes we can define structure across a range of data types, but that structure is not wholly sufficient for writing generic code.</p>
+
+<p>An example is the algebraic structure called <em>magma</em>. A <em>magma</em> provides an composition operation with <em>closure</em> (that i8s, if you compose two values of the same type, you get back another value of the same type). This is less structure than a semigroup, because semigroups also provide a guarantee of <em>associativity</em>.</p>
+
+<p>The guarantee of closure is so weak, that we cannot write much (if any) generic code that only requires this guarantee. In fact, closure is so weak, no laws are necessary to express: a parametrically polymorphic type system provides us this guarantee “for free”.</p>
+
+<p>This is why it is so critically important that the structure provided by the type class be sufficiently strong that useful generic code is possible.</p>
+
+<p>If you are looking at some structure that is sufficiently rare so as to permit very few useful instances for a given type, then there’s a good chance that a type class will allow you to write generically useful code. Conversely, if you are looking at some structure that permits infinitely many equally useful instances, then there’s a good chance having a type class will not allow you to write generically useful code.</p>
+
+<p>I consider these best practices for when to use and when not to use type classes. However, in the next section, I want to provide some practical reasons for following this advice, as well as show you what to do when type classes aren’t a good fit.</p>
+
+<h2 id="the-power-of-values">The Power of Values</h2>
+
+<p>Type classes provide a means of accessing structure as a function of type.</p>
+
+<p>As I have defined them, anyway, a type class has a <em>single</em> instance for any type. If for any reason a type class had <em>multiple</em> instances for a given type, then this would imply that type classes are <em>not</em> functions—at least, not <em>functions</em> in the mathematical sense of the word, because they would map the same type to <em>different</em> sets of operations.</p>
+
+<p>Such non-determinism would mean that any given type would no longer map to a unique set of operations. It would further imply that we could not know, just looking at a concrete type, what set of operations a type class would give us access to.</p>
+
+<p>Indeed, one of the chief problems of introducing non-determinism into my definition of a type class is that simple refactorings, like moving a function from one file to another, can change the runtime behavior of your program—a fact that Scala developers know all too well, thanks to their exposure to <em>implicit abuse</em>.</p>
+
+<p>Ensuring that type classes are <em>globally coherent</em> gives us the ability to clearly and easily understand how our program will behave, and to preserve this behavior in the presence of refactoring, without having to be cautious.</p>
+
+<p>Yet, while global coherence (<em>determinism</em> of the type class function) is important for reasoning and refactoring, there is something distinctly anti-modular about type classes. Type classes are, after all, <em>global</em>, <em>piecewise</em> defined functions from types to sets of operations.</p>
+
+<p><em>Global</em> definitions are opposed to <em>local</em> definitions, and <em>local, compositional definitions</em> are the foundation of <em>modularity</em>.</p>
+
+<p>Herein lies the fundamental tradeoff of type classes: type classes provide global (anti-modular), type-directed reasoning that stems from the very algebraic structure of the types in question; while modules and their weaker variants (records of functions), provide local (modular), value-directed reasoning that stems from the makeup of the values themselves.</p>
+
+<p>Although the battle between type classes and modules goes back for decades, there is no real competition, because while type classes are a natural fit for algebraic structure, modules (or records of functions) are a natural fit for indirection.</p>
+
+<p>Indirection gives us loose coupling between pieces of the whole, allowing us to, for example, connect to different types of databases at runtime, accessing them through a uniform interface; allowing us to support local logging, but also remote logging; allowing us to have a local file system, and a remote one; and allowing us to have test implementations, as well as production implementations.</p>
+
+<p>Type classes give us algebraic structure in the small, and indirection gives us modularity in the large. They do not compete with each other, but rather, compliment each other, and the weaknesses of the one are the strengths of the other.</p>
+
+<p>Some beautiful properties of modules (and records of functions) include the following:</p>
+
+<ul>
+  <li><strong>Superior Composition</strong>. We can take values, and compose them with other values, to yield values. While type class composition is possible, it looks and feels awkward because it has to be encoded in a different language than the primary, expression-oriented language that we write most of our code in.</li>
+  <li><strong>No Dependence on Type</strong>. While type classes are functions of types to values, modules are just ordinary values, so for a given type (or set of types), we can have as many different modules as we like. For example, we can have a different database module for each underlying database type (MySQL, PostgreSQL, SQL Server, etc.), not connected to the type of effect we are using or any other type.</li>
+  <li><strong>Superior Customization</strong>. We can easily and programmatically mix and match pieces of different modules, for example, drilling into a module and adding instrumentation to a single operation. Optics make these types of customizations trivial, but optics work on data, and type classes are not data.</li>
+</ul>
+
+<p>The benefits of working with ordinary values are tremendous and should not be overlooked. Now it’s also true that type classes have their own benefits. The lure of these benefits is sometimes so strong, it leads to <em>type class abuse</em>.</p>
+
+<h2 id="type-class-abuse">Type Class Abuse</h2>
+
+<p>Type class abuse is what happens when we use a type class to represent something that <em>should</em> be a module (or record of functions).</p>
+
+<p>Typical symptoms of type class abuse include the following:</p>
+
+<ul>
+  <li>The type class has <em>no laws</em> that permit well-defined generic use of the type class</li>
+  <li>There are <em>many</em> possible useful instances of the type class for a given type</li>
+  <li>The type class exists primarily to avoid passing or composing values</li>
+</ul>
+
+:ET

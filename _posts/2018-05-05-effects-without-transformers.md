@@ -94,7 +94,7 @@ For example, `MonadState` abstracts over all data types that are capable of supp
 
 In fact, these days **MTL-style** does not refer to the use of monad transformers, per se, but to the use of the type classes that allow abstracting over the effects modeled by data structures.
 
-In Scala, this style has become known as *finally tagless* for [historical reasons](http://okmij.org/ftp/tagless-final/index.html). Most programmers doing functional programming in Scala recommend and use finally tagless-style, because it offers additional flexibility (for example, mocking out services for testing).
+In Scala, this style has become known as *finally tagless* for [historical reasons](https://okmij.org/ftp/tagless-final/index.html). Most programmers doing functional programming in Scala recommend and use finally tagless-style, because it offers additional flexibility (for example, mocking out services for testing).
 
 It is not widely known in the Scala programming community that *finally tagless* does not require monad transformers. In fact, there is absolutely no connection between finally tagless and monad transformers!
 

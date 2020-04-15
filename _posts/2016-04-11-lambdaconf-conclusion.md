@@ -14,7 +14,7 @@ Individuals each act according to their own morality, but we must share a common
 
 For LambdaConf, there is no direct moral component: there is only the determination of which professional ethics best facilitate the goals of the conference. For this, we have come up with a code of conduct, which we will improve over time.
 
-The distinction is [explained elsewhere](http://www.diffen.com/difference/Ethics_vs_Morals):
+The distinction is [explained elsewhere](https://www.diffen.com/difference/Ethics_vs_Morals):
 
 > "A lawyer's morals may tell her that murder is reprehensible and that murderers should be punished, but her ethics as a professional lawyer, require her to defend her client to the best of her abilities, even if she knows that the client is guilty."
 

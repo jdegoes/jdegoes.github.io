@@ -6,7 +6,7 @@ category:     articles
 tags:         [startups, precog, entrepreneurs, entrepreneurship, techstars]
 ---
 
-It's been more than a year since Precog was [acquired by RichRelevance](http://techcrunch.com/2013/08/14/richrelevance-acquires-precog-to-add-large-scale-analytics-engine-to-e-commerce-personalization-platform/), and I've had some time to reflect on what I learned from my experiences there.
+It's been more than a year since Precog was [acquired by RichRelevance](https://techcrunch.com/2013/08/14/richrelevance-acquires-precog-to-add-large-scale-analytics-engine-to-e-commerce-personalization-platform/), and I've had some time to reflect on what I learned from my experiences there.
 
 ## Born to Build
 
@@ -36,7 +36,7 @@ That's exactly what I did at Precog.
 
 ## Precog in 10 Seconds
 
-In 2011, I applied to [TechStars Boulder](http://www.techstars.com/program/locations/boulder/), and managed to get in despite having a terrible demo, a practically worthless product hacked together in a few weekends, and a strongly  engineering-biased background.
+In 2011, I applied to [TechStars Boulder](https://www.techstars.com/program/locations/boulder/), and managed to get in despite having a terrible demo, a practically worthless product hacked together in a few weekends, and a strongly  engineering-biased background.
 
 I invested my own money in the company, often took no salary or minimum wage, and worked like a dog.
 
@@ -231,7 +231,7 @@ I've seen firsthand some of the fallout:
 
 Intellectually, I know that even if you do *a lot* of things right, that doesn't mean you will succeed. There's a large element of chance, and failure is something that *every* entrepreneur may have to contend with.
 
-For all the stories of last-minute miracles, [like the one that saved Evernote](http://techcrunch.com/2013/10/19/phil-libin-evernote/), there are a hundred more startups that *might* have turned out just as well. 
+For all the stories of last-minute miracles, [like the one that saved Evernote](https://techcrunch.com/2013/10/19/phil-libin-evernote/), there are a hundred more startups that *might* have turned out just as well. 
 
 We'll never know, because they never got a last-minute miracle.
 

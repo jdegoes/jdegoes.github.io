@@ -1,0 +1,126 @@
+I"7<p>High-performance application’s don’t <em>block</em>. Blocking is when a thread synchronously waits for something to happen—for example, waits for a lock to be acquired, a result set to be returned from a database, a timer to elapse, or bytes to be read from a socket.</p>
+
+<p>Instead, high-performance applications are <em>asynchronous</em>. Instead of synchronously waiting for something to happen, asynchronous applications register callbacks with handlers. Then, when something happens, the callbacks are invoked. This style of programming, which conserves threads (and their associated resources), is called <em>asynchronous programming</em>.</p>
+
+<p>Unfortunately, in 2019, sometimes we <em>must</em> block on the JVM. Some legacy APIs, and even industry-standard APIs like JDBC, block threads. Given how much valuable blocking synchronous code is out there, we often have no choice but to use it.</p>
+
+<p>These days, asynchronous data types like <code class="highlighter-rouge">Future</code> (combined with <code class="highlighter-rouge">Promise</code>) or <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>’s <code class="highlighter-rouge">IO</code> make it straightforward to write asynchronous applications. <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> goes further (like Monix <code class="highlighter-rouge">Task</code>) and makes it easy to write hybrid applications that are synchronous and asynchronous.</p>
+
+<p>The <em>real</em> trouble starts when asynchronous code is combined with synchronous code.</p>
+
+<h2 id="tricky-thread-management">Tricky Thread Management</h2>
+
+<p>Asynchronous code executes useful work continuously until it registers its callbacks, and then it suspends until the callbacks are invoked. As soon as the callbacks are registered, the thread executing the asynchronous code is free to do more useful work for other tasks.</p>
+
+<p>Blocking synchronous code, on the other hand, might execute for a <em>really long time</em>. A thread might have to wait around for tens or hundreds of milliseconds, or in extreme cases, minutes or hours—all the while, doing absolutely nothing.</p>
+
+<p>Because asynchronous and blocking code behave differently, we need to be very careful about how we run the different types of code.</p>
+
+<p>In all cases, we need to execute different tasks on different threads, but creating threads is slow. Instead of creating threads all the time, data types like <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>’s <code class="highlighter-rouge">IO</code> and <code class="highlighter-rouge">Future</code> use <em>thread pools</em>, which are collections of pre-allocated threads that wait around to execute any tasks <em>submitted</em> to the thread pools.</p>
+
+<p>CPUs only have a certain number of <em>cores</em>, each of which can execute tasks more or less independently of the other cores. If we create more threads than cores, then the operating system spends a lot of time switching between threads (<em>context switching</em>), because the hardware can’t physically run them all at the same time. So <em>ideally</em>, to be maximally efficient, we would only create as many threads as there are cores, to minimize context switching.</p>
+
+<p>This strategy works well for asynchronous code, because asynchronous code is constantly doing useful work until it suspends. However, it works poorly for blocking code (halting the application), because a thread pool cannot accept more work after all threads are busy—and for blocking code, they might stay busy (doing nothing!) for a very long time.</p>
+
+<p>As a result, well-designed applications actually have at least <em>two</em> thread pools:</p>
+
+<ol>
+  <li>One thread pool, designed for asynchronous code, has a <em>fixed</em> number of threads, usually equal to the number of cores on the CPU.</li>
+  <li>Another thread pool, designed for blocking code, has a <em>dynamic</em> number of threads (more threads will be added to the pool when necessary), which is inefficient (but what can you do!).</li>
+</ol>
+
+<p>Keeping the right tasks on the right thread pools has proven a <em>big mess</em>, even in modern effect systems. Functional programs can pull in libraries like <a href="https://twitter.com/davenpcm">Christopher Davenport</a>’s excellent <a href="https://github.com/ChristopherDavenport/linebacker">linebacker</a> library.</p>
+
+<p>However, in preparation for the upcoming release of <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> 1.0, <em>no</em> additional libraries are necessary for proper thread management, and you gain some <em>killer features</em> not found in any other effect system.</p>
+
+<h2 id="the-zio-trio">The ZIO Trio</h2>
+
+<p><a href="https://github.com/scalaz/scalaz-zio">ZIO</a> has three functions that make thread management a breeze:</p>
+
+<ol>
+  <li><code class="highlighter-rouge">IO#lock(executor)</code></li>
+  <li><code class="highlighter-rouge">scalaz.zio.blocking.blocking(task)</code></li>
+  <li><code class="highlighter-rouge">scalaz.zio.blocking.effectBlocking(task)</code></li>
+</ol>
+
+<p>Internally, two of these functions benefit from the fact that the <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> runtime system has two primary thread pools, which are set by the user at the level of the main function. One of these thread pools is for asynchronous code, and one is for blocking code. These pools are configurable, of course, but the built-in defaults provide excellent performance for most applications.</p>
+
+<p>In order to avoid exhausting the asynchronous code, <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> not only provides thread management functions, but is capable of making long-running asynchronous tasks yield to other tasks, providing a tunable level of fairness, but vastly higher performance than Scala’s own <code class="highlighter-rouge">Future</code> (which yields on every operation of every asynchronous task).</p>
+
+<p>The sections that follow introduce each of the three thread management functions in some detail.</p>
+
+<h3 id="lock">Lock</h3>
+
+<p>The first method that <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> provides to support thread management is <code class="highlighter-rouge">IO#lock</code>, which allows you to run a task on a given thread pool.</p>
+
+<p>The <code class="highlighter-rouge">lock</code> function guarantees that the specified task will be executed with a given executor, which chooses the thread pool.</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">task</span><span class="o">.</span><span class="py">lock</span><span class="o">(</span><span class="n">executor</span><span class="o">)</span></code></pre></figure>
+
+<p>With other functional effect types, even though you can shift a task to another thread pool (via something like <code class="highlighter-rouge">shift</code> or <code class="highlighter-rouge">evalOn</code>), any asynchronous boundary in the task can shift it <em>off</em> the thread pool.</p>
+
+<p>Because whether or not a task is composed of asynchronous boundaries is not visible in its type, it’s impossible to reason locally about <em>where</em> a task will run using the <code class="highlighter-rouge">shift</code> and <code class="highlighter-rouge">evalOn</code> primitives of other effect types. They have poorly-defined semantics.</p>
+
+<p>The unique guarantee that <code class="highlighter-rouge">lock</code> provides is semantically well-defined and stronger than any other effect system in Scala: the specified task will <em>always</em> execute on the given thread pool, even in the presence of asynchronous boundaries.</p>
+
+<p>The <code class="highlighter-rouge">lock</code> function is the missing ingredient for principled task location in purely functional effect systems. It lets you trivially verify with local reasoning that, for example, blocking effects will always be executed on a blocking thread pool; that a client request will always happen in a client library’s thread pool; or that a UI task will always execute on the UI thread, even if composed with other tasks that may need to execute elsewhere.</p>
+
+<h3 id="blocking">Blocking</h3>
+
+<p>The second method that <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> provides to support thread management is <code class="highlighter-rouge">blocking</code>, which allows you to lock a task on the blocking thread pool.</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">scalaz.zio.blocking._</span>
+
+<span class="k">val</span> <span class="nv">blockingTask</span> <span class="k">=</span> <span class="nf">blocking</span><span class="o">(</span><span class="n">task</span><span class="o">)</span></code></pre></figure>
+
+<p>This function is not primitive (it’s implemented in terms of <code class="highlighter-rouge">lock</code> and another function, which provides access to the two primary thread pools in <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>), but it’s one of the most common methods for thread pool management in <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>.</p>
+
+<h3 id="blocking-1">Blocking</h3>
+
+<p>The third method that <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> provides to support thread management is <code class="highlighter-rouge">effectBlocking</code>, which allows suspending (or <em>importing</em>) a blocking effect into a pure task.</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="c1">// def effectBlocking[A](effect: =&gt; A): IO[Throwable, A] = ...</span>
+<span class="k">import</span> <span class="nn">scalaz.zio.blocking._</span>
+
+<span class="k">val</span> <span class="nv">interruptibleSleep</span> <span class="k">=</span>
+  <span class="nf">effectBlocking</span><span class="o">(</span><span class="nv">Thread</span><span class="o">.</span><span class="py">sleep</span><span class="o">(</span><span class="nv">Long</span><span class="o">.</span><span class="py">MaxValue</span><span class="o">))</span></code></pre></figure>
+
+<p>The <code class="highlighter-rouge">effectBlocking</code> function returns a task that has two important features:</p>
+
+<ol>
+  <li>It executes the effect on the blocking thread pool using the <code class="highlighter-rouge">blocking</code> combinator.</li>
+  <li>It is interruptible (assuming the effect is blocking!), and any interruption will delegate to Java’s <code class="highlighter-rouge">Thread.interrupt</code>.</li>
+</ol>
+
+<p>The following code snippet will interrupt a really long <code class="highlighter-rouge">Thread.sleep</code> (which is a blocking function on the JVM):</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">scalaz.zio.blocking.effectBlocking</span>
+
+<span class="k">val</span> <span class="nv">interruptedSleep</span> <span class="k">=</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="n">fiber</span> <span class="k">&lt;-</span> <span class="nf">effectBlocking</span><span class="o">(</span><span class="nv">Thread</span><span class="o">.</span><span class="py">sleep</span><span class="o">(</span><span class="nv">Long</span><span class="o">.</span><span class="py">MaxValue</span><span class="o">)).</span><span class="py">fork</span>
+    <span class="k">_</span>     <span class="k">&lt;-</span> <span class="nv">fiber</span><span class="o">.</span><span class="py">interrupt</span>
+  <span class="o">}</span> <span class="nf">yield</span> <span class="o">()</span></code></pre></figure>
+
+<p>Like <code class="highlighter-rouge">lock</code> and <code class="highlighter-rouge">blocking</code>, this feature is a first for functional effect systems in Scala. Now runaway JDBC queries, thread sleeps, remote file downloads, and other blocking effects can be trivally interrupted in a composable fashion using ordinary <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> interruption.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>Proper thread management is essential for efficient applications. High-performance applications on the JVM should use at least two thread pools: a fixed one for asynchronous code, and a dynamic one for blocking code.</p>
+
+<p><a href="https://github.com/scalaz/scalaz-zio">ZIO</a> bakes in these two primary thread pools so users don’t need to worry about them (although, of course, they can be configured as necessary and applications can use many more than just two thread pools).</p>
+
+<p><a href="https://github.com/scalaz/scalaz-zio">ZIO</a> uses its two primary thread pools to make thread management easy using three functions, which bring unique functionality to the functional effect systems in Scala:</p>
+
+<ul>
+  <li>The <code class="highlighter-rouge">lock</code> function locks a task to a given thread pool (even over asynchronous boundaries!), providing principled, well-defined semantics for locating tasks;</li>
+  <li>The <code class="highlighter-rouge">blocking</code> function locks a task to <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>’s blocking thread pool;</li>
+  <li>The <code class="highlighter-rouge">effectBlocking</code> function suspends a blocking effect into an interruptible <code class="highlighter-rouge">IO</code>, by safely delegating to Java’s own thread interruption, allowing composable interruption of any blocking code.</li>
+</ul>
+
+<p>Thanks to no implicit execution contexts, no implicit context shifts, no weird edge-cases (like asynchronous boundaries shifting a task to another thread pool), built-in asynchronous and blocking thread pools, fairness and performance, and well-defined semantics, <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> makes it easier than ever to build applications that follow best practices.</p>
+
+<p>Who said functional programming wasn’t practical?</p>
+
+<p><em>Thanks to <a href="https://twitter.com/wiemzin">Wiem Zine Elabidine</a> for proofreading this post.</em></p>
+:ET

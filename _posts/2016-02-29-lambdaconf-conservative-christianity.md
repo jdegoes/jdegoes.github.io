@@ -18,7 +18,7 @@ But I have absolutely zero animosity towards religious people. I was raised a Ch
 
 I'm OK if people believe I'm going to burn in hell. Doesn't bother me one bit. No, I don't want to spend my time defending my beliefs, but from my experience, the vast majority of religious people do not attack me for what I believe. They respect my right to believe what I want, even as I respect theirs.
 
-Earlier this year, I got an email from a Christian asking me if LambdaConf was "for Christians". After all, every attendee, speaker, volunteer, and staff member must swear to uphold LambdaConf's [Pledge of Conduct](http://lambdaconf.us), which has explicit protections for minority groups, some of whom will, according to some interpretations of some religious texts, end up burning in hell right alongside me (howdy, friends!).
+Earlier this year, I got an email from a Christian asking me if LambdaConf was "for Christians". After all, every attendee, speaker, volunteer, and staff member must swear to uphold LambdaConf's [Pledge of Conduct](https://lambdaconf.us), which has explicit protections for minority groups, some of whom will, according to some interpretations of some religious texts, end up burning in hell right alongside me (howdy, friends!).
 
 The question's a good one. It's not always clear if and how we can work together in a world of such diverse beliefs.
 

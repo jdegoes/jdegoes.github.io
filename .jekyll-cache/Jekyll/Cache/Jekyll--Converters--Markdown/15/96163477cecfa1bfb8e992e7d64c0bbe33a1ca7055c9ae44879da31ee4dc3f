@@ -1,0 +1,120 @@
+I"S1<p>You don’t understand blockchain.</p>
+
+<p>Well, <em>maybe</em> you do. But if you don’t see what all the fuss is about, wonder why anyone uses blockchain technology instead of Postgres, or think Tor figured out decentralization long before Bitcoin, then I have some news for you:</p>
+
+<p><em>Every damn thing you know about the blockchain is wrong.</em></p>
+
+<p>In this post, I going to talk about what I see as the top 8 myths of blockchain. Be prepared for bold claims and new ways of looking at the space.</p>
+
+<h2 id="myth-1-blockchain-is-digital-currencies">Myth 1: Blockchain Is Digital Currencies</h2>
+
+<p>Many early applications of blockchain technology have been directed at the creation of digital assets that can be used as currencies (more precisely: de-centralized, consensus-driven, append-only ledgers).</p>
+
+<p>Blockchain technology itself, however, is neither about nor restricted to the creation of digital currencies.</p>
+
+<p>In the most general possible sense, <em>blockchain technology</em> refers to <em>a mathematical innovation that allows us to incentivize independent parties in an untrusted, purely consensual network to provide well-defined, agreed upon services</em>.</p>
+
+<blockquote>
+  <p>“Blockchain technology refers to a mathematical innovation that allows us to incentivize independent parties in an untrusted, purely consensual network to provide well-defined, agreed upon services.”</p>
+</blockquote>
+
+<p>It is hard to overstate just how important this innovation is. One of the oldest problems in the history of civilization is figuring out how to get different parties to work together.</p>
+
+<p>Previously, legal markets have heavily relied on <em>physical force</em> to incentivize independent parties to provide (contractually) agreed upon services. Indeed, this is one of the important functions of governments.</p>
+
+<p>Force works reasonably well for trustworthy parties in the same jurisdiction, but is costly and slow. Force doesn’t work in cases where the parties are untrusted, in cases where the parties span different jurisdictions, or in cases where speed or low costs are critical.</p>
+
+<p>Blockchain technology provides a shocking answer to one of civilization’s oldest questions. Without force—indeed, with just math—we can engineer cooperation between different parties in a well-defined way.</p>
+
+<p>Classifying the set of viable blockchain solutions is not trivial, but it’s clear based on this definition that any problem uniquely solved by blockchain technology will involve some combination of untrusted parties, multiple jurisdictions, high speed, and low costs.</p>
+
+<p>It should also be clear that some solutions currently marketed as blockchain solutions are not actually blockchain solutions, <em>per se</em>, even though they share some of the underlying math (zero-knowledge proofs, homomorphic computing, lattice cryptography, etc). All blockchain tech involves cryptographic tech, but not all cryptographic tech involves blockchain tech.</p>
+
+<h2 id="myth-2-tokens-are-currencies">Myth 2: Tokens Are Currencies</h2>
+
+<p>Tokens, such as Bitcoins, can be <em>used</em> as currencies, but fundamentally, tokens are <em>not</em> currencies, but <em>capabilities</em>.</p>
+
+<p>Possession of tokens gives you the <em>capability</em> to avail yourself of the well-defined, agreed upon services provided by a blockchain technology. <em>Incidentally</em>, people may be willing to give you some form of currency in order to acquire a token, if they want those services, or if they are speculating on the value of the tokens.</p>
+
+<p>For <em>pure cryptocurrencies</em> such as Bitcoin, the services revolve around providing a global, distributed ledger <em>for the tokens</em>, which blurs the line between capability and currency. But the world doesn’t need more than a few pure cryptocurrencies, so the majority of successful blockchain applications will <em>not</em> be pure cryptocurrencies.</p>
+
+<p>A better analogy for tokens is <em>corporate stock</em>: just like stock gives you capabilities to avail yourself of the services provided by the corporation to stockholders (such as the right to vote, right to dividends, etc.), tokens let you avail yourself of the services provided by the blockchain platform.</p>
+
+<p>Stock usually has real value, because you can often exchange it for money, but it’s less a currency than it is a set of rights to do something.</p>
+
+<h2 id="myth-3-blockchain-isnt-scalable">Myth 3: Blockchain Isn’t Scalable</h2>
+
+<p>Today’s blockchains are generally <em>not</em> scalable. Bitcoin can handle a few transactions per second. Ethereum can handle about five times that amount. To give you a sense for how terrible this performance is, Visa handles 65,000 transactions per <em>second</em>!</p>
+
+<p>Now, since <em>tokens are not currency</em>, blockchain platforms don’t <em>necessarily</em> need to scale to the level of payment systems. That said, it’s clear numerous applications require performance orders of magnitude greater than currently offered, as well as far cheaper storage and compute than currently possible on any existing blockchain.</p>
+
+<p>Nonetheless, there are no theoretical reasons why even public blockchain technology cannot scale. Ongoing work in proof-of-stake consensus algorithms, sharding, efficient routing, reputation networks and heterogeneous (specialized) networks, all provide a clear (if difficult) path toward building highly scalable blockchain platforms.</p>
+
+<p>Blockchain platforms can be thought of as highly-constrained, specialized databases. First generation systems are architecturally similar to flat file managers (how data was stored prior to databases). Later systems will be more architecturally similar to highly-scalable databases like Google Spanner.</p>
+
+<h2 id="myth-4-blockchain-platforms-will-replicate-tech-stacks">Myth 4: Blockchain Platforms Will Replicate Tech Stacks</h2>
+
+<p>Many people who are sold on the promise of blockchain technology imagine that the distributed applications of tomorrow will be built on blockchain platforms that replicate the form and function of today’s tech stacks.</p>
+
+<p>Just like today’s applications are built on file systems, databases, message queues, compute nodes, and so forth, many imagine that distributed applications will be built on combinations of services like Filecoin (for storage), IPDB (for database), Ethereum (for logic), and so forth.</p>
+
+<p>Billions have been invested in this vision of the future, which is so utterly and catastrophically wrong, entire blockchain platforms will collapse in a heap of rubble. Or at least be reduced to ghosts of their former selves.</p>
+
+<p>The reason is simple: any distributed application that has significant market value can easily attract enough participation to provide all of the services it needs for itself, on its own blockchain, without having to pass along numerous third-party costs to end-users.</p>
+
+<p>The stack for new distributed applications is <em>not</em> going to be a bunch of blockchain platforms, but rather <em>open source software</em>. Developers will assemble their applications from open source components that provide different distributed services, such as queuing and storage.</p>
+
+<p>The only distributed applications that will be built in Frankenstein fashion are those that cannot easily attract enough outside compute and storage—i.e. the set of unsuccessful distributed applications.</p>
+
+<h2 id="myth-5-blockchains-are-anti-government">Myth 5: Blockchains Are Anti-Government</h2>
+
+<p>Lots of early vocal blockchain proponents were outspoken libertarians, or even anarchists, which led many to believe that blockchains are inherently anti-government.</p>
+
+<p>Nothing could be further from the truth.</p>
+
+<p>As tokens are not currency, but assets, proceeds from the sale of such assets can be taxed in the same manner as other assets. In addition, if blockchain technology is eventually regulated differently, the capability to provide verifiable audits on blockchain transactions could ensure <em>perfect</em> compliance with regulation, which is a standard no other industry can match.</p>
+
+<p>Blockchain also provides the technology necessary to power many functions of government in a way that can be audited, and yet preserves a tunable degree of confidentiality in transactions. For example, a government powered by blockchain technology could issue currency and tax participants in an extraordinarily efficient, software-defined way, which leaves no room for tax evasion, has none of the overhead of the existing system, and gives citizens trust through tunable transparency.</p>
+
+<p>Blockchains are not anti-government, they are just a new technological tool, one that actually has the potential to radically <em>improve</em> the efficiency and transparency of government, and usher in an era of software-defined (and therefore, software-enforced) regulation.</p>
+
+<h2 id="myth-6-blockchain-is-an-append-only-chain-of-blocks">Myth 6: Blockchain Is An Append-Only Chain of Blocks</h2>
+
+<p>Technically speaking, the word <em>blockchain</em> stems from Bitcoin’s append-only chain of blocks, a data structure produced as part of the “mining” process that confirms transactions.</p>
+
+<p>These days, blockchain technology has evolved past linear append-only chains. Sharded systems utilize Directed Acyclic Graphs (DAGs) of blocks, not linear chains, and there is no specific requirement for ever-growing, append-only chains (we’ll see other types of chains in the future that preserve the ability to audit but discard some historical information).</p>
+
+<p>While some developers may not like the imprecision or terminology drift, <em>blockchain</em> now refers generically to a <em>space</em> of solutions, not any specific <em>implementation techniques</em> or <em>data structures</em>.</p>
+
+<h2 id="myth-7-blockchains-should-be-implemented-in-go-or-cc">Myth 7: Blockchains Should Be Implemented in Go or C/C++</h2>
+
+<p><img src="https://i.imgur.com/6VzdZiS.gif" alt="" /></p>
+
+<p>Given the high stakes involved, blockchain platforms should be written in languages that permit as much static verification as possible, and which allow straightforward and easily verifiable translation of math and formal protocol semantics into executable code.</p>
+
+<p>Languages with strong, static type systems, which possess semantics amenable to formal verification, and which support functional programming (a mathematical style of developing software), are an excellent fit for implementation of blockchain technology.</p>
+
+<p>Haskell in particular is proving to be a <a href="https://www.cardanohub.org/en/home/">robust choice</a> for implementing new blockchain technology, and other functional programming languages show promise as well (OCaml, Scala).</p>
+
+<p>(Sorry, I couldn’t resist!)</p>
+
+<h2 id="myth-8-blockchain-is-a-bubble">Myth 8: Blockchain Is a Bubble</h2>
+
+<p>No one can perfectly predict the future of Bitcoin, Ethereum, and other major players in the blockchain space—precisely because the success of those platforms depends on people. Developers have to write code, pull requests must be accepted or rejected, and miners must adopt (or not adopt) upgrades.</p>
+
+<p>While it’s impossible to perfectly predict what will become of the first-movers in the blockchain space, I feel confident in saying that the market cap of all blockchain technologies today is completely insignificant compared to what it will ultimately become.</p>
+
+<p>In other words, while individual cryptocurrencies may (or may not) be in a bubble, the overall blockchain market is in its early days. All the real growth lies in the future, not the past.</p>
+
+<p>Blockchain is a technology that will change the world forever.</p>
+
+<h2 id="the-future">The Future</h2>
+
+<p>In this post, I’ve outlined what I see as the major myths around blockchain technology that impede communication and funnel investment toward dead-end solutions.</p>
+
+<p>What I <em>haven’t</em> done is talk about what blockchain technology is good for.</p>
+
+<p>What are the killer applications for this type of technology, how will they emerge, and how will they be structured? What are the innovations and players we should be paying attention to, and the ones that are safe to ignore? How can blockchain technology provide a radically new way of monetizing some types of open source projects?</p>
+
+<p>All these are excellent topics…for different posts. Let me know what you’re interested in hearing about in the comments below!</p>
+:ET

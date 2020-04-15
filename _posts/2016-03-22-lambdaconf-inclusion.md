@@ -22,7 +22,7 @@ My immediate reaction could be described as a combination of shock and horror. N
 
 I’ll admit it: we never planned for this contingency.
 
-LambdaConf [started in 2014](http://www.degoesconsulting.com/lambdaconf-2014/) (I still love the cheesy western theme!), and the event is really my and Courtney’s first real experience organizing anything on this scale.
+LambdaConf [started in 2014](https://www.degoesconsulting.com/lambdaconf-2014/) (I still love the cheesy western theme!), and the event is really my and Courtney’s first real experience organizing anything on this scale.
 
 The first version of LambdaConf didn’t even have a code of conduct (I didn’t know what that was until the following year!), a formal CFP, or a proposal review process. I just wanted to get a bunch of passionate people together to talk about functional programming!
 
@@ -52,7 +52,7 @@ We all agreed on one thing upfront: LambdaConf **does not and cannot** endorse a
 
 We absolutely reject the notion that just because someone attends or speaks at the conference, the conference must somehow "endorse" their views.
 
-Beyond that, I recently and very publicly [came out as pro-inclusion](http://degoes.net/articles/lambdaconf-conservative-christianity) for the devoutly religious, including conservative Christians like my sister-in-law Courtney. So we discussed how inclusion is, in some ways, a fundamental tenet *baked* into the core of LambdaConf.
+Beyond that, I recently and very publicly [came out as pro-inclusion](https://degoes.net/articles/lambdaconf-conservative-christianity) for the devoutly religious, including conservative Christians like my sister-in-law Courtney. So we discussed how inclusion is, in some ways, a fundamental tenet *baked* into the core of LambdaConf.
 
 Yet, even inclusion has its limits.
 
@@ -64,7 +64,7 @@ The staff and I discussed the issue for days, including one in-person meeting in
 
 In the end, we all converged on the same opinion: that LambdaConf should focus on the *behavior* of attendees, rather than their *belief systems*.
 
-Assuming personal safety isn’t an issue (more on that later), we concluded that anyone who can treat others well (as [defined by our Pledge of Conduct](http://lambdaconf.us)) should be welcome, regardless of their own personal belief system.
+Assuming personal safety isn’t an issue (more on that later), we concluded that anyone who can treat others well (as [defined by our Pledge of Conduct](https://lambdaconf.us)) should be welcome, regardless of their own personal belief system.
 
 However, none of us felt comfortable making this decision alone. We weren’t committed to the position, and we could see valid and convincing arguments for many other views.
 

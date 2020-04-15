@@ -6,7 +6,7 @@ category:     articles
 tags:         [fp, functional programming, conditionals, if, anti-if, booleans]
 ---
 
-The [Anti-IF Campaign](http://antiifcampaign.com) currently stands at 4,136
+The [Anti-IF Campaign](https://antiifcampaign.com) currently stands at 4,136
 signatures, and there's a reason: conditional statements are frequently a
 troublesome source of bugs and brittle logic, and they make reasoning about
 code difficult because they multiply the code paths.
@@ -60,7 +60,7 @@ It's no wonder that conditionals (and with them, booleans) are so widely despise
 # A Closer Look
 
 In an object-oriented programming language, it's generally considered a good
-practice to [replace conditionals with polymorphism](http://refactoring.com/catalog/replaceConditionalWithPolymorphism.html).
+practice to [replace conditionals with polymorphism](https://refactoring.com/catalog/replaceConditionalWithPolymorphism.html).
 
 In a similar fashion, in functional programming, it's often considered good
 practice to replace boolean values with algebraic data types.
@@ -270,7 +270,7 @@ both easier to reason about and more generic.
 
 So what are you waiting for?
 
-Go sign the [Anti-IF Campaign](http://antiifcampaign.com) today. :)
+Go sign the [Anti-IF Campaign](https://antiifcampaign.com) today. :)
 
 *P.S.* I'm just joking about the Anti-IF campaign (but it's kinda funny).
 

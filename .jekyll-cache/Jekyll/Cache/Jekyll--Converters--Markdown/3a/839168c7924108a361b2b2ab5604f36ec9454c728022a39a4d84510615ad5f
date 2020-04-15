@@ -1,0 +1,98 @@
+I"0.<p>At <a href="https://scalapeno2018.com/">Scalapeño</a> this year, I <a href="https://www.youtube.com/watch?v=v8IQ-X2HkGE">argued in my keynote</a> that the best and most unique parts of Scala are the ones suited to functional programming—including traits (when used for type classes, modules, and sum types), case classes (when used for product types), higher-kinded types, dot method syntax (which is useful for method chaining and namespacing), and various features of Scala’s type system.</p>
+
+<p>In the <a href="https://twitter.com/jdegoes">Twitter</a> aftermath that followed, I further argued that object-oriented programming—by which I mean inheritance hierarchies (typified by the Scala collections inheritance hierarchy) and subtyping (beyond its use for modeling sum types, modules, and type classes)—isn’t useful. That is, it doesn’t have any real world practical benefits over functional programming.</p>
+
+<p>Some <a href="https://twitter.com/adriaanm/status/1017054795214020609">claimed</a> without supporting evidence that Scala’s embrace of object-oriented programming helps working programmers solve real problems. To settle the issue once and for all (at least for some people), I issued the following public challenge:</p>
+
+<p><img src="/images/fp-vs-oop-challenge.png" alt="" /></p>
+
+<p>In a world of millions of object-oriented programmers, I received a grand total of 3 responses (!).</p>
+
+<p>In this blog post, I’ll look at one of the responses, and show how you can solve the same problem using standard techniques from functional programming. Then every reader can decide for themselves whether OOP adds anything of value to what I have defined as the <em>good parts</em> of the Scala programming language.</p>
+
+<h2 id="data-modeling">Data Modeling</h2>
+
+<p>The first response to my challenge was a problem in <a href="https://gist.github.com/huntc/65dafc5b737d4cc1fe0492d52379c2e3">data modeling</a> by <a href="https://twitter.com/huntchr">Christopher Hunt</a>, a veteran of Lightbend:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Event</span><span class="o">(</span><span class="k">val</span> <span class="nv">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">CountersUpdated</span><span class="o">(</span>
+  <span class="k">override</span> <span class="k">val</span> <span class="nv">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span>
+  <span class="n">counter</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">Event</span><span class="o">(</span><span class="n">id</span><span class="o">)</span>
+
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">DeviceIdUpdated</span><span class="o">(</span>
+  <span class="k">override</span> <span class="k">val</span> <span class="nv">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span>
+  <span class="n">deviceId</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Event</span><span class="o">(</span><span class="n">id</span><span class="o">)</span></code></pre></figure>
+
+<p>This example uses inheritance not for type classes, modules, or sum type emulation, but to provide the following benefits:</p>
+
+<ol>
+  <li>The compile-time guarantee that every event has an <code class="highlighter-rouge">id</code> of type <code class="highlighter-rouge">Int</code>, which means the same thing across every event.</li>
+  <li>The flexibility for each event to have its own custom payload (for example, one has a <code class="highlighter-rouge">counter: Option[Int]</code>, and another has a <code class="highlighter-rouge">deviceId: Int</code>).</li>
+</ol>
+
+<p>Let’s take a look at how functional programming can provide us with these same benefits, without the use of inheritance.</p>
+
+<h2 id="naive-solution">Naive Solution</h2>
+
+<p>In functional programming, we might choose to naively model this problem with a single sum type:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">Event</span>
+  <span class="o">=</span> <span class="kt">CountersUpdated</span> <span class="kt">Int</span> <span class="p">(</span><span class="kt">Maybe</span> <span class="kt">Int</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">DeviceIdUpdated</span> <span class="kt">Int</span> <span class="kt">Int</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="c1">// In Scala 2.x:</span>
+<span class="k">sealed</span> <span class="k">trait</span> <span class="nc">Event</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">CountersUpdated</span><span class="o">(</span>
+  <span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">counter</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">Event</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">DeviceIdUpdated</span><span class="o">(</span>
+  <span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">deviceId</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Event</span>
+
+<span class="c1">// In Scala 3.x:</span>
+<span class="n">enum</span> <span class="nc">Event</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">CountersUpdated</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">counter</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span>
+  <span class="k">case</span> <span class="nc">DeviceIdUpdated</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">deviceId</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>While this approach provides us with the ability to vary the payload for each type of event, we don’t have the compile time guarantee that each type of event has an event id.</p>
+
+<p>We could regain this guarantee with classy lenses, but we don’t need anything as fancy as that: we just need to take advantage of the full power of algebraic data types to remove the duplication in our current data model.</p>
+
+<h2 id="idiomatic-solution">Idiomatic Solution</h2>
+
+<p>In any case where we have a sum type, whose terms share a common piece of data, we can apply a refactoring: we can extract a new product type with the common data, and push the sum type deeper as another term of that product.</p>
+
+<p>In this case, our event id is the common piece of data, so we can extract a product type that includes both the id and a new sum type that captures differences between different events:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">Event</span> <span class="o">=</span> <span class="kt">Event</span> <span class="kt">Int</span> <span class="kt">Payload</span>
+<span class="kr">data</span> <span class="kt">Payload</span>
+  <span class="o">=</span> <span class="kt">CountersUpdated</span> <span class="p">(</span><span class="kt">Maybe</span> <span class="kt">Int</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">DeviceIdUpdated</span> <span class="kt">Int</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="c1">// In Scala 2.x:</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Event</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">payload</span><span class="k">:</span> <span class="kt">Payload</span><span class="o">)</span>
+<span class="k">sealed</span> <span class="k">trait</span> <span class="nc">Payload</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">CountersUpdated</span><span class="o">(</span><span class="n">counter</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">Payload</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">DeviceIdUpdated</span><span class="o">(</span><span class="n">deviceId</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Payload</span>
+
+<span class="c1">// In Scala 3.x:</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Event</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">payload</span><span class="k">:</span> <span class="kt">Payload</span><span class="o">)</span>
+<span class="n">enum</span> <span class="nc">Payload</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">CountersUpdated</span><span class="o">(</span><span class="n">counter</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span>
+  <span class="k">case</span> <span class="nc">DeviceIdUpdated</span><span class="o">(</span><span class="n">deviceId</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>This simple refactoring now lets us not just vary the payload depending on the type of event, but also lets us have a compile-time guarantee that all events share common data.</p>
+
+<p>Compared with the object-oriented solution, the new data model is the same size (smaller in Scala 3.x!), has all the benefits of the object-oriented solution, and does not conflate <em>abstraction</em> (the capability to extract an id from a type) with the data model.</p>
+
+<p>The new data model is squeaky clean, contains no logic (which is better reserved for type classes, because it’s far more flexible), and precisely models the problem domain!</p>
+
+<p>While developers can argue which approach they prefer, it’s clear the object-oriented solution has no benefits over the functional programming solution.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>In this post, I showed how functional programming compares to object-oriented programming. Rather than use a contrived example that might skew the results in favor of functional programming, I took my example from proponents of OOP.</p>
+
+<p>Stay tuned for other posts in this series, where I look at other challenges problems. And if you have some small, self-contained example, and wonder how to do the same thing in functional programming, please post it in the comments below!</p>
+:ET

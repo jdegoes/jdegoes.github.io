@@ -1,0 +1,362 @@
+I"z�<p>Functional programmers are incredibly lazy.</p>
+
+<p>More precisely, we defer commitment as late as possible. In extreme examples
+like Haskell, we defer the computation of every part of every expression until
+the last possible moment.</p>
+
+<p>Even in less extreme cases, however, we push effects (such as input/output)
+to the edges of our program. With Monad Transformers Library (MTL) or FTL, we
+defer committing to specific effect types until our application’s main function.</p>
+
+<p>This <em>commitment to non-commitment</em> tends to have several benefits:</p>
+
+<ul>
+  <li>It improves comprehension, because low-level portions of the code needn’t be
+concerned with unnecessary and distracting details;</li>
+  <li>It improves reusability, since higher-level code has more control over
+decisions.</li>
+  <li><em>Sometimes</em>, it even improves performance (algorithm fusion in the case of
+Haskell’s non-strict evaluation model).</li>
+</ul>
+
+<p>Sadly, there’s something about even the most <em>functional</em> code that is
+inherently <em>not</em> lazy. Instead, almost all functional code eagerly commits to
+<em>more</em> than it needs to, obfuscating intent and decreasing reusability.</p>
+
+<p>I’m referring to the tendency of functional code to use <em>hard-coded data
+structures</em>.</p>
+
+<h2 id="devil-in-the-data">Devil in the Data</h2>
+
+<p>Let’s take the following code example, which tries to find an employee’s manager
+or returns an error message:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">findManager</span> <span class="o">::</span> <span class="kt">List</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="kt">Either</span> <span class="kt">String</span> <span class="kt">Employee</span>
+<span class="n">findManager</span> <span class="n">es</span> <span class="n">e</span> <span class="o">=</span> <span class="n">maybe</span>
+  <span class="p">(</span><span class="kt">Left</span> <span class="s">"Could not find manager of "</span> <span class="o">&lt;&gt;</span> <span class="n">show</span> <span class="n">e</span><span class="p">)</span> <span class="kt">Right</span>
+  <span class="p">(</span><span class="n">find</span> <span class="p">(</span><span class="nf">\</span><span class="n">m</span> <span class="o">-&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">e</span><span class="o">.</span><span class="n">managerId</span><span class="p">)</span> <span class="n">es</span><span class="p">)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">findManager</span><span class="o">(</span><span class="n">es</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Employee</span><span class="o">],</span> <span class="n">e</span><span class="k">:</span> <span class="kt">Employee</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Employee</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nv">es</span><span class="o">.</span><span class="py">find</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">id</span> <span class="o">==</span> <span class="nv">e</span><span class="o">.</span><span class="py">managerId</span><span class="o">).</span><span class="py">fold</span><span class="o">(</span>
+    <span class="nc">Left</span><span class="o">(</span><span class="s">"Could not find manager of "</span> <span class="o">+</span> <span class="n">e</span><span class="o">))(</span>
+    <span class="nc">Right</span><span class="o">(</span><span class="k">_</span><span class="o">))</span></code></pre></figure>
+
+<p>Notice how the code <em>commits</em> to returning the result in a hard-coded <code class="highlighter-rouge">Either</code>
+data structure.</p>
+
+<p>This is <em>far</em> more specific than the code actually requires. All the function
+<em>really needs</em> is the ability to construct error and success cases, without the
+ability to know anything about the data structure or to deconstruct it.</p>
+
+<p>The code is <em>prematurely committing</em> to a concrete data structure, which removes
+the choice from all higher-level code (you don’t have the choice to return the
+error in an <code class="highlighter-rouge">IO</code> or <code class="highlighter-rouge">Future</code> monad, for example), making the implementation both
+unnecessarily complex and more difficult to reuse.</p>
+
+<p>In an ideal world, the <code class="highlighter-rouge">findManager</code> function would be <em>polymorphic</em> in the type
+of data structure it returned. Further, the function would not require the
+ability to construct <em>and</em> deconstruct error/success values, since it depends
+only on construction.</p>
+
+<p>In an ideal world, our code would commit to <em>no</em> data structures.</p>
+
+<h2 id="constructing-polymorphic-data">Constructing Polymorphic Data</h2>
+
+<p>To purge the blight of concrete data structures from our functional programs,
+our first step is going to be to separate the capability of <em>construction</em> from
+the capability of <em>deconstruction</em>.</p>
+
+<p>Using an MTL-like approach, we’re going to describe the capability of
+constructing an <code class="highlighter-rouge">Either</code>-like structure:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">EitherLike</span> <span class="n">e</span> <span class="kr">where</span>
+  <span class="n">left</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span>
+  <span class="n">right</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">EitherLike</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">left</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">a</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+  <span class="k">def</span> <span class="nf">right</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">b</span><span class="k">:</span> <span class="kt">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>These classes promise the ability to construct an <code class="highlighter-rouge">Either</code>-like structure from a
+left or a right value. However, the structure they are constructing could be anything—including a sum type with many more terms than just right and
+left, or even a <code class="highlighter-rouge">Monad</code> with an error and success case.</p>
+
+<p>With this type class, we can now make the original code polymorphic in the type
+of data structure it returns:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">findManager</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">e</span><span class="o">.</span> <span class="kt">EitherLike</span> <span class="n">e</span> <span class="o">=&gt;</span> <span class="kt">List</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="kt">String</span> <span class="kt">Employee</span>
+<span class="n">findManager</span> <span class="n">es</span> <span class="n">e</span> <span class="o">=</span> <span class="n">maybe</span>
+  <span class="p">(</span><span class="n">left</span> <span class="s">"Could not find manager of "</span> <span class="o">&lt;&gt;</span> <span class="n">show</span> <span class="n">e</span><span class="p">)</span> <span class="n">right</span>
+  <span class="p">(</span><span class="n">find</span> <span class="p">(</span><span class="nf">\</span><span class="n">m</span> <span class="o">-&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">e</span><span class="o">.</span><span class="n">managerId</span><span class="p">)</span> <span class="n">es</span><span class="p">)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">findManager</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">EitherLike</span><span class="o">](</span><span class="n">es</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Employee</span><span class="o">],</span> <span class="n">e</span><span class="k">:</span> <span class="kt">Employee</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Employee</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nv">es</span><span class="o">.</span><span class="py">find</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">id</span> <span class="o">==</span> <span class="nv">e</span><span class="o">.</span><span class="py">managerId</span><span class="o">).</span><span class="py">fold</span><span class="o">(</span>
+    <span class="o">(</span><span class="s">"Could not find manager of "</span> <span class="o">+</span> <span class="n">e</span><span class="o">).</span><span class="py">left</span><span class="o">)(</span>
+    <span class="nv">_</span><span class="o">.</span><span class="py">right</span><span class="o">[</span><span class="kt">Employee</span><span class="o">])</span></code></pre></figure>
+
+<p>This was an easy change to make, but what happens when we need not just the ability to <em>construct</em> a data structure, but also the ability to <em>deconstruct</em> it?</p>
+
+<p>The solution to this problem is surprisingly elegant.</p>
+
+<h2 id="deconstructing-polymorphic-data">Deconstructing Polymorphic Data</h2>
+
+<p>The capability of deconstruction can be expressed directly as a <em>catamorphism</em>
+or <em>fold</em> from the representation of a data structure.</p>
+
+<p>In the case of an <code class="highlighter-rouge">Either</code>-like data structure, we can represent this
+catamorphism with the following type class:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">DeconstructEither</span> <span class="n">e</span> <span class="kr">where</span>
+  <span class="n">either</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span> <span class="n">b</span> <span class="n">z</span><span class="o">.</span> <span class="p">(</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="n">z</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">b</span> <span class="o">-&gt;</span> <span class="n">z</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">z</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">DeconstructEither</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">either</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span>, <span class="kt">Z</span><span class="o">](</span><span class="n">left</span><span class="k">:</span> <span class="kt">a</span> <span class="o">=&gt;</span> <span class="n">Z</span><span class="o">,</span> <span class="n">right</span><span class="k">:</span> <span class="kt">B</span> <span class="o">=&gt;</span> <span class="n">Z</span><span class="o">)(</span><span class="n">e</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">Z</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Here’s how we could use this type class to construct a <code class="highlighter-rouge">leftOrElse</code> combinator,
+which extracts the left side of an either if it’s there, or else uses a
+specified default value:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">leftOrElse</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="kt">DeconstructEither</span> <span class="n">e</span> <span class="o">=&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">a</span>
+<span class="n">leftOrElse</span> <span class="n">a</span> <span class="o">=</span> <span class="n">either</span> <span class="n">id</span> <span class="p">(</span><span class="n">const</span> <span class="n">a</span><span class="p">)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">leftOrElse</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">a</span><span class="k">:</span> <span class="kt">A</span><span class="o">,</span> <span class="n">e</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">])(</span><span class="k">implicit</span> <span class="n">E</span><span class="k">:</span> <span class="kt">DeconstructEither</span><span class="o">[</span><span class="kt">E</span><span class="o">])</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=</span>
+  <span class="nv">E</span><span class="o">.</span><span class="py">either</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span>, <span class="kt">A</span><span class="o">](</span><span class="n">identity</span><span class="o">,</span> <span class="nv">Function</span><span class="o">.</span><span class="py">const</span><span class="o">(</span><span class="n">a</span><span class="o">))(</span><span class="n">e</span><span class="o">)</span></code></pre></figure>
+
+<p>This code is completely polymorphic in the type of data structure it operates
+on, requiring only the ability to deconstruct an either-like data structure into
+its components.</p>
+
+<p>However, it’s hard to look at this code without noticing there’s a lot of
+boilerplate. The <em>catamorphism</em> of deconstruction is eerily similar to the
+<em>anamorphism</em> of construction, yet we have two type classes, one for
+construction, and one for deconstruction.</p>
+
+<p>With a little bit of abstraction, we can completely eliminate all this
+boilerplate and make generic abstractions for construction and deconstruction.</p>
+
+<h2 id="generic-constructors--deconstructors">Generic Constructors &amp; Deconstructors</h2>
+
+<p>As a first step, we’ll refactor the constructors and deconstructors for <code class="highlighter-rouge">Either</code>
+as follows:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">EitherConstructor</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span>
+  <span class="p">{</span> <span class="n">left</span>  <span class="o">::</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span><span class="p">,</span>
+    <span class="n">right</span> <span class="o">::</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span> <span class="p">}</span>
+
+<span class="kr">class</span> <span class="kt">EitherConstruct</span> <span class="n">e</span> <span class="kr">where</span>
+  <span class="n">construct</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="kt">EitherConstructor</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span>
+
+<span class="kr">class</span> <span class="kt">EitherDeconstruct</span> <span class="n">e1</span> <span class="kr">where</span>
+  <span class="n">deconstruct</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">e2</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="n">e1</span> <span class="n">a</span> <span class="n">b</span> <span class="o">-&gt;</span>
+    <span class="kt">EitherConstructor</span> <span class="n">e2</span> <span class="n">a</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">e2</span> <span class="n">a</span> <span class="n">b</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">EitherConstructor</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">left</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+  <span class="k">def</span> <span class="nf">right</span><span class="o">(</span><span class="n">b</span><span class="k">:</span> <span class="kt">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">EitherConstruct</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">construct</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span><span class="k">:</span> <span class="kt">EitherConstructor</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">EitherDeconstruct</span><span class="o">[</span><span class="kt">E1</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">deconstruct</span><span class="o">[</span><span class="kt">E2</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">e1</span><span class="k">:</span> <span class="kt">E1</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">])(</span><span class="n">m</span><span class="k">:</span> <span class="kt">EitherConstructor</span><span class="o">[</span><span class="kt">E2</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">E2</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>These classes lets you simply build and match against either-like structures as
+follows:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Const</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
+<span class="n">deconstruct</span> <span class="p">(</span><span class="n">construct</span><span class="o">.</span><span class="n">left</span> <span class="s">"testing"</span> <span class="o">::</span> <span class="kt">Const</span> <span class="kt">String</span> <span class="kt">Int</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">left</span> <span class="o">:</span> <span class="n">id</span><span class="p">,</span>
+  <span class="n">right</span> <span class="o">:</span> <span class="n">const</span> <span class="s">"Wasn't there!"</span>
+<span class="p">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">Const</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="n">A</span>
+<span class="nv">D</span><span class="o">.</span><span class="py">deconstruct</span><span class="o">(</span><span class="nv">C</span><span class="o">.</span><span class="py">construct</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Int</span><span class="o">].</span><span class="py">left</span><span class="o">(</span><span class="s">"testing"</span><span class="o">))(</span><span class="k">new</span>  
+  <span class="nc">EitherConstructor</span><span class="o">[</span><span class="kt">Const</span>, <span class="kt">String</span>, <span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">left</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Const</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="n">a</span>
+    <span class="k">def</span> <span class="nf">right</span><span class="o">(</span><span class="n">b</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Const</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="s">"Wasn't there!"</span>
+<span class="o">})</span></code></pre></figure>
+
+<p>Notice that we can abstract over <em>all</em> constructors of a given arity in
+straightforward fashion:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Construct0</span> <span class="n">m0</span> <span class="n">repr</span> <span class="kr">where</span>
+  <span class="n">make0</span> <span class="o">::</span> <span class="n">m0</span> <span class="n">repr</span>
+
+<span class="kr">class</span> <span class="kt">Construct1</span> <span class="n">m1</span> <span class="p">(</span><span class="n">repr</span> <span class="o">::</span> <span class="o">*</span> <span class="o">-&gt;</span> <span class="o">*</span><span class="p">)</span> <span class="kr">where</span>
+  <span class="n">make1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="n">m1</span> <span class="n">repr</span> <span class="n">a</span>
+
+<span class="kr">class</span> <span class="kt">Construct2</span> <span class="n">m2</span> <span class="p">(</span><span class="n">repr</span> <span class="o">::</span> <span class="o">*</span> <span class="o">-&gt;</span> <span class="o">*</span> <span class="o">-&gt;</span> <span class="o">*</span><span class="p">)</span> <span class="kr">where</span>
+  <span class="n">make2</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="n">m2</span> <span class="n">repr</span> <span class="n">a</span> <span class="n">b</span>
+
+<span class="kr">class</span> <span class="kt">Deconstruct0</span> <span class="n">m0</span> <span class="n">rep1</span> <span class="kr">where</span>
+  <span class="n">switch0</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">rep2</span><span class="o">.</span> <span class="n">rep1</span> <span class="o">-&gt;</span> <span class="n">m0</span> <span class="n">rep2</span> <span class="o">-&gt;</span> <span class="n">rep2</span>
+
+<span class="kr">class</span> <span class="kt">Deconstruct1</span> <span class="n">m1</span> <span class="n">rep1</span> <span class="kr">where</span>
+  <span class="n">switch1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">rep2</span> <span class="n">a</span><span class="o">.</span> <span class="n">rep1</span> <span class="n">a</span> <span class="o">-&gt;</span>
+    <span class="n">m1</span> <span class="n">rep2</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">rep2</span> <span class="n">a</span>
+
+<span class="kr">class</span> <span class="kt">Deconstruct2</span> <span class="n">m2</span> <span class="n">rep1</span> <span class="kr">where</span>
+  <span class="n">switch2</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">rep2</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="n">rep1</span> <span class="n">a</span> <span class="n">b</span> <span class="o">-&gt;</span>
+    <span class="n">m1</span> <span class="n">rep2</span> <span class="n">a</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">rep2</span> <span class="n">a</span> <span class="n">b</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Construct0</span><span class="o">[</span><span class="kt">M0</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">Rep</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">make0</span><span class="k">:</span> <span class="kt">M0</span><span class="o">[</span><span class="kt">Rep</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">Construct1</span><span class="o">[</span><span class="kt">M1</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">Rep</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">make1</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span><span class="k">:</span> <span class="kt">M1</span><span class="o">[</span><span class="kt">Rep</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">Construct2</span><span class="o">[</span><span class="kt">M2</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">Rep</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">make2</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span><span class="k">:</span> <span class="kt">M2</span><span class="o">[</span><span class="kt">Rep</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">Deconstruct0</span><span class="o">[</span><span class="kt">M0</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">Rep1</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">switch0</span><span class="o">[</span><span class="kt">Rep2</span><span class="o">](</span><span class="n">rep1</span><span class="k">:</span> <span class="kt">Rep1</span><span class="o">)(</span><span class="n">m</span><span class="k">:</span> <span class="kt">M0</span><span class="o">[</span><span class="kt">Rep2</span><span class="o">])</span><span class="k">:</span> <span class="kt">Rep2</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">Deconstruct1</span><span class="o">[</span><span class="kt">M1</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">Rep1</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">switch1</span><span class="o">[</span><span class="kt">Rep2</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">](</span><span class="n">rep1</span><span class="k">:</span> <span class="kt">Rep1</span><span class="o">[</span><span class="kt">A</span><span class="o">])(</span><span class="n">m</span><span class="k">:</span> <span class="kt">M1</span><span class="o">[</span><span class="kt">Rep2</span>, <span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">Rep2</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">trait</span> <span class="nc">Deconstruct2</span><span class="o">[</span><span class="kt">M2</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">Rep1</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">swtich2</span><span class="o">[</span><span class="kt">Rep2</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">rep1</span><span class="k">:</span> <span class="kt">Rep1</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">])(</span><span class="n">m</span><span class="k">:</span> <span class="kt">M2</span><span class="o">[</span><span class="kt">Rep2</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">Rep2</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Here’s a concrete example of instances of these classes for constructing and
+deconstructing the <code class="highlighter-rouge">Either</code> data structure:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">EitherConstructor</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span> <span class="kt">EitherConstructor</span> <span class="p">{</span>
+    <span class="n">left</span>  <span class="o">::</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span><span class="p">,</span>
+    <span class="n">right</span> <span class="o">::</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">a</span> <span class="n">b</span> <span class="p">}</span>
+
+<span class="kr">instance</span> <span class="n">eitherConstruct</span> <span class="o">::</span> <span class="kt">Construct2</span> <span class="kt">EitherConstructor</span> <span class="kt">Either</span> <span class="kr">where</span>
+  <span class="n">make2</span> <span class="o">=</span> <span class="kt">EitherConstructor</span> <span class="p">{</span> <span class="n">left</span> <span class="o">:</span> <span class="kt">Left</span><span class="p">,</span> <span class="n">right</span> <span class="o">:</span> <span class="kt">Right</span> <span class="p">}</span>
+
+<span class="kr">instance</span> <span class="n">eitherDeconstruct</span> <span class="o">::</span> <span class="kt">Deconstruct2</span> <span class="kt">EitherConstructor</span> <span class="kt">Either</span> <span class="kr">where</span>
+  <span class="n">switch2</span> <span class="p">(</span><span class="kt">Left</span> <span class="n">v</span><span class="p">)</span> <span class="p">(</span><span class="kt">EitherConstructor</span> <span class="n">r</span><span class="p">)</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">left</span> <span class="n">v</span>
+  <span class="n">switch2</span> <span class="p">(</span><span class="kt">Right</span> <span class="n">v</span><span class="p">)</span> <span class="p">(</span><span class="kt">EitherConstructor</span> <span class="n">r</span><span class="p">)</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">right</span> <span class="n">v</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">EitherConstructor</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">left</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+
+  <span class="k">def</span> <span class="nf">right</span><span class="o">(</span><span class="n">b</span><span class="k">:</span> <span class="kt">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span>
+<span class="o">}</span>
+<span class="k">implicit</span> <span class="k">val</span> <span class="nv">eitherConstruct</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Construct2</span><span class="o">[</span><span class="kt">EitherConstructor</span>, <span class="kt">Either</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">make2</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">EitherConstructor</span><span class="o">[</span><span class="kt">Either</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">left</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Left</span><span class="o">(</span><span class="n">a</span><span class="o">)</span>
+
+    <span class="k">def</span> <span class="nf">right</span><span class="o">(</span><span class="n">b</span><span class="k">:</span> <span class="kt">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Right</span><span class="o">(</span><span class="n">b</span><span class="o">)</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+<span class="k">implicit</span> <span class="k">val</span> <span class="nv">eitherDeconstruct</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Deconstruct2</span><span class="o">[</span><span class="kt">EitherConstructor</span>, <span class="kt">Either</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">switch2</span><span class="o">[</span><span class="kt">Rep2</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">e</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">])(</span><span class="n">m</span><span class="k">:</span> <span class="kt">EitherConstructor</span><span class="o">[</span><span class="kt">Rep2</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+    <span class="n">e</span> <span class="k">match</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="nc">Left</span><span class="o">(</span><span class="n">v</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nv">m</span><span class="o">.</span><span class="py">left</span><span class="o">(</span><span class="n">v</span><span class="o">)</span>
+      <span class="k">case</span> <span class="nc">Right</span><span class="o">(</span><span class="n">v</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nv">m</span><span class="o">.</span><span class="py">right</span><span class="o">(</span><span class="n">v</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Finally, we can refactor our toy example to use this machinery as follows:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Const</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
+<span class="n">switch2</span> <span class="p">(</span><span class="n">make2</span><span class="o">.</span><span class="n">left</span> <span class="s">"testing"</span> <span class="o">::</span> <span class="kt">Const</span> <span class="kt">String</span> <span class="kt">Int</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">left</span> <span class="o">:</span> <span class="n">id</span><span class="p">,</span>
+  <span class="n">right</span> <span class="o">:</span> <span class="n">const</span> <span class="s">"Wasn't there!"</span>
+<span class="p">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">Const</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="n">A</span>
+<span class="nv">C</span><span class="o">.</span><span class="py">switch2</span><span class="o">(</span><span class="nv">D</span><span class="o">.</span><span class="py">make2</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Int</span><span class="o">].</span><span class="py">left</span><span class="o">(</span><span class="s">"testing"</span><span class="o">))(</span><span class="k">new</span>  
+  <span class="nc">EitherConstructor</span><span class="o">[</span><span class="kt">Const</span>, <span class="kt">String</span>, <span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">left</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Const</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="n">a</span>
+    <span class="k">def</span> <span class="nf">right</span><span class="o">(</span><span class="n">b</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Const</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="s">"Wasn't there!"</span>
+<span class="o">})</span></code></pre></figure>
+
+<p>There you have it—code that’s fully polymorphic in construction and
+deconstruction. It works with any data structure that can provide the
+capabilities it needs, and <em>only</em> the capabilities it needs.</p>
+
+<p>Now let’s revisit our original example.</p>
+
+<h2 id="polymorphic-overload">Polymorphic Overload</h2>
+
+<p>Our original example that motivated this development was the <code class="highlighter-rouge">findManger</code> function:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">findManager</span> <span class="o">::</span> <span class="kt">List</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="kt">Either</span> <span class="kt">String</span> <span class="kt">Employee</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">findManager</span><span class="o">(</span><span class="n">es</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Employee</span><span class="o">],</span> <span class="n">e</span><span class="k">:</span> <span class="kt">Employee</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Employee</span><span class="o">]</span></code></pre></figure>
+
+<p>If we modified this example to use a polymorphic return value, we’d end up
+with the following type signature:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">findManager</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">e</span><span class="o">.</span> <span class="kt">Construct2</span> <span class="kt">EitherConstructor</span> <span class="n">e</span> <span class="o">=&gt;</span>
+  <span class="kt">List</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="kt">Employee</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="kt">String</span> <span class="kt">Employee</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">findManager</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]](</span><span class="n">es</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Employee</span><span class="o">],</span> <span class="n">e</span><span class="k">:</span> <span class="kt">Employee</span><span class="o">)(</span>
+  <span class="k">implicit</span> <span class="n">C</span><span class="k">:</span> <span class="kt">Construct2</span><span class="o">[</span><span class="kt">EitherConstructor</span>, <span class="kt">E</span><span class="o">])</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">Employee</span><span class="o">]</span></code></pre></figure>
+
+<p>This function could be used to return any type of structure which is at least as
+capable as <code class="highlighter-rouge">Either</code>’s constructors, including any <code class="highlighter-rouge">Monad</code> that had failure and
+success cases, or other sum types that have more than two terms.</p>
+
+<p>While more flexible, the function is still monomorphic in the type of <code class="highlighter-rouge">List</code>,
+<code class="highlighter-rouge">Employee</code>, and <code class="highlighter-rouge">String</code>. If taken to its logical conclusion, then making this
+function totally polymorphic would yield something like this:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">findManager</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">e</span> <span class="n">l</span> <span class="n">p</span> <span class="n">s</span><span class="o">.</span>
+  <span class="kt">Construct2</span> <span class="kt">EitherConstructor</span> <span class="n">e</span> <span class="o">=&gt;</span>
+  <span class="kt">Deconstruct1</span> <span class="kt">ListConstructor</span> <span class="n">l</span> <span class="o">=&gt;</span>
+  <span class="kt">Deconstruct0</span> <span class="kt">EmployeeConstructor</span> <span class="n">p</span> <span class="o">=&gt;</span>
+  <span class="kt">Construct0</span> <span class="kt">StringConstructor</span> <span class="n">s</span> <span class="o">=&gt;</span>
+  <span class="n">l</span> <span class="n">p</span> <span class="o">-&gt;</span> <span class="n">p</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">s</span> <span class="n">p</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">findManager</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">L</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">P</span>, <span class="kt">S</span><span class="o">](</span><span class="n">es</span><span class="k">:</span> <span class="kt">L</span><span class="o">[</span><span class="kt">P</span><span class="o">],</span> <span class="n">e</span><span class="k">:</span> <span class="kt">P</span><span class="o">)(</span>
+  <span class="k">implicit</span> <span class="n">E</span><span class="k">:</span> <span class="kt">Construct2</span><span class="o">[</span><span class="kt">EitherConstructor</span>, <span class="kt">E</span><span class="o">],</span>
+  <span class="k">implicit</span> <span class="n">L</span><span class="k">:</span> <span class="kt">Deconstruct1</span><span class="o">[</span><span class="kt">ListConstructor</span>, <span class="kt">L</span><span class="o">],</span>
+  <span class="k">implicit</span> <span class="n">P</span><span class="k">:</span> <span class="kt">Deconstruct0</span><span class="o">[</span><span class="kt">EmployeeConstructor</span>, <span class="kt">P</span><span class="o">],</span>
+  <span class="k">implicit</span> <span class="n">S</span><span class="k">:</span> <span class="kt">Construct0</span><span class="o">[</span><span class="kt">StringConstructor</span>, <span class="kt">S</span><span class="o">])</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">S</span>, <span class="kt">P</span><span class="o">]</span></code></pre></figure>
+
+<p>If we change a bunch of names and use Unicode and type alias operators, we can
+make this horrible soup of letters and symbols a little more readable,
+possibly close to the following:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">findManager</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">e</span> <span class="n">l</span> <span class="n">p</span> <span class="n">s</span><span class="o">.</span>
+  <span class="kt">Either</span>   <span class="err">↑₂</span> <span class="n">e</span> <span class="o">=&gt;</span>
+  <span class="kt">List</span>     <span class="err">↓₁</span> <span class="n">l</span> <span class="o">=&gt;</span>
+  <span class="kt">Employee</span> <span class="err">↓₀</span> <span class="n">p</span> <span class="o">=&gt;</span>
+  <span class="kt">String</span>   <span class="err">↑₀</span> <span class="n">s</span> <span class="o">=&gt;</span>
+  <span class="n">l</span> <span class="n">p</span> <span class="o">-&gt;</span> <span class="n">p</span> <span class="o">-&gt;</span> <span class="n">e</span> <span class="n">s</span> <span class="n">p</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">findManager</span><span class="o">[</span><span class="kt">E</span><span class="o">[</span><span class="k">_</span>, <span class="k">_</span><span class="o">]</span>, <span class="kt">L</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">P</span>, <span class="kt">S</span><span class="o">](</span><span class="n">es</span><span class="k">:</span> <span class="kt">L</span><span class="o">[</span><span class="kt">P</span><span class="o">],</span> <span class="n">e</span><span class="k">:</span> <span class="kt">P</span><span class="o">)(</span>
+  <span class="k">implicit</span> <span class="n">E</span><span class="k">:</span> <span class="kt">Either</span>   <span class="kt">↑</span><span class="err">₂</span> <span class="kt">E</span><span class="o">,</span>
+  <span class="k">implicit</span> <span class="n">L</span><span class="k">:</span> <span class="kt">List</span>     <span class="kt">↓</span><span class="err">₁</span> <span class="kt">L</span><span class="o">,</span>
+  <span class="k">implicit</span> <span class="n">P</span><span class="k">:</span> <span class="kt">Employee</span> <span class="kt">↓</span><span class="err">₀</span> <span class="kt">P</span><span class="o">,</span>
+  <span class="k">implicit</span> <span class="n">S</span><span class="k">:</span> <span class="kt">String</span>   <span class="kt">↑</span><span class="err">₀</span> <span class="kt">S</span><span class="o">)</span><span class="k">:</span> <span class="kt">E</span><span class="o">[</span><span class="kt">S</span>, <span class="kt">P</span><span class="o">]</span></code></pre></figure>
+
+<p>That’s about the best we can get—and let’s be honest, it’s not very good.
+There’s still a lot of boilerplate, and while all this polymorphism is very
+powerful, must code won’t need it.</p>
+
+<p>It’s a heavy price to pay for fringe use cases. <em>Too heavy</em>, I’d say, at least
+with <em>today’s</em> programming languages.</p>
+
+<h2 id="looking-forward">Looking Forward</h2>
+
+<p>Ultimately, I’d argue that today’s programming languages are unnaturally
+obsessed with data. They are wedded to the idea of rigid layouts of bits in
+memory—for understandably pragmatic or historic reasons.</p>
+
+<p>Yet, the functions we develop in our code don’t <em>usually</em> require bits. Instead,
+they require <em>capabilities</em>. Some to construct, some to deconstruct. If we
+expressed these capabilities precisely, we could free our code from having to
+know too much about the structures it operates on, while at the same time making
+our code much more reusable for different purposes.</p>
+
+<p>We can model this degree of polymorphism with today’s programming languages, but
+it’s awfully cumbersome. However, if we were building a <em>next-generation</em>
+programming language, we could make it difficult or impossible to make our code
+depend on “layouts of bits”, and instead, make it trivial to require only as
+much structure as we need to implement each function.</p>
+
+<p>For now, though, I recommend you stick to data structures when you must, and
+judiciously incorporate data polymorphism where it makes sense to do so, which
+will be cases where the opportunities for reuse vastly outweigh the overhead.</p>
+:ET

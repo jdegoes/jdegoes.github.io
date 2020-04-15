@@ -6,7 +6,7 @@ category:     articles
 tags:         [fp, functional programming, type classes, scala, monads, effects, reactive, scalaz, fp-oop, zio, oop]
 ---
 
-I'm one of those crazy functional programming zealots and the architect of [ZIO](http://github.com/scalaz/scalaz-zio), a purely-functional effect system for Scala.
+I'm one of those crazy functional programming zealots and the architect of [ZIO](https://github.com/scalaz/scalaz-zio), a purely-functional effect system for Scala.
 
 I use the purely-functional `IO` in Scala to model _all_ my effects&mdash;not out of any ideological commitment to functional programming, but because it makes my life easier and makes my programs faster, clearer and better.
 
@@ -62,7 +62,7 @@ Other times, the lack of first-class programs means poor expressivity. Expressio
 
 `IO` cleanly solves these issues by turning our programs into first-class values. We can pass these values around, we can store them in data structures, and we can combine them in an expression-oriented way to yield other programs.
 
-I'll show you a few examples with [ZIO](http://github.com/scalaz/scalaz-zio) to demonstrate the power of this approach.
+I'll show you a few examples with [ZIO](https://github.com/scalaz/scalaz-zio) to demonstrate the power of this approach.
 
 Suppose we want to define a combinator which retries a program until it succeeds:
 
@@ -95,7 +95,7 @@ Because we can define and use combinators on our programs, we can solve very com
 
 ### Performance & Power
 
-The final very attractive property of an effect monad like [ZIO](http://github.com/scalaz/scalaz-zio) (and similar ones like Monix `Task`) is that it can provide us with a level of performance and power that cannot be obtained elsewhere.
+The final very attractive property of an effect monad like [ZIO](https://github.com/scalaz/scalaz-zio) (and similar ones like Monix `Task`) is that it can provide us with a level of performance and power that cannot be obtained elsewhere.
 
 For example, in a [variety of benchmarks](https://github.com/scalaz/scalaz-zio/tree/master/benchmarks/src/main/scala/scalaz/zio), ZIO is 100x or more faster than Scala's own `Future`. `Future` is not functional code, and it has all the drawbacks of dysfunctional code, including a different reasoning model and poor interop with pure code.
 
@@ -137,7 +137,7 @@ For example, a Scala 3 proposal to use implicit function types for effect capabi
  * **Runaway Resources**. Implicit function types do not solve the fundamental problem of how to perform `try` / `finally` across asynchronous, synchronous, and concurrent sections of code (because this requires continuations), which means they will be prone to leaking resources in exceptional cases. Modern `IO` types solve this easily.
  * **Monstrous Monomorphism**. Unlike monadic approaches, which, via final tagless / mtl-style, permit you to write code that is polymorphic across different implementations (a mock implementation for testing, an asynchronous one for production, etc.), implicit function types are too monomorphic to achieve this degree of flexibility&mdash;unless you use them to wrap monads, in which case, what's the point?
 
-Contrast an effect system based on implicit function types with monadic approaches based on `IO`, which have had 30 years of active development and have seen significant use in industry (including at my [last company](http://github.com/slamdata/quasar), where they were used to build large-scale analytics infrastructure).
+Contrast an effect system based on implicit function types with monadic approaches based on `IO`, which have had 30 years of active development and have seen significant use in industry (including at my [last company](https://github.com/slamdata/quasar), where they were used to build large-scale analytics infrastructure).
 
 Indeed, monads have proven so successful at solving all of the above problems (and more!), you can now find monadic effect systems implemented in PureScript, Kotlin, Scala, Javascript, Java, C#, F#, and numerous other programming languages.
 
@@ -151,7 +151,7 @@ A lot of these benefits are about making it easier for us to refactor our progra
 
 Other benefits include uniform purity, so we don't have to worry about mixing pure and impure code; and the ability to turn our programs into first-class values, so we can pass them around, store them in data structures, and combine them in expressions&mdash;giving us insane levels of expressivity.
 
-Beyond all this, there is a strong business case for using an `IO` effect system like [ZIO](http://github.com/scalaz/scalaz-zio), Monix `Task`, or equivalent. ZIO includes features like super fast performance, a uniform interface for synchronous and asynchronous effects, lazy evaluation (_interruption_) that safely eliminates wasted resources (memory, network, CPU), parallelism, concurrency, scalability, and so much more.
+Beyond all this, there is a strong business case for using an `IO` effect system like [ZIO](https://github.com/scalaz/scalaz-zio), Monix `Task`, or equivalent. ZIO includes features like super fast performance, a uniform interface for synchronous and asynchronous effects, lazy evaluation (_interruption_) that safely eliminates wasted resources (memory, network, CPU), parallelism, concurrency, scalability, and so much more.
 
 Unlike implicit function types and other academic curiosities, monadic effects are battle-tested and industry-proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across purely functional programming communities, regardless of language.
 

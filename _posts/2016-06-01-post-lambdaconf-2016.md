@@ -12,7 +12,7 @@ Last week, 370 people from all around the world descended to Boulder, Colorado.
 Not to discuss politics or religion. And not because they all thought alike,
 but in spite of the fact that they did not.
 
-They came to [LambdaConf 2016](http://lambdaconf.us) to learn about and share
+They came to [LambdaConf 2016](https://lambdaconf.us) to learn about and share
 their passion for *functional programming*, a flourishing and dramatic
 simplification of the way we build, combine and reason about software.
 
@@ -46,7 +46,7 @@ Despite the success of the conference on every possible level, there are many
 lessons I have learned from this incident.
 
 First, if I had a do-over, I would handle the situation differently. Instead of
-[polling speakers](http://degoes.net/articles/lambdaconf-inclusion), I and the
+[polling speakers](https://degoes.net/articles/lambdaconf-inclusion), I and the
 other staff would have had one-on-one conversations with people until we came to
 firm conclusions.
 
@@ -218,9 +218,9 @@ that everyone who wants to attend can do so.
 # Conclusion
 
 Despite all the controversy, thanks to loyal speakers, attendees, volunteers,
-and sponsors ([HaskellBook](http://haskellbook.com),
-[Workiva](http://workiva.com), [SlamData](http://slamdata.com),
-[Hell Yeah](http://hellyeah.is), [Status 451](http://status451.com/)),
+and sponsors ([HaskellBook](https://haskellbook.com),
+[Workiva](https://workiva.com), [SlamData](https://slamdata.com),
+[Hell Yeah](https://hellyeah.is), [Status 451](https://status451.com/)),
 and thanks to the singular efforts of the folks at Status 451, LambdaConf has
 never been in a stronger position.
 

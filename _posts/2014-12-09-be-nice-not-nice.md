@@ -8,7 +8,7 @@ tags:         [startups, entrepreneurs, entrepreneurship, truth, honesty, grinfu
 
 I sat on a sturdy wooden chair at one of my favorite shops, sipping a black coffee and listening patiently as a fellow entrepreneur described where he was at with his business.
 
-As he described his product, and the challenges they were having, I flashed back to [my days at Precog](http://degoes.net/articles/precog-lessons-learned/).
+As he described his product, and the challenges they were having, I flashed back to [my days at Precog](https://degoes.net/articles/precog-lessons-learned/).
 
 If I was correct, he was *about* to learn many of the same lessons that *I* learned, in the same way I learned them: *slowly* and *painfully*.
 

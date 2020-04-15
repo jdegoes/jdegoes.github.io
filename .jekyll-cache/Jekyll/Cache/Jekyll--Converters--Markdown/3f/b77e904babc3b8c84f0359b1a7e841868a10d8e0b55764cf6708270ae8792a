@@ -1,0 +1,193 @@
+I"�J<p>Descriptive variable names are a code smell.</p>
+
+<p>More precisely, if you can name your variables after more descriptive things
+than <code class="highlighter-rouge">f</code>, <code class="highlighter-rouge">a</code>, <code class="highlighter-rouge">b</code>, and so on, then your code is probably <em>monomorphic</em>.</p>
+
+<p>Monomorphic code is much more likely to be incorrect than polymorphic code,
+because for every type signature, there are many more possible implementations.</p>
+
+<p>Thus, descriptive variable names are a code smell, indicating your code is
+overly monomorphic and more likely to be broken.</p>
+
+<p>Fortunately, you can turn this around with a little refactoring process I
+call, <em>extract polymorphism from monomorphism</em>. While this refactoring does not
+always eliminate monomorphism, it can <em>defer</em> it, which is an overriding theme
+of functional programming (defer all the things!).</p>
+
+<p>In the next section, I’ll show you this refactoring in action.</p>
+
+<h2 id="monomorphism-in-string-functions">Monomorphism in String Functions</h2>
+
+<p>Some functions are maximally monomorphic — which is to say, every type in
+the signature is <em>concrete</em>, and there are no values in the signature described
+by type parameters.</p>
+
+<p>For such monomorphic functions, the “number” of possible implementations is
+exceedingly great: we can implement them in numerous ways that satisfy the type
+signature, but are horribly broken.</p>
+
+<p>For example, consider how many ways there are to implement the following
+function:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">foo</span> <span class="o">::</span> <span class="kt">List</span> <span class="kt">Char</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="kt">Char</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="kt">Char</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">foo</span><span class="o">(</span><span class="n">string1</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Char</span><span class="o">],</span> <span class="n">string2</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Char</span><span class="o">])</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Char</span><span class="o">]</span></code></pre></figure>
+
+<p>There are a huge number of ways to implement the function. The type signature of
+the function barely constrains it. All we know is that if we feed the function
+two strings, we’ll get back a string.</p>
+
+<p>The string may or may not be related to either input. It may contain random
+hard-coded characters. Or it might be empty.</p>
+
+<p>Now consider how many ways there are to implement the following function:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">foo</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="kt">List</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="n">a</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">foo</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">fst</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">],</span> <span class="n">snd</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>This function is at least <em>somewhat</em> polymorphic. There are fewer ways we can
+implement the function. In particular, we can’t just hard-code some elements in
+a list, because we have no ability to manufacture values of an arbitrary type.</p>
+
+<p>Adding a type parameter to describe the type of the elements in the list has
+constrained our space of possible solutions!</p>
+
+<p>However, there’s still lots of ways to implement the function: we can return
+the first list, return the second list, return some mashup of the first and
+second lists, or return an empty list.</p>
+
+<p>Let’s say we take this one step further and introduce even more polymorphism
+into the code, hiding the fact that the second parameter and return values are
+lists:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">foo</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span> <span class="n">b</span><span class="o">.</span> <span class="kt">List</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">b</span> <span class="o">-&gt;</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">b</span> <span class="o">-&gt;</span> <span class="n">b</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">foo</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">as</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">],</span> <span class="n">b</span><span class="k">:</span> <span class="kt">B</span><span class="o">,</span> <span class="n">ab</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">,</span> <span class="n">bbb</span><span class="k">:</span> <span class="kt">B</span> <span class="o">=&gt;</span> <span class="n">B</span> <span class="k">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">B</span></code></pre></figure>
+
+<p>There are considerably fewer ways to implement this function. The function can
+return <code class="highlighter-rouge">b</code> (a useless definition, since it doesn’t use the type parameters), or
+it convert <code class="highlighter-rouge">a</code>’s to <code class="highlighter-rouge">b</code>’s, and smash <code class="highlighter-rouge">b</code>’s together to produce a final <code class="highlighter-rouge">b</code>.</p>
+
+<p>If we continued this process to its logical conclusion, and leverage standard
+type classes, we might end up with the following types:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">foo</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span> <span class="n">a</span> <span class="n">r</span><span class="o">.</span> <span class="p">(</span><span class="kt">Foldable</span> <span class="n">f</span><span class="p">,</span> <span class="kt">Semigroup</span> <span class="n">r</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">f</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="n">r</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">r</span> <span class="o">-&gt;</span> <span class="n">r</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">foo</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Foldable</span>, <span class="kt">A</span>, <span class="kt">R:</span> <span class="kt">Semigroup</span><span class="o">](</span><span class="n">fa</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">A</span><span class="o">],</span> <span class="n">ar</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">R</span><span class="o">,</span> <span class="n">r</span><span class="k">:</span> <span class="kt">R</span><span class="o">)</span><span class="k">:</span> <span class="kt">R</span></code></pre></figure>
+
+<p>This is a sufficiently high degree of polymorphism that our variable names are
+now totally abstract, named after their types.</p>
+
+<p>It’s high enough I’m betting you can <em>guess</em> what the function <code class="highlighter-rouge">foo</code> is supposed
+to do (let me know if you need a hint!).</p>
+
+<p>Note that in our process of trying to polymorphize this function, we lost the
+original type signature, which was, presumably, required by a bunch of code.</p>
+
+<p>Our program may not need the original type signature, if we can force the
+polymorphism higher into the code base.</p>
+
+<p>However, if our code <em>does</em> require the original type signature, then we can
+recapture the original definition quite simply:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">foo0</span> <span class="o">::</span> <span class="kt">List</span> <span class="kt">Char</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="kt">Char</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="kt">Char</span>
+<span class="n">foo0</span> <span class="n">l1</span> <span class="n">l2</span> <span class="o">=</span> <span class="n">foo</span> <span class="n">l1</span> <span class="n">pure</span> <span class="n">l2</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">foo0</span><span class="o">(</span><span class="n">l1</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Char</span><span class="o">],</span> <span class="n">l2</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Char</span><span class="o">])</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Char</span><span class="o">]</span> <span class="k">=</span>
+  <span class="n">foo</span><span class="o">[</span><span class="kt">List</span>, <span class="kt">Char</span>, <span class="kt">List</span><span class="o">[</span><span class="kt">Char</span><span class="o">]](</span><span class="n">l1</span><span class="o">,</span> <span class="nc">List</span><span class="o">(</span><span class="k">_</span><span class="o">),</span> <span class="n">l2</span><span class="o">)</span></code></pre></figure>
+
+<p>While these signatures are the same as the old ones, their implementation is
+trivial, and very easy to reason about.</p>
+
+<p>In essence, what we’ve done is created a little <em>bubble of polymorphism</em> in
+which we pushed as much logic as possible, so that the amount of monomorphic
+code we have to reason about is as small as possible.</p>
+
+<p>Of course, in many cases, you can push the polymorphism even higher, by looking
+at the functions that require <code class="highlighter-rouge">foo</code> and generalizing them.</p>
+
+<p>This is just a toy example, so I’ll briefly run through a real-world example to
+show how the technique works in the wild.</p>
+
+<h2 id="real-world-example-grouping">Real-World Example: Grouping</h2>
+
+<p>A few months ago, I was working on a function that had this type signature:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">JoinMap</span> <span class="o">=</span> <span class="kt">Map</span> <span class="p">(</span><span class="kt">Set</span> <span class="kt">Data</span><span class="p">)</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Data</span><span class="p">)</span>
+<span class="n">groupByJoinKeys</span> <span class="o">::</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Data</span> <span class="o">-&gt;</span> <span class="kt">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="kt">Data</span> <span class="o">-&gt;</span> <span class="kt">JoinMap</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">JoinMap</span> <span class="o">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">Set</span><span class="o">[</span><span class="kt">Data</span><span class="o">]</span>, <span class="kt">List</span><span class="o">[</span><span class="kt">Data</span><span class="o">]]</span>
+<span class="k">def</span> <span class="nf">groupByJoinKeys</span><span class="o">(</span><span class="n">joinKeys</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">List</span><span class="o">[</span><span class="kt">Data</span> <span class="k">=&gt;</span> <span class="kt">Data</span><span class="o">]],</span> <span class="n">dataset</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Data</span><span class="o">])</span><span class="k">:</span> <span class="kt">JoinMap</span></code></pre></figure>
+
+<p>The purpose of the function was to iterate through a <code class="highlighter-rouge">dataset</code>, and apply a
+bunch of projections to the data (the “join keys”), and then stuff the values of
+the dataset into a map keyed off the projections.</p>
+
+<p>I don’t recall my first implementation of this function, but I know for a fact
+it was broken. <em>Totally broken</em>, in fact, and unnecessarily complex.</p>
+
+<p>After a bit of work, I managed to extract out something much more polymorphic:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">groupBy</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">k</span> <span class="n">v</span><span class="o">.</span> <span class="p">(</span><span class="kt">Ord</span> <span class="n">k</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">(</span><span class="n">v</span> <span class="o">-&gt;</span> <span class="n">k</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">List</span> <span class="n">v</span> <span class="o">-&gt;</span> <span class="kt">Map</span> <span class="n">k</span> <span class="p">(</span><span class="kt">List</span> <span class="n">v</span><span class="p">)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">groupBy</span><span class="o">[</span><span class="kt">K:</span> <span class="kt">Ord</span>, <span class="kt">V</span><span class="o">](</span><span class="n">vk</span><span class="k">:</span> <span class="kt">V</span> <span class="o">=&gt;</span> <span class="n">K</span><span class="o">,</span> <span class="n">vs</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">V</span><span class="o">])</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">K</span>, <span class="kt">List</span><span class="o">[</span><span class="kt">V</span><span class="o">]]</span></code></pre></figure>
+
+<p>There’s still lots of ways to implement this function, but far fewer than the
+original definition.</p>
+
+<p>Although I could have taken the technique farther, in this case, I stopped here
+(the point of diminishing returns). A correct implementation proved straightforward.</p>
+
+<p>Finally, I went back to <code class="highlighter-rouge">groupByJoinKeys</code>, and implemented this monomorphic
+function in terms of the polymorphic <code class="highlighter-rouge">groupBy</code> — because in this case, I
+couldn’t easily push the polymorphism any higher.</p>
+
+<p>The implementation of <code class="highlighter-rouge">groupByJoinKeys</code> turned out to be a simple one-liner.</p>
+
+<h2 id="nothing-new-under-the-sun">Nothing New Under the Sun</h2>
+
+<p>The technique I’ve elaborated here is not unique to functional programming.</p>
+
+<p>In object-oriented programming, we had a saying: <em>require the least powerful
+interface you need to implement a method</em>.</p>
+
+<p>In other words, if your method only needs to know if a thing is a <em>Shape</em>, then
+don’t also require it to be a <em>Hexagon</em> (a subtype of <em>Shape</em>).</p>
+
+<p>This technique applies to functional programming, as well, only since we don’t
+typically have subtyping, we use polymorphism, and when that alone is
+insufficient, we add type class constraints to provide more structure.</p>
+
+<p>Whether in OOP or FP, the effect is the same: making the code more polymorphic
+reduces the space of possible implementations.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>Monomorphic type signatures are very concrete. They permit richly descriptive
+variable names, because you know exactly the types you are working with and
+what they semantically represent.</p>
+
+<p>The dark side of monomorphic type signatures is that they have far more
+inhabitants. There are so many ways to implement them, your chances of screwing
+them up is comparatively high, and it’s harder to reason about their correctness.</p>
+
+<p>Introducing polymorphism can constrain the space of possible implementations and
+make it simpler to mentally verify correctness of a piece of code. Completely
+polymorphic type signatures don’t permit descriptive variable names, but they
+do vastly constrain the space of implementations.</p>
+
+<p>Sometimes we can push the polymorphism very high in the code, and other times
+we can’t. But even when we need monomorphism, we can push as much functionality
+as we can into little bubbles of polymorphism.</p>
+
+<p>This lets us apply the technique virtually anywhere, and reduce the total amount
+of functionality that is implemented monomorphically.</p>
+
+<p>As with all refactoring techniques, it’s possible to over-apply this technique,
+as I’m sure you can imagine. But in general, I recommend experienced developers
+look for <em>more</em> ways to polymorphize their code (not fewer).</p>
+
+<p>At least for me, the resulting improvements in code quality have been quite
+noticeable. If you’ve tried the technique, please share your experiences below!</p>
+:ET

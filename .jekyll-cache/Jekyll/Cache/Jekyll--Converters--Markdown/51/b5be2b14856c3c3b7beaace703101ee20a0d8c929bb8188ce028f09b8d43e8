@@ -1,0 +1,69 @@
+I"<<p>If you haven’t heard of the meteoric rise of NoSQL, you’ve been living in a hole. Likely at the bottom of the ocean. In the Mariana trench. Buried under a heap of rubble.</p>
+
+<p>NoSQL adoption is exploding, and not just in the startup scene. Even big companies like Apple and Comcast have skin in the game, with large NoSQL deployments that probably dwarf those at your company.</p>
+
+<p>MongoDB, the most widely-adopted NoSQL database, <a href="https://www.crunchbase.com/funding-round/5576d45dd1a3b6f606ba5c478660a4e3">recently raised</a> $150 million dollars on a <strong>$1,200,000,000</strong> dollar valuation.</p>
+
+<p>Yes, that’s more than a billion dollars for a “boring” database company built around pure open source software!</p>
+
+<p>What you probably <em>haven’t</em> heard, what’s been <em>lost</em> in all the hype, is that NoSQL’s unprecedented growth has very little to do with “big data” or “SQL”!</p>
+
+<p>Sure, many NoSQL systems are “big data”, but the vast majority of actual deployments are “small data”. In fact, these days, plenty of <a href="https://www.splicemachine.com">SQL databases</a> are “big data”, too.</p>
+
+<p>And sure, many NoSQL systems don’t use SQL as their primary interface. After all, this is where the term <em>NoSQL</em> originally came from (since then it’s been retconned to mean “Not Only SQL”). <a href="https://www.couchbase.com/communities/n1ql">But some</a> NoSQL databases do use SQL as a primary query interface, and not all relational data tools use SQL as their primary interface (remember Excel, the #1 BI tool in the world?).</p>
+
+<p>To <em>really</em> understand the reason for NoSQL’s popularity, you have to look a lot further than just <em>big data</em> and <em>not SQL</em>.</p>
+
+<h2 id="the-scoop-on-nosqls-hotness">The Scoop on NoSQL’s Hotness</h2>
+
+<p>It’s well-known that the time required to develop a new application has been steadily falling. All thanks to new technologies, the cloud, and the growth of open source.</p>
+
+<p>The proverbial developer in a garage can now crank out a fully featured app in a weekend — an app that used to take <em>months</em> for a whole team of engineers. That’s astounding when you think about it.</p>
+
+<p>NoSQL databases <em>accelerate</em> this trend even further. With NoSQL:</p>
+
+<ul>
+  <li>Developers can stuff any kind of data into their database, not just flat, uniform, tabular data. When building apps, most developers actually use <em>objects</em>, which have nesting and allow non-uniform structure, and which can be stored natively in NoSQL databases. <em>NoSQL databases fit the data model that developers already use to build applications.</em></li>
+  <li>Developers don’t have to spend months building a rigid data model that has to be carefully thought through, revised at massive cost, and deployed and maintained by a separate database team within ops.</li>
+</ul>
+
+<p>The pervasive theme here is that NoSQL <em>empowers</em> developers to rapidly create new applications or change existing applications — an order of magnitude faster than they could do with legacy technologies.</p>
+
+<p>Indeed, I’d argue that the macrosopic trend behind <em>many</em> of today’s buzzwords (cloud, APIs, devops, PaaS, etc) is <em>developer empowerment</em> (AKA “The Rise of the Maker”).</p>
+
+<p>As <a href="https://www.google.com/trends/explore#q=mongodb%2C%20oracle%20db&amp;cmpt=q">Google Trends</a> illustrates (albeit unscientifically!), more and more developers are turning to these databases to build new applications. MongoDB alone has been downloaded more than 7 million times (with 2 million of those downloads occurring in the last 6 months)!</p>
+
+<p>The large database vendors either haven’t tried their hand at NoSQL, or haven’t seen adoption like MongoDB.</p>
+
+<p>It’s true that some vendors are <em>genuinely</em> trying to innovate. But others are so busy selling licenses, products, and solutions based on 40 year old legacy technology that the <em>biggest disruption</em> in databases since the invention of the RDBMS is happening right under their noses!</p>
+
+<h2 id="the-achilles-heel-of-nosql">The Achilles’ Heel of NoSQL</h2>
+
+<p>While adoption is staggering, not everything is rainbows and sunshine in the land of NoSQL. NoSQL databases have a <em>critical vulnerability</em> that could ultimately curb or even reverse their exponential growth.</p>
+
+<p>It’s quite simple: analytics tooling for NoSQL databases is almost non-existent. Apps stuff a lot of data into these databases, but legacy analytics tooling based on relational technology can’t make any sense of it (because it’s not uniform, tabular data).</p>
+
+<p>So what usually happens is that companies extract, transform, normalize, and flatten their NoSQL data into an RDBMS, where they can slice and dice data and build reports.</p>
+
+<p>The cost and pain of this process, together with the fact that NoSQL databases aren’t fully self-contained (using them requires using their “competition”” for analytics!) is the biggest threat to the possible dominance of NoSQL databases.</p>
+
+<p>If RDBMS vendors get their act together and move closer to NoSQL databases, while still preserving their compatibility with legacy analytic toolchains, they may be able to slow or even reverse the tide of adoption.</p>
+
+<p>PostgreSQL is leading the way here, even though it has a <em>long</em> way to go. An open source RDBMS developed by and for developers, recent additions make  PostgreSQL behave more like NoSQL databases and less like traditional RDBMS technology (albeit at the cost of breaking compatibility with existing analytic toolchains, which sort of levels the playing field).</p>
+
+<h2 id="whats-next">What’s Next?</h2>
+
+<p>NoSQL adoption is currently driving the creation of billion dollar database companies, the likes of which have not been seen in <em>decades</em>. The money being poured into this sector will spawn other billion dollar NoSQL industries, in much the same way that RDBMS spawned BI, ETL, data warehousing, and many others.</p>
+
+<p>It’s a <em>massive</em> landgrab right now, as every NoSQL vendor tries to carve out the largest set of use cases that their technology can handle.</p>
+
+<p>In the next few years, expect major database vendors to snap up the players who have seen substantial traction, but who haven’t made it big enough to go public (or in some cases, even those who <em>do</em> go public!).</p>
+
+<p>Earlier this year, <a href="https://www-03.ibm.com/press/us/en/pressrelease/43342.wss">IBM acquired Cloudant</a> for a tidy sum. That’s not the last acquisition you’ll hear about, but the first of many.</p>
+
+<p>The lack of analytic tooling that natively supports NoSQL databases is a serious issue to continued adoption. Either this will create a market for a new wave of analytic companies (much like the major BI and analytic database vendors were born in the wake of the original RDBMS solutions), or it will curb the adoption and force RDBMS to become more like NoSQL.</p>
+
+<p>In either case, the database world is never going to be the same again.</p>
+
+<p>Strap yourselves in for one heck of a ride.</p>
+:ET

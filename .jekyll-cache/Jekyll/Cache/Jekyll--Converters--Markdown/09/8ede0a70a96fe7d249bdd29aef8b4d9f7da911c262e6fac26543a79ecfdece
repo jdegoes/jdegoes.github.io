@@ -1,0 +1,339 @@
+I"�<p>It’s time. <code class="highlighter-rouge">IO</code> needs to die a horrible death.</p>
+
+<p>As functional programmers, we sometimes delude ourselves into thinking that functional code is <em>always</em> significantly easier to understand, more declarative, and more powerful.</p>
+
+<p>That’s just not true, as the following snippets should demonstrate:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">blahblah</span> <span class="o">::</span> <span class="kt">Boolean</span> <span class="o">-&gt;</span> <span class="kt">Boolean</span> <span class="o">-&gt;</span> <span class="kt">Boolean</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">blahblah</span> <span class="n">b1</span> <span class="n">b2</span> <span class="n">b3</span> <span class="o">=</span> <span class="o">...</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">blahblah</span><span class="o">(</span><span class="n">b1</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">,</span> <span class="n">b2</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">,</span> <span class="n">b3</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">)</span><span class="k">:</span> <span class="kt">Task</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>What the heck does that function do? And why exactly should we care that it’s “purely functional”, again?</p>
+
+<p>Yeah, I know, I know: the function returns a <em>value</em> representing an <em>IO effect</em>, which inverts the control: now the caller has explicit control over the effect (in imperative programming, it’s the <em>callee</em> that has control, which makes reasoning harder).</p>
+
+<p>This <em>inversion of control</em> is part of the magic of functional programming.</p>
+
+<p>But in the case of <code class="highlighter-rouge">IO</code>, I can either ignore the value (in which case why does the function exist?), or I can sequence it into a chain of computations (in which case it reduces to ordinary imperative programming).</p>
+
+<p>The <em>only</em> advantage of the latter is that because it’s a value, it can be stuffed into data structures, lazily executed, retried until success, and so on. Which is all well and good, but it’s at best a <em>token</em> benefit over writing the same thing in C.</p>
+
+<p>Come on, this is <em>2015</em>. We can do better than <code class="highlighter-rouge">IO</code>!</p>
+
+<h1 id="the-free-revolution">The Free Revolution</h1>
+
+<p>I first heard of the <em>“Free monad”</em> a few years back, when I was <em>functionally-curious</em> but not really programming with functions. I had a chance to dig in for a <a href="https://github.com/jdegoes/lambdaconf-2014-introgame">workshop I did for LambdaConf 2014</a>, and since then, I’ve used free monads several times, and encouraged adoption of them at <a href="https://slamdata.com">my company</a>.</p>
+
+<p>A Free monad is basically just a way to stuff a sequential computation in a data structure, so you can inspect that data structure and “interpret” it later.</p>
+
+<p>It’s called “free” because you get a monad for free for any higher-kinded <code class="highlighter-rouge">* -&gt; *</code> type (in the same way that a list is a free monoid, because it can take any type and give you a free monoid for that type by recording the “appends” in a list, which can be replayed later).</p>
+
+<p>I’ll save the gory details, but I do want to share a neat interpretation of <code class="highlighter-rouge">Free</code> as a description of a program (see my <a href="https://github.com/jdegoes/scalaworld-2015">ScalaWorld 2015</a> presentation for more):</p>
+
+<pre>
+  A description of a program
+that will halt, run forever, or 
+    produce a value `a`
+            |
+           / \
+          /   \
+         /     \
+        Free f a
+             ^ ^
+             |  \
+             |   \ Value produced by program
+        Operational
+          Algebra
+
+
+Scala: Free[F[_], A]
+</pre>
+
+<p>In this interpretation, <code class="highlighter-rouge">Free f a</code> is a description of a program, <code class="highlighter-rouge">f</code> is the set of operations the program can be reduced to (called an <em>algebra</em> in this post) and <code class="highlighter-rouge">a</code> is the value that will be produced by the program unless it halts or runs forever.</p>
+
+<p>Free monads let us model arbitrary programs, not as a sequence of chunks of machine code (the <code class="highlighter-rouge">IO</code> approach), but as a sequence of algebraic operations that describe the <em>semantics</em> of our program.</p>
+
+<p>Such descriptions of programs can be introspected (one step at a time), interpreted, and transformed.</p>
+
+<p>Moreover, not only do algebras compose (that is, if you have algebras <code class="highlighter-rouge">f</code> and <code class="highlighter-rouge">g</code>, you can compose them into a composite algebra <code class="highlighter-rouge">Coproduct f g</code> for some suitable definition of <code class="highlighter-rouge">Coproduct</code>), but interpreters also compose — both horizontally <em>and</em> vertically.</p>
+
+<p>If you can interpret <code class="highlighter-rouge">f</code> and <code class="highlighter-rouge">g</code> separately into some <code class="highlighter-rouge">h</code>, you can interpret the coproduct of their algebras into <code class="highlighter-rouge">h</code>. Further, if you can interpret <code class="highlighter-rouge">f</code> into <code class="highlighter-rouge">g</code>, and <code class="highlighter-rouge">g</code> into <code class="highlighter-rouge">h</code>, then you can interpret <code class="highlighter-rouge">f</code> into <code class="highlighter-rouge">h</code> (this involves a higher-order bind, which I find pretty cool!).</p>
+
+<p>Free monads embody the essence of sequential computation, while <a href="https://github.com/jdegoes/scalaworld-2015">free applicatives</a> embody the essence of parallel computation.</p>
+
+<p>Using both or some hybridization of them, you can therefore model arbitrary programs with both sequential and parallel computation, all of which reduce to operations having well-defined semantics.</p>
+
+<h2 id="interpretation-of-free-structures">Interpretation of Free Structures</h2>
+
+<p>I’ve used the word “interpret” several times. What does that really mean?</p>
+
+<p>Interpretation is a so-called <em>natural transformation</em> between functors:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Natural</span> <span class="n">f</span> <span class="n">g</span> <span class="o">=</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="n">f</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">g</span> <span class="n">a</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Natural</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">apply</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">fa</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">G</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>In the case of a free monad, you can interpret <code class="highlighter-rouge">Free f a</code> to <code class="highlighter-rouge">Free g a</code> with a natural transformation between <code class="highlighter-rouge">f</code> and <code class="highlighter-rouge">g</code> (among other ways). This requires that <code class="highlighter-rouge">g</code> be at least as capable as <code class="highlighter-rouge">f</code> (<code class="highlighter-rouge">IO</code> is infinitely powerful so you can interpret anything to <code class="highlighter-rouge">IO</code>).</p>
+
+<p>Note that if <code class="highlighter-rouge">g</code> is itself a <code class="highlighter-rouge">Monad</code>, then you can collapse <code class="highlighter-rouge">Free g a</code> into <code class="highlighter-rouge">g a</code>.</p>
+
+<p>Generally, in most examples of free monads, algebras are interpreted directly into effectful monads like <code class="highlighter-rouge">IO</code>.</p>
+
+<p>While this approach is technically superior to defining a whole program in <code class="highlighter-rouge">IO</code> (you gain ability to isolate and reason about effects, modularize interpretation, and more), there are <em>far more powerful</em> techniques.</p>
+
+<p>These techniques can forever change the way we write functional programs.</p>
+
+<h2 id="from-coal-to-diamond">From Coal to Diamond</h2>
+
+<p>The following snippet shows what I consider to be idiomatic, <em>FP-as-a-better-C</em> logic for a modern business application:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">saveFile</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="kt">Unit</span>
+<span class="n">saveFile</span> <span class="n">p</span> <span class="n">f</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">log</span> <span class="p">(</span><span class="s">"Saving file"</span> <span class="o">++</span> <span class="n">show</span> <span class="p">(</span><span class="n">name</span> <span class="n">p</span><span class="p">)</span> <span class="o">++</span> <span class="s">" to "</span> <span class="o">++</span> <span class="n">show</span> <span class="p">(</span><span class="n">parentDir</span> <span class="n">p</span><span class="p">))</span>
+  <span class="n">r</span> <span class="o">&lt;-</span> <span class="n">httpPost</span> <span class="p">(</span><span class="s">"cloudfiles.fooservice.com/"</span> <span class="o">++</span> <span class="p">(</span><span class="n">show</span> <span class="n">p</span><span class="p">))</span> <span class="n">f</span>
+  <span class="kr">if</span> <span class="p">(</span><span class="n">httpOK</span> <span class="n">r</span><span class="p">)</span> <span class="kr">then</span> <span class="n">log</span> <span class="p">(</span><span class="s">"Successfully saved file "</span> <span class="o">++</span> <span class="n">show</span> <span class="n">p</span><span class="p">)</span>
+  <span class="kr">else</span> <span class="kr">let</span> <span class="n">msg</span> <span class="o">=</span> <span class="s">"Failed to save file "</span> <span class="o">++</span> <span class="n">show</span> <span class="n">p</span>
+  <span class="kr">in</span> <span class="n">log</span> <span class="n">msg</span> <span class="o">*&gt;</span> <span class="n">throwException</span> <span class="p">(</span><span class="n">error</span> <span class="n">msg</span><span class="p">)</span></code></pre></figure>
+
+<p>The function saves a resource to a cloud store, with logging and error handling.</p>
+
+<p>While “purely functional”, this code is <em>really bad</em> (sorry, it just <em>is</em>!):</p>
+
+<ol>
+  <li>It’s hard to understand.</li>
+  <li>It’s hard to test.</li>
+  <li>It conflates different concerns (logging, error handling, business logic), and untangling them will introduce more complexity.</li>
+  <li>It mixes different levels of abstraction (REST API versus business logic).</li>
+  <li>It distributes knowledge that should be centralized (such as where and how to interact with the cloud files API).</li>
+</ol>
+
+<p>Let’s solve these problems using the power of free algebras.</p>
+
+<h3 id="layers-of-an-onion">Layers of an Onion</h3>
+
+<p>Our first step is defining an algebra for the cloud files API.</p>
+
+<p>This API should have well-defined semantics, and be high-level and composable.</p>
+
+<p>That is, it should possess high-level semantics, and should be built from as few orthogonal operations as possible, relying on composition to satisfy more advanced use cases.</p>
+
+<p>In our case, let’s assume we only need two operations: one to store a file, and one to list stored files:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">CloudFilesF</span> <span class="n">a</span>
+  <span class="o">=</span> <span class="kt">SaveFile</span> <span class="kt">Path</span> <span class="kt">Bytes</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">ListFiles</span> <span class="kt">Path</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span></code></pre></figure>
+
+<p>With this algebra, we can define a lightweight <em>Domain-Specific Language</em> (DSL) for interacting with the API:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">CloudFilesAPI</span> <span class="n">a</span> <span class="o">=</span> <span class="kt">Free</span> <span class="kt">CloudFilesF</span> <span class="n">a</span>
+
+<span class="n">saveFile</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="kt">CloudFilesAPI</span> <span class="kt">Unit</span>
+<span class="n">saveFile</span> <span class="n">path</span> <span class="n">bytes</span> <span class="o">=</span> <span class="n">liftF</span> <span class="p">(</span><span class="kt">SaveFile</span> <span class="n">path</span> <span class="n">bytes</span> <span class="kt">Unit</span><span class="p">)</span>
+
+<span class="n">listFiles</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">CloudFilesAPI</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Path</span><span class="p">)</span>
+<span class="n">listFiles</span> <span class="n">path</span> <span class="o">=</span> <span class="n">liftF</span> <span class="p">(</span><span class="kt">ListFiles</span> <span class="n">path</span> <span class="n">id</span><span class="p">)</span></code></pre></figure>
+
+<p>(This is too specialized, but ignore that for now.)</p>
+
+<p>Note that our DSL defines the <em>semantics</em> of the cloud files API (one can even define <em>laws</em> for these operations), but does not actually describe <em>how</em> to provide the service.</p>
+
+<p>In fact, the cloud files API is a REST API, so we can express the semantics of <code class="highlighter-rouge">CloudFilesF</code> in terms of <em>another</em> DSL: one for REST APIs.</p>
+
+<p>A simple approximation of this algebra might look something like this:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">HttpF</span> <span class="n">a</span>
+  <span class="o">=</span> <span class="kt">GET</span>    <span class="kt">Path</span> <span class="p">(</span><span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">PUT</span>    <span class="kt">Path</span> <span class="kt">Bytes</span> <span class="p">(</span><span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">POST</span>   <span class="kt">Path</span> <span class="kt">Bytes</span> <span class="p">(</span><span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">DELETE</span> <span class="kt">Path</span> <span class="p">(</span><span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span></code></pre></figure>
+
+<p>Now we can explicitly define how the semantics of the cloud files API map into the algebra of RESTful APIs by implementing the following function:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">cloudFilesI</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="kt">CloudFilesF</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="kt">HttpF</span> <span class="n">a</span></code></pre></figure>
+
+<p>This interpreter function takes an operation <code class="highlighter-rouge">CloudFilesF</code>, and interprets it into a “program” of operations in <code class="highlighter-rouge">HttpF</code>.</p>
+
+<p>Our core application can then speak in terms of the high-level, domain-focused algebra <code class="highlighter-rouge">CloudFilesF</code>, while at some point, this will be dynamically interpreted into the low-level, protocol-focused algebra <code class="highlighter-rouge">HttpF</code>.</p>
+
+<p>We’re not done yet. Our original snippet had logging. Rather than tangle this into the domain logic or the protocol logic, we can define a new algebra <code class="highlighter-rouge">LogF</code> to capture logging:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">LogF</span> <span class="n">a</span>
+  <span class="o">=</span> <span class="kt">Log</span> <span class="kt">Level</span> <span class="kt">String</span> <span class="n">a</span></code></pre></figure>
+
+<p>We can then define <em>another</em> interpreter which maps from <code class="highlighter-rouge">CloudFilesF</code> into <code class="highlighter-rouge">LogF</code>:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">logCloudFilesI</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="kt">CloudFilesF</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="kt">LogF</span> <span class="kt">Unit</span>
+<span class="n">logCloudFilesI</span> <span class="p">(</span><span class="kt">SaveFile</span> <span class="n">p</span> <span class="kr">_</span> <span class="kr">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">liftF</span> <span class="o">$</span> <span class="kt">Log</span> <span class="kt">Debug</span> <span class="p">(</span><span class="s">"Saving file to "</span> <span class="o">++</span> <span class="n">show</span> <span class="n">p</span><span class="p">)</span> <span class="kt">Unit</span>
+<span class="n">logCloudFilesI</span> <span class="p">(</span><span class="kt">ListFiles</span> <span class="n">p</span> <span class="kr">_</span><span class="p">)</span>  <span class="o">=</span> <span class="n">liftF</span> <span class="o">$</span> <span class="kt">Log</span> <span class="kt">Debug</span> <span class="p">(</span><span class="s">"Listing files at "</span> <span class="o">++</span> <span class="n">show</span> <span class="n">p</span><span class="p">)</span> <span class="kt">Unit</span></code></pre></figure>
+
+<p>Interpreters compose, so we can take the <code class="highlighter-rouge">cloudFilesI</code> interpreter, and compose it with the <code class="highlighter-rouge">logCloudFilesI</code> interpreter, to yield a new interpreter:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">loggingCloudFilesI</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="kt">CloudFilesF</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="p">(</span><span class="kt">Coproduct</span> <span class="kt">LogF</span> <span class="kt">HttpF</span><span class="p">)</span> <span class="n">a</span>
+<span class="n">loggingCloudFilesI</span> <span class="n">op</span> <span class="o">=</span> <span class="n">toLeft</span> <span class="p">(</span><span class="n">logCloudFilesI</span> <span class="n">op</span><span class="p">)</span> <span class="o">*&gt;</span> <span class="n">toRight</span> <span class="p">(</span><span class="n">cloudFilesI</span> <span class="n">op</span><span class="p">)</span></code></pre></figure>
+
+<p>where the helper functions <code class="highlighter-rouge">toLeft</code> and <code class="highlighter-rouge">toRight</code> lift a <code class="highlighter-rouge">Free f a</code> or <code class="highlighter-rouge">Free g a</code> into a <code class="highlighter-rouge">Free (Coproduct f g) a</code>, respectively.</p>
+
+<p>Finally, at the end of the world, we are going to have to provide a mapping from our final algebra (in this case, <code class="highlighter-rouge">Coproduct LogF HttpF</code>) into something like <code class="highlighter-rouge">IO</code>:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">executor</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="kt">Coproduct</span> <span class="kt">LogF</span> <span class="kt">HttpF</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="n">a</span></code></pre></figure>
+
+<p>Note some of the benefits that gracefully fall out of this approach:</p>
+
+<ol>
+  <li>Code interacting with the cloud files service does not know or care how it’s implemented. The cloud files layer is focused on our problem domain and speaks at the right level of abstraction.</li>
+  <li>The mapping from the semantics of the cloud files service into the semantics of REST APIs is completely centralized and isolated from the rest of the application. We don’t even have to use this interpreter! For testing, for example, we can map the cloud files service into a mock service that speaks the high-level semantics directly.</li>
+  <li>The logging code is also centralized and isolated, and completely untangled from business logic and REST APIs (note we could also log at the level of the REST API if we wanted to generalize the logging to all services that “compile” to REST APIs). The logging itself can be structured and uniform rather than random and scattered across the whole program. In addition, the logging need not log to a file, since we can supply different interpreters — some that throw away logging, others that log to a remote API.</li>
+  <li>Everything is modular and composable. We can pick how we want to interpret the program, <em>even based on runtime values</em>, by composing interpreters appropriately.</li>
+</ol>
+
+<h3 id="enjoying-the-onion">Enjoying the Onion</h3>
+
+<p>We’ve gone from a low-level, imperative API, into a declarative description of our problem domain. We are able to describe our problem at a high level, as well as at a low level, and provide a precise means of mapping between different domains and levels of abstraction.</p>
+
+<p>We are further able to completely untangle different aspects of our program, such as the mapping from a high-level domain into a REST API, or the logging of application activity.</p>
+
+<p>Finally, we are able to consolidate knowledge that would otherwise be distributed throughout the program: knowledge of how to translate a cloud files operation into a REST API call; knowledge of how and what to log.</p>
+
+<h2 id="perfecting-the-approach">Perfecting the Approach</h2>
+
+<p>I think the benefits of this approach are apparent even in this toy example. In real world scenarios, however, the benefits should be even more persuasive.</p>
+
+<p>That said, there are a few things we can tweak to improve it.</p>
+
+<h3 id="1-orthogonal-composable-algebras">1. Orthogonal, Composable Algebras</h3>
+
+<p>In many real-world cases, free algebras are not orthogonal. Rather, there are a huge number of overlapping operations.</p>
+
+<p>The reason is one of practicality: sometimes it’s more efficient to provide a large number of overlapping operations, than providing a small number of orthogonal ones.</p>
+
+<p>Let’s take the example of a file system algebra (<code class="highlighter-rouge">FileF</code>). One approach is simply to list all the common operations available in a file system:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">FileF</span> <span class="n">a</span>
+  <span class="o">=</span> <span class="kt">MakeDir</span> <span class="kt">Path</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">Delete</span> <span class="kt">Path</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">Copy</span> <span class="kt">Path</span> <span class="kt">Path</span> <span class="n">a</span> 
+  <span class="o">|</span> <span class="kt">Rename</span> <span class="kt">Path</span> <span class="kt">Path</span> <span class="n">a</span> 
+  <span class="o">|</span> <span class="kt">Move</span> <span class="kt">Path</span> <span class="kt">Path</span> <span class="n">a</span> 
+  <span class="o">|</span> <span class="kt">Ls</span> <span class="kt">Path</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">CreateFile</span> <span class="kt">Path</span> <span class="kt">Bytes</span> <span class="n">a</span>  
+  <span class="o">|</span> <span class="kt">ReadFile</span> <span class="kt">Path</span> <span class="p">(</span><span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">AppendFile</span> <span class="kt">Path</span> <span class="kt">Bytes</span> <span class="n">a</span></code></pre></figure>
+
+<p>But this set of operations is not primitive; that is, some operations can be composed from others. To simplify reasoning, formalize semantics, and reduce total volume of code, we should replace this list with a set of completely orthogonal operations.</p>
+
+<p>For example:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">FileF</span> <span class="n">a</span>
+  <span class="o">=</span> <span class="kt">CreateFile</span> <span class="kt">Path</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">CreateDir</span> <span class="kt">Path</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">AppendFile</span> <span class="kt">Path</span> <span class="kt">Bytes</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">Duplicate</span> <span class="kt">Path</span> <span class="kt">Path</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">Delete</span> <span class="kt">Path</span> <span class="n">a</span>
+  <span class="o">|</span> <span class="kt">Ls</span> <span class="kt">Path</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">ReadFile</span> <span class="kt">Path</span> <span class="p">(</span><span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span></code></pre></figure>
+
+<p>In this form, no operation can be expressed in terms of any other. In addition, we can provide composite operations for things like moving:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">rename</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="kt">FileF</span> <span class="kt">Unit</span>
+<span class="n">rename</span> <span class="n">from</span> <span class="n">to</span> <span class="o">=</span>
+  <span class="p">(</span><span class="n">liftF</span> <span class="o">$</span> <span class="kt">Duplicate</span> <span class="n">from</span> <span class="n">to</span> <span class="kt">Unit</span><span class="p">)</span> <span class="o">*&gt;</span>
+  <span class="p">(</span><span class="n">liftF</span> <span class="o">$</span> <span class="kt">Delete</span> <span class="n">from</span> <span class="kt">Unit</span><span class="p">)</span></code></pre></figure>
+
+<p>While ideal from a theoretical perspective, as a practical matter, can you imagine renaming a 10 GB file by first creating a copy of it, and then deleting the old version?!?</p>
+
+<p>That kind of inefficiency is not practical for most real world programs!</p>
+
+<p>To solve this problem, we can write an <em>optimizing interpreter</em>, which is a special kind of interpreter that can detect patterns and substitute them with semantically equivalent but faster alternatives.</p>
+
+<p>Now, there is a limitation here: free monads are <em>too powerful</em> to optimize, because operations depend on runtime values (such is implied by the very signature of bind!).</p>
+
+<p>But free applicatives, however, are constrained enough to allow us to perform this sort of optimization. Or we can extend our free structure with a special kind of atomic sequencing operation that ignores the value of the left-hand side (e.g. <code class="highlighter-rouge">*&gt;</code> or <code class="highlighter-rouge">&gt;&gt;</code>).</p>
+
+<p>In either case, this lets our interpreter see far enough ahead into the structure of the program to perform semantically-equivalent optimizations (such as replacing a duplicate/delete by an OS-level rename/move).</p>
+
+<h3 id="2-generalizing-interpreters">2. Generalizing Interpreters</h3>
+
+<p>The interpreters I wrote for the toy example above are pretty specific: they can only interpret to a concrete target algebra.</p>
+
+<p>By generalizing these interpreters, we can make the code less brittle to changes and maximize the places we can use them.</p>
+
+<p>The general form for an interpreter is as follows:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Interpreter</span> <span class="n">f</span> <span class="n">g</span> <span class="o">=</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="n">f</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="n">g</span> <span class="n">a</span></code></pre></figure>
+
+<p>This translates a single operation <code class="highlighter-rouge">f a</code> into a program of operations in <code class="highlighter-rouge">g</code>.</p>
+
+<p>But instead of interpreting to a concrete <code class="highlighter-rouge">g</code>, we’d like to be able to say that we can interpret to <em>any</em> <code class="highlighter-rouge">g</code> that supports the capabilities we require.</p>
+
+<p>There are lots of ways of doing this (type-level machinery in Haskell, implicits in Scala, type classes), but the most straightforward way is to leverage some lens-machinery: specifically, a <code class="highlighter-rouge">Prism</code>.</p>
+
+<p>A <code class="highlighter-rouge">Prism</code> lets us construct and (when possible) deconstruct sum types.</p>
+
+<p>The first step is defining a higher-order prism that can work with functors:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Inject</span> <span class="n">f</span> <span class="n">g</span> <span class="o">=</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="kt">PrismP</span> <span class="p">(</span><span class="n">f</span> <span class="n">a</span><span class="p">)</span> <span class="p">(</span><span class="n">g</span> <span class="n">a</span><span class="p">)</span></code></pre></figure>
+
+<p>This lets us construct an <code class="highlighter-rouge">f a</code> whenever we have a <code class="highlighter-rouge">g a</code>.</p>
+
+<p>We can now generalize the notion of an interpreter:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Interpreter</span> <span class="n">f</span> <span class="n">g'</span> <span class="o">=</span> <span class="n">forall</span> <span class="n">a</span> <span class="n">g</span><span class="o">.</span> <span class="kt">Inject</span> <span class="n">g</span> <span class="n">g'</span> <span class="o">-&gt;</span> <span class="n">f</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="n">g</span> <span class="n">a</span></code></pre></figure>
+
+<p>This says, in words, that so long as you can prove that any <code class="highlighter-rouge">g</code> is at least as powerful as <code class="highlighter-rouge">g'</code> (by supplying a <code class="highlighter-rouge">Inject</code>), then the interpreter (which requires <code class="highlighter-rouge">g'</code>) can interpret into <code class="highlighter-rouge">g</code>.</p>
+
+<p>This interpreter is fully <em>polymorphic in its target algebra</em>. While a bit more cumbersome to define, this more general interpreter is more robust to code changes and can be used in more places.</p>
+
+<h3 id="3-generalizing-dsls">3. Generalizing DSLs</h3>
+
+<p>The final obvious improvement we can make is to generalize the DSLs.</p>
+
+<p>I previously introduced the following DSL for the cloud files API:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">CloudFilesAPI</span> <span class="n">a</span> <span class="o">=</span> <span class="kt">Free</span> <span class="kt">CloudFilesF</span> <span class="n">a</span>
+
+<span class="n">saveFile</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="kt">CloudFilesAPI</span> <span class="kt">Unit</span>
+<span class="n">saveFile</span> <span class="n">path</span> <span class="n">bytes</span> <span class="o">=</span> <span class="n">liftF</span> <span class="p">(</span><span class="kt">SaveFile</span> <span class="n">path</span> <span class="n">bytes</span> <span class="kt">Unit</span><span class="p">)</span>
+
+<span class="n">listFiles</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">CloudFilesAPI</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Path</span><span class="p">)</span>
+<span class="n">listFiles</span> <span class="n">path</span> <span class="o">=</span> <span class="n">liftF</span> <span class="p">(</span><span class="kt">ListFiles</span> <span class="n">path</span> <span class="n">id</span><span class="p">)</span></code></pre></figure>
+
+<p>This DSL requires the target algebra be <code class="highlighter-rouge">CloudFilesF</code>. We can generalize this in the same way we generalized the interpreters: by requiring the target algebra be at least as powerful as <code class="highlighter-rouge">CloudFilesF</code>.</p>
+
+<p>The following generalization takes advantage of PureScript’s first-class records, though there are lots of other ways to avoid boilerplate in other languages:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">CloudFilesDSL</span> <span class="n">g</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="n">saveFile</span>  <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">Bytes</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="n">g</span> <span class="kt">Unit</span><span class="p">,</span>
+  <span class="n">listFiles</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="n">g</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Path</span><span class="p">)</span> <span class="p">}</span>
+
+<span class="n">cloudFilesDSL</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">g</span><span class="o">.</span> <span class="kt">Inject</span> <span class="n">g</span> <span class="kt">CloudFilesF</span> <span class="o">-&gt;</span> <span class="kt">CloudFilesDSL</span> <span class="n">g</span>
+<span class="n">cloudFilesDSL</span> <span class="n">p</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="n">saveFile</span>  <span class="o">:</span> <span class="nf">\</span><span class="n">path</span> <span class="n">bytes</span> <span class="o">-&gt;</span> <span class="n">liftF</span> <span class="o">$</span> <span class="n">review</span> <span class="n">p</span> <span class="p">(</span><span class="kt">SaveFile</span> <span class="n">path</span> <span class="n">bytes</span> <span class="kt">Unit</span><span class="p">),</span>
+  <span class="n">listFiles</span> <span class="o">:</span> <span class="nf">\</span><span class="n">path</span>       <span class="o">-&gt;</span> <span class="n">liftF</span> <span class="o">$</span> <span class="n">review</span> <span class="n">p</span> <span class="p">(</span><span class="kt">ListFiles</span> <span class="n">path</span> <span class="n">id</span><span class="p">)</span> <span class="p">}</span></code></pre></figure>
+
+<p>Now we can use the DSL in any target algebra that includes <code class="highlighter-rouge">CloudFilesF</code>.</p>
+
+<h1 id="summary">Summary</h1>
+
+<p>Too much “purely functional” code is written by sequentially executing opaque chunks of machine code. That’s the <code class="highlighter-rouge">IO</code> monad in Haskell, <code class="highlighter-rouge">Task</code> in Scala, and <code class="highlighter-rouge">Eff</code> in PureScript.</p>
+
+<p>This leads to all the anti-patterns we see in imperative coding: mixing levels of abstraction, distributing knowledge that should be centralized, tangling concerns, and much more. Problems that have led to the invention of aspect-oriented programming, dependency injection, runtime metaprogramming, and other noble-minded, if ultimately criminal attempts at fixing what’s wrong with programming-in-the-large.</p>
+
+<p>Fortunately, today’s bag of tools for functional programming has a far better solution: describing effects by reducing them to orthogonal, composable operations, and describing computation with these operations using a computational context like <code class="highlighter-rouge">Free</code>.</p>
+
+<p>In other words, in modern FP, we shouldn’t write programs — we should write <em>descriptions</em> of programs, which we can then introspect, transform, and interpret at will.</p>
+
+<p>This leads to a style of programming where a large program is deconstructed into layers. These layers represent different levels of abstraction and different concerns.</p>
+
+<p>Ultimately, all these “layers” are compiled into something like <code class="highlighter-rouge">IO</code>, but that’s at the edges of the program. In between, highly-constrained algebras that can be reasoned about and manipulated are expressed into ever broader algebras, which come closer and closer to the “machine code” that is required for execution.</p>
+
+<p>The approach outlined in this post is most certainly <em>not</em> the future of functional programming. There are problems here I haven’t talked about, and most languages don’t make this particular style of programming very easy or performant.</p>
+
+<p>But I believe it’s a hint at what the future looks like. A future in which our programs are more like compilers than lists of machine instructions. A future where integration testing is dead. Where even the largest of programs can be broken down and understood in terms of smaller parts.</p>
+
+<p>And that’s a future I’m very much looking forward to.</p>
+
+<p>How about you?</p>
+:ET

@@ -1,0 +1,321 @@
+I"�D<p>Every community makes decisions about for whom to allow participation and about what types of behavior they permit. Codes of conduct (COCs) attempt to codify these decisions so that participants have a better understanding of what communities expect from them—and guarantee to them—and so community members can hold leadership accountable to their commitments.</p>
+
+<p>I’m delighted to announce that after nearly two years in development, <a href="https://github.com/fantasylandinst/fcop">FCOP</a>, the code of conduct for professional communities, is nearing a 1.0 release!</p>
+
+<p>FCOP attempts to set very clear boundaries for ad hoc professional communities, such as technical meetups, open source projects, educational events, and industry conferences. Of course, no code of conduct replaces the need for trust, but FCOP helps make sure that everyone is on the same page.</p>
+
+<p>In my biased opinion, and specifically for ad hoc professional communities, FCOP is better in every possible way to the other available choices. FCOP is far more precise, and offers better guarantees and protections for members of a community, as well as realistic obligations and sensible protections for leaders of a community.</p>
+
+<p>In this post, I’ll compare <a href="https://github.com/fantasylandinst/fcop">FCOP</a> with <a href="https://citizencodeofconduct.org">Citizen COC</a> and <a href="https://www.contributor-covenant.org/version/1/4/code-of-conduct.html">Contributor Covenant</a>, two other options for those looking for a COC.</p>
+
+<h2 id="broad-provisions">Broad Provisions</h2>
+
+<p>There are many dimensions on which COCs can be compared. I’ve highlighted a few of the most important ones below:</p>
+
+<ul>
+  <li><strong>Anti-Harassment</strong>. The COC explicitly does not allow harassment.</li>
+  <li><strong>Anti-Insulting</strong>. The COC explicitly does not allow insulting communication, such as personal insults and ad hominem, or disparaging remarks about race, gender, body size, or sexual-orientation.</li>
+  <li><strong>Anti-Doxxing</strong>. The COC explicitly does not allow doxxing (publishing personal details about someone, such as their phone number or real name).</li>
+  <li><strong>Leader Discretion</strong>. The COC does not mandate any particular consequences for specific COC violations, but leaves this decision to those who are tasked with investigating and resolving the incident.</li>
+  <li><strong>No Legal Overlap</strong>. The COC explicitly does not try to supplant the legal system. Some COCs attempt to prohibit behavior that is already illegal or deal with illegal behavior outside the legal system.</li>
+  <li><strong>Community Isolation</strong>. The COC explicitly does not consider behavior that occurs outside the community, drawing a clear line between the personal and professional lives of members, and removing incentives for malicious individuals to dig through the personal lives of members.</li>
+  <li><strong>Glossary</strong>. The COC explicitly defines the terms that it uses for clarity and precision. COCs that do not define their terms are often vague and open to arbitrary interpretation, defeating the point of a COC.</li>
+  <li><strong>Objective Criteria</strong>. The COC explicitly requires objective criteria for COC violations. The alternative is defining violations in terms of how someone emotionally responds to an event, which makes it impossible for members to know how to behave, because to know how to behave, they have to predict people’s internal emotional reaction to every possible event.</li>
+  <li><strong>Limited Liability</strong>. The COC explicitly limits liability for the leaders of a community, to protect them in the event they are sued. Organizations may choose not to deploy COCs without limits on liability, or may require the COCs be reviewed and approved by their legal departments.</li>
+  <li><strong>Anti-Retaliation</strong>. The COC explicitly does not allow retaliation in response to reporting or resolving COC violations.</li>
+  <li><strong>Anti-Sabotage</strong>. The COC explicitly does not allow members to maliciously hurt each other’s careers (including taking credit for other people’s work) or maliciously damage the community itself.</li>
+  <li><strong>Anti-Prying</strong>. The COC explicitly does not allow members to spy on each other (private channels, phone conversations, etc.).</li>
+  <li><strong>Anti-Criminal</strong>. The COC explicitly does not allow people to participate if they are likely to engage in criminal behavior.</li>
+  <li><strong>Rightfully Accused</strong>. The COC explicitly tries to protect people who are innocent, even if they have been falsely accused of a COC violation.</li>
+  <li><strong>No Tone Policing</strong>. The COC explicitly does not engage in tone policing. A common alternative is to mandate empathic and emotionally sensitive communication, which is highly subjective, and not even possible for many with intellectual disabilities.</li>
+  <li><strong>Symmetry</strong>. The COC explicitly does not show favoritism to anyone, but uniformly requires professional behavior from everyone.</li>
+  <li><strong>Reasonable Effort</strong>. The COC explicitly limits the amount of work that leaders of a community are expected to perform. This provision is especially important for volunteer-run communities, like most open source projects and many conferences.</li>
+  <li><strong>Customizable</strong>. The COC explicitly has provisions for arbitrary amendments so the COC can be customized for each community.</li>
+</ul>
+
+<p>Against these dimensions, the following table shows how the different codes of conduct stack up against one another.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left"> </th>
+      <th style="text-align: left">FCOP</th>
+      <th style="text-align: left">Citizen COC</th>
+      <th style="text-align: left">Contributor COC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Anti-Harassment</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Anti-Insulting</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Anti-Doxxing</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Leader Discretion</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">No Legal Overlap</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Community Isolation</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Glossary</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Objective Criteria</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Limited Liability</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Anti-Retaliation</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Anti-Sabotage</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Anti-Prying</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Anti-Criminal</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Rightfully Accused</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">No Tone Policing</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Symmetry</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Reasonable Effort</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Customizable</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>As this table shows, FCOP has broader protections for members than either Citizen COC or Contributor COC. Additionally, FCOP has provisions that appeal specifically to organizations and community leaders, who in nearly all cases wish to limit both legal liability and enforcement costs.</p>
+
+<p>Often in cases where all COCs share the same broad provision, FCOP has a stronger version. For example, the anti-harassment clause in FCOP states you may only interact with people if they want you to interact with them, and only in a professional way. This common-sense clause is by far the strongest anti-harassment clause of any of the COCs.</p>
+
+<h2 id="inclusivity">Inclusivity</h2>
+
+<p>Since COCs are often designed to signal inclusivity, many specifically mention common demographic dimensions, such as race, gender, and sexual-orientation. At the very least, a COC that explicitly refers to a demographic is signaling that leaders are intent on making the community welcoming to its members.</p>
+
+<p>The following table shows what types of demographic dimensions are explicitly mentioned in each of the three COCs.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left"> </th>
+      <th style="text-align: left">FCOP</th>
+      <th style="text-align: left">Citizen COC</th>
+      <th style="text-align: left">Contributor COC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Race</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Gender</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Ethnicity</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Sexual Orientation</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Disability</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Religion</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Socioeconomic Status</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Sexual Identity</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Gender Expression</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Appearance</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Experience</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Education</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Nationality</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Body Size</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Age</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">✔</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Politics</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Body Mods</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">BDSM/Kink</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Personality</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Past Professions</td>
+      <td style="text-align: left">✔</td>
+      <td style="text-align: left">𐄂</td>
+      <td style="text-align: left">𐄂</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>FCOP has more comprehensive coverage than Citizen COC or Contributor COC, including coverage of politics and BDSM/kink. In these areas specifically, members of various communities (<a href="https://medium.com/@marlene.jaeckel/the-empress-has-no-clothes-the-dark-underbelly-of-women-who-code-and-google-women-techmakers-723be27a45df">Atlanta Tech</a>, <a href="https://reason.com/blog/2017/04/18/drupal-developer-ousted-over-kink#slide1">Drupal</a>) have faced harassment, insulting communication, doxxing, threatening behavior, and even career sabotage, as a result of personal attributes that were completely irrelevant to their membership in these communities.</p>
+
+<p>Disturbingly, it’s clear from historical records that Contributor COC is <a href="https://github.com/ContributorCovenant/contributor_covenant/issues/73">explicitly designed to not protect political views</a>, potentially increasing legal liability in jurisdictions that forbid discrimination on political grounds.</p>
+
+<h2 id="best-coc">Best COC?</h2>
+
+<p>FCOP has broad coverage, strong inclusivity, legal protections, and bounded enforcement costs for leaders, but that doesn’t make it the right choice for every community. For support groups, for example, which are focused on social or personal goals, some provisions in FCOP are not relevant.</p>
+
+<p>Because not all communities are exclusively focused on professional goals, there is no one COC that is best for every community. Different communities can and should make the choice that’s right for them.</p>
+
+<p>For communities exclusively focused on professional goals, which are committed to having a COC, FCOP offers a compelling package.</p>
+
+<h2 id="special-thanks">Special Thanks</h2>
+
+<p>A special thanks to all the people who helped author or submit revisions to FCOP, including Ankush N., Matthew G., Rachel H., and Morgan P.; and to all those whose critique of FCOP directly contributed to the current design, including Marlene J., Matthew G., Adrienne L., Christie K., Sophia D., Courtney D., and Matthew D..</p>
+
+<p>Through their contributions and critiques, all these people and many others have helped make FCOP the most thoroughly analyzed, precise, and comprehensive COC available today for professional communities.</p>
+
+<p><a href="https://github.com/fantasylandinst/fcop">Take a look</a> at the results for yourself, and if you see a way to improve FCOP, please submit issues or pull requests!</p>
+:ET

@@ -29,7 +29,7 @@ prior commitments. Getting those commitments out in the open for all to see
 does, I believe, help ensure their consistent enforcement.
 
 For that reason, I'm a fan of COCs, which is why
-[LambdaConf](http://lambdaconf.us) has had a COC since I first learned of them.
+[LambdaConf](https://lambdaconf.us) has had a COC since I first learned of them.
 
 That said, not all COCs are created equal.
 
@@ -52,7 +52,7 @@ These drawbacks are not insurmountable. I believe it's possible to create a
 code of conduct that is not vague, and which offers uniform protections.
 
 In fact, I and others have been working on precisely such a code of conduct,
-under the umbrella of [Fantasyland Institute of Learning](http://fantasyland.institute),
+under the umbrella of [Fantasyland Institute of Learning](https://fantasyland.institute),
 a non-profit I help run that is dedicated to improving the way the world
 develops software.
 
@@ -91,7 +91,7 @@ all professional events and within all online communities.
 
 It's my hope that FCOP will see broader usage within the tech industry, both
 within open source projects, and within all manner of professional meetups and
-events like [LambdaConf](http://lambdaconf.us). While not appropriate for many
+events like [LambdaConf](https://lambdaconf.us). While not appropriate for many
 kinds of communities, those with purely professional goals may find some value.
 
 If you'd like to contribute, please dig into the draft and submit issues or

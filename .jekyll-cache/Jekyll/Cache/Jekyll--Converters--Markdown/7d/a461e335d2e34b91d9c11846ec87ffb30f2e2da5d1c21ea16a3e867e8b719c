@@ -1,0 +1,281 @@
+I"~<p>Type classes, object-oriented interfaces, and ML-style modules were all invented to solve the same core problem: how do we abstract over a set of functions and types that might have multiple concrete implementations?</p>
+
+<p>For example, a <em>monoid</em> is an algebraic structure with an associative binary operation and an identity element (natural numbers form a monoid under the addition operator, with <code class="highlighter-rouge">0</code> as the identity element of the monoid).</p>
+
+<p>There are lots of possible monoids, and we’d like to be able to write generic code which can work with <em>any</em> monoid.</p>
+
+<p>In Haskell, we do that with type classes:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Monoid</span> <span class="n">a</span> <span class="kr">where</span>
+  <span class="n">empty</span> <span class="o">::</span> <span class="n">a</span>
+  <span class="n">append</span> <span class="o">::</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">a</span></code></pre></figure>
+
+<p>In SML, we do it with modules:</p>
+
+<figure class="highlight"><pre><code class="language-sml" data-lang="sml"><span class="kr">signature</span> <span class="nn">MONOID</span> <span class="p">=</span> 
+ <span class="kr">sig</span>
+   <span class="kr">type</span> <span class="kt">t</span>
+   <span class="kr">val</span> <span class="nv">append</span><span class="p">:</span> <span class="n">t*t</span> <span class="p">-&gt;</span> <span class="n">t</span>
+   <span class="kr">val</span> <span class="nv">empty</span><span class="p">:</span> <span class="n">t</span>
+ <span class="kr">end</span><span class="p">;</span></code></pre></figure>
+
+<p>And in Java, we do it with interfaces:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">interface</span> <span class="nc">Monoid</span><span class="o">&lt;</span><span class="no">A</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="no">A</span> <span class="nf">empty</span><span class="o">();</span>
+  <span class="no">A</span> <span class="nf">append</span><span class="o">(</span><span class="no">A</span> <span class="n">v1</span><span class="o">,</span> <span class="no">A</span> <span class="n">v2</span><span class="o">);</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Of these solutions, Haskell type classes are by far the sexiest because of compiler magic that makes using them so effortless.</p>
+
+<p>Let’s take a closer look at that magic before I dive into some of my gripes against even Haskell’s type classes.</p>
+
+<h2 id="the-magic-of-type-classes">The Magic of Type Classes</h2>
+
+<p>In Haskell, you provide a concrete implementation for a type class by defining an <em>instance</em> of that type class for some type.</p>
+
+<p>For example, we can create the additive monoid for natural numbers as follows:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">instance</span> <span class="kt">Monoid</span> <span class="kt">Integer</span> <span class="kr">where</span>
+  <span class="n">empty</span> <span class="o">=</span> <span class="mi">0</span> <span class="o">::</span> <span class="kt">Integer</span>
+  <span class="n">append</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span></code></pre></figure>
+
+<p>Ordinarily, we would define this instance in either the module that <code class="highlighter-rouge">Monoid</code> is defined, or the module that <code class="highlighter-rouge">Integer</code> is defined (if we were defining it at all, and we wouldn’t for reasons I’ll explain later).</p>
+
+<p>If we play by these rules, then any module that imports both <code class="highlighter-rouge">Monoid</code> and <code class="highlighter-rouge">Integer</code> will be able to use this <code class="highlighter-rouge">Monoid</code> instance trivially and automatically:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kt">Prelude</span><span class="o">&gt;</span> <span class="n">append</span> <span class="mi">1</span> <span class="mi">2</span>
+<span class="mi">3</span></code></pre></figure>
+
+<p>When I called the <code class="highlighter-rouge">append</code> function, I did not specify which type class instance the compiler should use. The compiler infers the type of the parameters to the <code class="highlighter-rouge">append</code> function, and finds a suitable instance (in this case, the instance we just defined).</p>
+
+<p>This magic is one of the things that makes Haskell code so clean. Unlike in Java or SML, where we would have to pass around their versions of ‘type classes’ manually, Haskell figures that out for us!</p>
+
+<p>Scala has poor-man’s type classes. Or rather, you can simulate type classes (and a great many other things) with <em>implicits</em>, which are function parameters that Scala will pass around for you.</p>
+
+<p>The above example might look like this in Scala:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Monoid</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">empty</span><span class="k">:</span> <span class="kt">A</span>
+  <span class="k">def</span> <span class="nf">append</span><span class="o">(</span><span class="n">v1</span><span class="k">:</span> <span class="kt">A</span><span class="o">,</span> <span class="n">v2</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">A</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="nf">empty</span><span class="o">[</span><span class="kt">A:</span> <span class="kt">Monoid</span><span class="o">]</span> <span class="k">=</span> <span class="n">implicitly</span><span class="o">[</span><span class="kt">Monoid</span><span class="o">[</span><span class="kt">A</span><span class="o">]].</span><span class="py">empty</span>
+<span class="k">def</span> <span class="nf">append</span><span class="o">[</span><span class="kt">A:</span> <span class="kt">Monoid</span><span class="o">](</span><span class="n">v1</span><span class="k">:</span> <span class="kt">A</span><span class="o">,</span> <span class="n">v2</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">=</span> <span class="n">implicitly</span><span class="o">[</span><span class="kt">Monoid</span><span class="o">[</span><span class="kt">A</span><span class="o">]].</span><span class="py">append</span><span class="o">(</span><span class="n">v1</span><span class="o">,</span> <span class="n">v2</span><span class="o">)</span>
+
+<span class="k">implicit</span> <span class="k">val</span> <span class="nv">MonoidInt</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Monoid</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">empty</span> <span class="k">=</span> <span class="mi">0</span>
+  <span class="k">def</span> <span class="nf">append</span><span class="o">(</span><span class="n">v1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">v2</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">=</span> <span class="n">v1</span> <span class="o">+</span> <span class="n">v2</span>
+<span class="o">}</span>
+
+<span class="n">scala</span><span class="o">&gt;</span> <span class="nf">append</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="nf">append</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="n">empty</span><span class="o">[</span><span class="kt">Int</span><span class="o">]))</span>
+<span class="n">res2</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">3</span></code></pre></figure>
+
+<p>Beautiful, right? Well, yes — type classes are indeed a wonderful creation responsible for much clean, generic, highly-maintainable, <em>beautiful</em> code.</p>
+
+<p>But type classes, as implemented in both Haskell, Scala, and most other languages, have a darker side, too.</p>
+
+<h2 id="unprincipled-type-classes">Unprincipled Type Classes</h2>
+
+<p>Fundamentally, I want to argue that type classes in most all languages are <em>ad hoc</em> rather than principled, relying on personal discipline and conventions instead of the compiler to define and use correctly.</p>
+
+<p>My criticisms aren’t mean to argue for <em>abolishing</em> type classes, but rather, for making them <em>better</em> — something I believe is surely possible, and which I provide some ideas for at the end of the post.</p>
+
+<h3 id="laws">Laws</h3>
+
+<p>Type classes can’t stand alone. To be useful writing generic code, they need to ship with <em>laws</em> that describe how they behave.</p>
+
+<p>For example, an order type class (<code class="highlighter-rouge">Ord</code> in Haskell) can provide laws saying the ordering is <em>transitive</em> (that is, if <code class="highlighter-rouge">a &lt;= b</code> and <code class="highlighter-rouge">b &lt;= c</code>, then <code class="highlighter-rouge">a &lt;= c</code>), that it’s <em>anti-symmetric</em> (if <code class="highlighter-rouge">a &lt;= b</code> and <code class="highlighter-rouge">b &lt;= a</code>, then <code class="highlighter-rouge">a = b</code>), and that it’s <em>total</em> (either <code class="highlighter-rouge">a &lt;= b</code> or <code class="highlighter-rouge">b &lt;= a</code>). Armed with these laws, you can then write a generic sorting algorithm which requires only that it’s elements have an order type instance defined.</p>
+
+<p>If you can’t define laws for a type class, then it’s not useful as an abstraction, and you should not try to define a type class. Instead, just write lawless functions and pass them around (or think harder about those laws!).</p>
+
+<p>Unfortunately, while laws are sometimes documented in source code comments, they are not enforced by the compiler, and it’s very common for developers to unintentionally (or even intentionally!) create instances that break those laws in ways that can cause nasty bugs.</p>
+
+<p>In the ordering example, consider an instance for integers which says <code class="highlighter-rouge">1 &lt;= 2</code> and <code class="highlighter-rouge">2 &lt;= 1</code>, but denies that <code class="highlighter-rouge">1 = 2</code>. Then think about what happens when your generic sorting routine gets ahold of this instance!</p>
+
+<p>Type class laws are the essence of abstraction: thanks to laws, they enable you to generically reason about how functions work independent of the particular types they operate on. Yet, laws are given no special treatment by most languages and compilers!</p>
+
+<h3 id="orphans">Orphans</h3>
+
+<p>For a given type class and type, there is often <em>more</em> than one way to write an instance for the type that satisfies its laws.</p>
+
+<p>For integers, we can define multiple instances of the <code class="highlighter-rouge">Monoid</code> type class which satisfy all the laws. The additive monoid defines <code class="highlighter-rouge">empty</code> to be <code class="highlighter-rouge">0</code>, and <code class="highlighter-rouge">append</code> to be integer addition (<code class="highlighter-rouge">+</code>). The multiplicative monoid defines <code class="highlighter-rouge">empty</code> to be <code class="highlighter-rouge">1</code> and <code class="highlighter-rouge">append</code> to be integer multiplication (<code class="highlighter-rouge">*</code>).</p>
+
+<p>Alarms should be going off in your head right now. If you can define multiple instances for a given type, which have completely different behavior (but nonetheless satisfy the type class laws), which one will the compiler choose?</p>
+
+<p>You might write code that expects the additive monoid, but Haskell chooses the multiplicative monoid. Oh no!</p>
+
+<p>For Haskell, at least, it turns out that if you define your instances in either the module in which the type is defined, or the module in which the type class is defined, then you’re safe, because the compiler <em>won’t let you</em> define multiple instances. Any code that imports both the type and the type class will automatically see the right (and only!) type class instance.</p>
+
+<p>If for a given type class and type, instances are defined elsewhere (not in the modules that declare the type or the type class), the instances are referred to as <em>orphan instances</em>.</p>
+
+<p>For orphan instances, which type class instance you get depends on what you import!</p>
+
+<p>We can’t just ignore this issue or the reason why it exists. For a given type, there may be <em>many</em> (perhaps even infinitely many!) ways to implement an instance that satisfies the laws of the type class.</p>
+
+<p>In Haskell, the community’s preferred solution is to create wrapper types (<code class="highlighter-rouge">newtype</code>) and define instances on the wrappers instead. You can then “force” the compiler to choose the instance you want by using the right wrapper type.</p>
+
+<p>This practice, which I lovingly call <em>newtype abuse</em>, works well enough, but it’s totally ad hoc and unprincipled. While you can force the compiler to select a desired instance by wrapping values in the right <code class="highlighter-rouge">newtype</code>, the instance satisfies <em>no more laws</em> than another <code class="highlighter-rouge">newtype</code> wrapper.</p>
+
+<p>Stated more forcefully, when we abuse newtypes, we are encoding functional requirements into the <em>name</em> of a <code class="highlighter-rouge">newtype</code> wrapper, instead of making the compiler verify those requirements!</p>
+
+<p>If the <em>correctness</em> of your monoidal code depends on more properties being satisfied by an instance than just the <code class="highlighter-rouge">Monoid</code> laws (e.g. if you require the multiplicative monoid for integers), then the compiler should be able to verify those properties.</p>
+
+<p>The alternative is ascribing arbitrary and unenforceable significance to the names of data constructors.</p>
+
+<h4 id="brief-digression-on-newtypes">Brief Digression on Newtypes</h4>
+
+<p>Newtypes aren’t always bad, but they’re often an example of “programming by name”. For example, if you define <code class="highlighter-rouge">newtype Email = Email String</code>, you haven’t restricted the set of valid values for <code class="highlighter-rouge">Email</code> — every valid string is also a valid email, and visa versa. On the other hand, if we use smart constructors for an <code class="highlighter-rouge">Email</code> type, then we can restrict the set of <code class="highlighter-rouge">Email</code> to be those strings which are actually valid emails (or better yet, use a more precise representation which corresponds 1-to-1 to an email!).</p>
+
+<p>Both of these approaches make the code easier to read, but only one of them actually leverages the compiler to enforce properties of correctness.</p>
+
+<h3 id="abstraction">Abstraction</h3>
+
+<p>In Haskell, you cannot abstract over type classes in the same way you can abstract over functions and other values. Why? Because type classes are magical — they’re neither values nor types, so you can’t rely on the ordinary machinery of abstraction.</p>
+
+<p>Let’s say I want to take two type classes, and programmatically combine them (and possibly one or more values) to create another type class. (TODO: Example.)</p>
+
+<p>How would you express this in Haskell? You can’t, because type classes are magical!</p>
+
+<p>Ironically, in weaker languages that don’t support type classes, abstraction is usually possible, because the type classes are emulated using first-class language features, such as dictionaries, interfaces, traits, or modules.</p>
+
+<h2 id="principled-type-classes">Principled Type Classes?</h2>
+
+<p>I don’t know what the <em>best</em> solution to these issues is. But I do have some ideas about what <em>I</em> want from type classes:</p>
+
+<ol>
+  <li><strong>Haskell-style</strong>. A baked-in notion of type classes in the overall style of Haskell, Purescript, Idris, etc.</li>
+  <li><strong>Lawful</strong>. First-class laws for type classes, which are enforced by the compiler.</li>
+  <li><strong>Hierarchical</strong>. A compiler-verified requirement that a subclass of a type class must have at least one more law than that type class.</li>
+  <li><strong>Globally Unambiguous</strong>. Type class resolution that produces an error if there exists more than one instances which satisfies the constraints at the point where the compiler must choose an instance.</li>
+  <li><strong>Abstractable</strong>. The ability to abstract over type classes themselves.</li>
+</ol>
+
+<p>I’ll explore what I mean by each of these in the sections that follow.</p>
+
+<h3 id="haskell-style">Haskell-Style</h3>
+
+<p>Some have made <a href="https://www.haskellforall.com/2012/05/scrap-your-type-classes.html">compelling arguments</a> for abolishing type classes in Haskell, at least as baked-in language constructs.</p>
+
+<p>I’m obviously sympathetic to this point of view, but I just view the problems with built-in type classes as a reason to <em>make them better</em> rather than to <em>abolish them</em>.</p>
+
+<p>The advantage for built-in type classes is not just concise code: if the compiler knows about type classes, it can make sure they’re used in sensible ways that lead to the construction of correct, comprehensible software.</p>
+
+<p>If you emulate type classes using ordinary values, then while you gain a whole host of benefits, you also lose some. I don’t personally think the tradeoff is worthwhile — at least for “improved type classes” of the type I’m advocating.</p>
+
+<h3 id="lawful">Lawful</h3>
+
+<p>By lawful, I want the ability to state the laws for a type class when defining that type class. In fact, I want the compiler to <em>force</em> me to do so!</p>
+
+<p>Dependently-typed languages can do this easily in many cases. Idris, for example, introduces a <code class="highlighter-rouge">VerifiedMonoid</code> class which cannot be implemented for a type without proving its laws are satisfied for that type (unless you cheat!):</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="p">(</span><span class="kt">VerifiedSemigroup</span> <span class="n">a</span><span class="p">,</span> <span class="kt">Monoid</span> <span class="n">a</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">VerifiedMonoid</span> <span class="n">a</span> <span class="kr">where</span>
+  <span class="n">total</span> <span class="n">monoidNeutralIsNeutralL</span> <span class="o">:</span> <span class="p">(</span><span class="n">l</span> <span class="o">:</span> <span class="n">a</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">l</span> <span class="o">&lt;+&gt;</span> <span class="n">neutral</span> <span class="o">=</span> <span class="n">l</span>
+  <span class="n">total</span> <span class="n">monoidNeutralIsNeutralR</span> <span class="o">:</span> <span class="p">(</span><span class="n">r</span> <span class="o">:</span> <span class="n">a</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">neutral</span> <span class="o">&lt;+&gt;</span> <span class="n">r</span> <span class="o">=</span> <span class="n">r</span></code></pre></figure>
+
+<p>Dependent-typing, however, is not a panacea. You can’t use it to prove laws about effects, like proving the monad laws for Haskell’s <code class="highlighter-rouge">IO</code>. I’m not sure whether that’s a good thing or a bad thing.</p>
+
+<p>But I do think that dependent-typing isn’t necessary to have lawful type classes. For non-dependently-typed languages, QuickCheck-style property verification is probably sufficient (<code class="highlighter-rouge">doctest</code> is already used for this purpose in the Haskell community).</p>
+
+<p>One can imagine defining laws like this (warning: bullshit syntax):</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Semigroup</span> <span class="n">a</span> <span class="o">=&gt;</span> <span class="kt">Monoid</span> <span class="n">a</span> <span class="kr">where</span>
+  <span class="n">empty</span> <span class="o">::</span> <span class="n">a</span>
+  
+  <span class="n">law</span> <span class="n">emptyIsIdentity</span> <span class="n">a</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span> <span class="p">`</span><span class="n">append</span><span class="p">`</span> <span class="n">empty</span><span class="p">)</span> <span class="o">.==.</span> <span class="n">a</span><span class="p">)</span> <span class="o">.&amp;&amp;.</span> <span class="p">(</span><span class="n">empty</span> <span class="p">`</span><span class="n">append</span><span class="p">`</span> <span class="n">a</span><span class="p">)</span> <span class="o">.==.</span> <span class="n">a</span></code></pre></figure>
+
+<p>where the compiler would infer constraints for law parameters (for example, an <code class="highlighter-rouge">Arb</code> instance for <code class="highlighter-rouge">a</code>), and require that instances pass the laws of both <code class="highlighter-rouge">Monoid</code>, as well as its superclass <code class="highlighter-rouge">Semigroup</code>.</p>
+
+<p>Interestingly, this approach might be possible in present-day Scala, although it would require macros.</p>
+
+<h3 id="hierarchical">Hierarchical</h3>
+
+<p>Two type classes with the same laws have no useful distinction (different <em>names</em> are not a meaningful distinction!). Hence, the compiler should not allow them to exist.</p>
+
+<p>Every type class should have at least one more law than its super class. The (implicit) super class of all base type classes has no laws, thus forcing every base type class to have at least one law.</p>
+
+<h3 id="globally-unambiguous">Globally Unambiguous</h3>
+
+<p>At the point of instance selection — that is, when the compiler chooses an instance based on inferred types — there should be no ambiguity. If the compiler detects more than one instance satisfying the constraints, then the compiler should reject the program with an appropriate error message.</p>
+
+<p>The compiler should not just consider instances defined in imports, but should <em>globally</em> consider <em>all instances</em> defined in the <em>entire</em> project and <em>all</em> its dependencies.</p>
+
+<p>Notice I’m focused on <em>instance selection</em> and not <em>instance definition</em>. I’m actually in favor of allowing multiple instances that satisfy the same laws, as long as these instances are for different (if related) type classes.</p>
+
+<p>For example, I’m OK with defining instances for <code class="highlighter-rouge">Integer</code> of two distinct subclasses of <code class="highlighter-rouge">Monoid</code>.</p>
+
+<p>Why? Because fundamentally, <em>laws are all that matter</em>. Subclasses have even more laws than superclasses, and satisfying these laws might require a more specific kind of implementation, which satisfies superclass laws in a different (if still valid) way.</p>
+
+<p>So even though I couldn’t create two <code class="highlighter-rouge">Monoid</code> instances for <code class="highlighter-rouge">Integer</code>, one for addition and one for multiplication, I <em>would</em> be allowed to create two classes that derive from <code class="highlighter-rouge">Monoid</code> and define instances of each class for <code class="highlighter-rouge">Integer</code>.</p>
+
+<p>See the distinction?</p>
+
+<p>Let’s say I want to define both additive and multiplicative monoids for integers. My first step would be to create type classes which have <em>even more laws</em> that further restrict the implementation to have the properties I want.</p>
+
+<p>For example:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Integral</span> <span class="n">a</span> <span class="kr">where</span>
+  <span class="n">toInteger</span>   <span class="o">::</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Integer</span>  
+  <span class="n">fromInteger</span> <span class="o">::</span> <span class="kt">Integer</span> <span class="o">-&gt;</span> <span class="n">a</span>
+  
+  <span class="n">law</span> <span class="n">isoInteger</span> <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">toInteger</span> <span class="o">.</span> <span class="n">fromInteger</span><span class="p">)</span> <span class="n">a</span> <span class="o">.==.</span> <span class="n">a</span>
+  <span class="n">law</span> <span class="n">isoA</span> <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">fromInteger</span> <span class="o">.</span> <span class="n">toInteger</span><span class="p">)</span> <span class="n">a</span> <span class="o">.==.</span> <span class="n">a</span>
+
+<span class="kr">class</span> <span class="p">(</span><span class="kt">Monoid</span> <span class="n">a</span><span class="p">,</span> <span class="kt">Integral</span> <span class="n">a</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">IntMultMonoid</span> <span class="n">a</span> <span class="kr">where</span>
+  <span class="n">law</span> <span class="n">appendIsIntMult</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">fromInteger</span> <span class="o">$</span> <span class="p">(</span><span class="n">toInteger</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">toInteger</span> <span class="n">b</span><span class="p">))</span> <span class="o">.==.</span> <span class="n">a</span> <span class="p">`</span><span class="n">append</span><span class="p">`</span> <span class="n">b</span>
+  
+<span class="kr">class</span> <span class="p">(</span><span class="kt">Monoid</span> <span class="n">a</span><span class="p">,</span> <span class="kt">Integral</span> <span class="n">a</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">IntAddMonoid</span> <span class="n">a</span> <span class="kr">where</span>
+  <span class="n">law</span> <span class="n">appendIsIntAdd</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">fromInteger</span> <span class="o">$</span> <span class="p">(</span><span class="n">toInteger</span> <span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">toInteger</span> <span class="n">b</span><span class="p">))</span> <span class="o">.==.</span> <span class="n">a</span> <span class="p">`</span><span class="n">append</span><span class="p">`</span> <span class="n">b</span></code></pre></figure>
+
+<p>(These are over-constrained — many uses could get by with weaker laws — but they’re enough to demonstrate my point!)</p>
+
+<p>Now assume we’ve defined instances of both of these type classes for <code class="highlighter-rouge">Integer</code>. How do I use them?</p>
+
+<p>If I tried the naive approach, I’d run into problems:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="mi">1</span> <span class="p">`</span><span class="n">append</span><span class="p">`</span> <span class="mi">2</span></code></pre></figure>
+
+<p>This would generate a compiler error, because there exist two instances which satisfy the laws for <code class="highlighter-rouge">Semigroup</code> and <code class="highlighter-rouge">Integer</code>.</p>
+
+<p>However, I can further constrain my code as follows:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">addOneTwo</span> <span class="o">::</span> <span class="p">(</span><span class="kt">IntAddMonoid</span> <span class="n">a</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">a</span>
+<span class="n">addOneTwo</span> <span class="n">a</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="p">`</span><span class="n">append</span><span class="p">`</span> <span class="n">b</span>
+
+<span class="n">addOneTwo</span> <span class="mi">1</span> <span class="mi">2</span></code></pre></figure>
+
+<p>My function <code class="highlighter-rouge">addOneTwo</code> has stronger constraints than just <code class="highlighter-rouge">Monoid</code>. So when I call that function with <code class="highlighter-rouge">Integer</code>, the compiler is able to select the unique instance which satisfies my stronger constraints.</p>
+
+<p>Note that in this code, I’m explicitly capturing the fact that I <em>care</em> about more than just the <code class="highlighter-rouge">Monoid</code> laws when the compiler chooses the instance for <code class="highlighter-rouge">Integer</code>. I’m capturing that fact in a way that is <em>rigorous</em> and <em>compiler-verified</em>.</p>
+
+<p>There would be several positive side effects of this approach:</p>
+
+<ol>
+  <li><strong>No Newtype Abuse</strong>. There’s no need for the ad hoc practice of abusing <code class="highlighter-rouge">newtype</code> to force Haskell to select the “right” type class instance. (In fact, I’d like the compiler to forbid this abuse of <code class="highlighter-rouge">newtype</code> for instance selection.)</li>
+  <li><strong>More Generic Code</strong>. For example, the above function <code class="highlighter-rouge">addOneTwo</code> works on any type that’s provably isomorphic to <code class="highlighter-rouge">Integer</code> (and some use cases wouldn’t even require laws that strong).</li>
+  <li><strong>Lawful Thinking</strong>. The compiler forces you to think about which additional laws you need to choose the instance you want, and to state those laws in compiler-verifiable properties.</li>
+</ol>
+
+<h3 id="abstractable">Abstractable</h3>
+
+<p>I think that making type classes abstractable and fully composable requires two things:</p>
+
+<ol>
+  <li>First-class modules, which can be passed around and manipulated like values.</li>
+  <li>Probably named instances (which, for example, Purescript and Idris already support!). Named instances aren’t necessary for instance selection, but they would be helpful as a concise way of referring to a specific “module”.</li>
+</ol>
+
+<p>Obviously, in languages that don’t have type classes, the emulated type classes are ordinary values and can be abstracted and composed like other values.</p>
+
+<p>First-class modules also seem to provide a clean answer to the problem of “type class coherency”, but that’s a topic for another post.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>Type classes have a <em>long ways</em> to go before they become <em>principled</em>.</p>
+
+<p>Their current problems range from lawlessness to global ambiguity to complete failure to abstract.</p>
+
+<p>My ideal solution would look a lot like Haskell’s type classes, but add compiler-enforced, hierarchical laws, make type class selection (but not definition!) globally unambiguous, and allow abstraction and composition of type classes in all the same ways we can compose and abstract over values.</p>
+
+<p>Where do you think type classes should go? Share your thoughts in the comments below.</p>
+:ET

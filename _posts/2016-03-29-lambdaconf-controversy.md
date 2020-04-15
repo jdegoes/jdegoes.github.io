@@ -8,7 +8,7 @@ image:
   feature: "lambdaconf-inclusion.png"
 ---
 
-Unfortunately, my blog post on [wrestling with inclusion at LambdaConf](http://degoes.net/articles/lambdaconf-inclusion) has divided many in the tech community.
+Unfortunately, my blog post on [wrestling with inclusion at LambdaConf](https://degoes.net/articles/lambdaconf-inclusion) has divided many in the tech community.
 
 Since so many have provided their feedback, I want to explain my personal thoughts here, and invite others to share thoughtful and gracious responses.
 
@@ -194,7 +194,7 @@ You might lose *everything*.
 
 I'm sure many will say, you deserve all that and more if you're a bad person. But the thing is, *even if you agree with this*, you have to acknowledge that social media makes *mistakes* (just look at the social media hysteria following any terrorist attack!).
 
-Social media is often a platform for false, distorted, and misrepresented information. There's irrational groupthink and [perverse game mechanics](http://hintjens.com/blog:114) (see the end).
+Social media is often a platform for false, distorted, and misrepresented information. There's irrational groupthink and [perverse game mechanics](https://hintjens.com/blog:114) (see the end).
 
 I don't like that. I *really* don't like that.
 
@@ -210,7 +210,7 @@ For me, the answer to both questions is *yes*.
 
 ## Communities
 
-As [Alissa Pajer](http://alissapajer.github.io/posts/2016-03-26-lambdaconf.html) has so articulately, brilliantly, and graciously pointed out, different conference policies will select for different communities, and different communities will select for different conferences.
+As [Alissa Pajer](https://alissapajer.github.io/posts/2016-03-26-lambdaconf.html) has so articulately, brilliantly, and graciously pointed out, different conference policies will select for different communities, and different communities will select for different conferences.
 
 Some people have claimed that a policy which allows a neo-reactionary to speak at the conference will produce a conference dominated by neo-reactionaries.
 
@@ -268,7 +268,7 @@ I guess that makes me a typical Boulder nut job! Albeit, a nut job who gets [rea
 
 Do you love functional programming? Are you peaceful, and can you pledge to treat attendees exceedingly well?
 
-In that case, regardless of your personal beliefs, I invite you to [join me](http://lambdaconf.us) and other professionals in a professional setting, to talk about professional things (not personal beliefs!).
+In that case, regardless of your personal beliefs, I invite you to [join me](https://lambdaconf.us) and other professionals in a professional setting, to talk about professional things (not personal beliefs!).
 
 I'm gonna be the crazy bald guy out front, holding up the "free hugs" sign (hey, only if you want one!), and maybe occasionally getting a bit emotional.
 

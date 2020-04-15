@@ -6,7 +6,7 @@ category:     articles
 tags:         [type classes, haskell, purescript, scala, cats, scalaz, mtl, tagless-final, functional programming, fp]
 ---
 
-Tagless-final is a technique originally used to [embed domain-specific languages](http://okmij.org/ftp/tagless-final/index.html) into a host language, without the use of Generalized Algebraic Data Types.
+Tagless-final is a technique originally used to [embed domain-specific languages](https://okmij.org/ftp/tagless-final/index.html) into a host language, without the use of Generalized Algebraic Data Types.
 
 In the Haskell community, _tagless-final_ still refers to a way of creating polymorphic programs in a custom DSL that are interpreted by instantiating them to a concrete data type. In the Scala community, however, tagless-final is used almost exclusively for monadic, effectful DSLs. Usage of the term in Scala is closest to what Haskeller's mean by _MTL-style_, but without the algebraic laws that govern MTL type classes.
 
@@ -205,7 +205,7 @@ Let's take a look at all the fine print in the next few sections.
 
 It is absolutely true that adding a layer of indirection over an effect type can reduce the cost of switching to a different effect type, assuming similar underlying semantics.
 
-It is also true that adding a layer of indirection over Spark, Akka HTTP, Slick, or a database-specific dialect of SQL, might reduce the cost of switching to different technologies.
+It is also true that adding a layer of indirection over Spark, Akka https, Slick, or a database-specific dialect of SQL, might reduce the cost of switching to different technologies.
 
 In my experience, however, the attempt to proactively add layers of indirection without a clear business mandate to do so, simply to mitigate the _possible_ cost of future change, is an example of _premature indirection_. 
 
@@ -318,7 +318,7 @@ In Scala, the Cats Effect type class hierarchy provides many type classes that a
 
 Methods that require one of these type classes can literally do _anything_ they wants, without constraints, even assuming a working social contract. These methods nullify the power of discipline, depriving us of any benefits to reasoning and testability, resulting in opaque blobs of side-effecting, untestable procedural code.
 
-Nearly all tagless-final code (including some of the [best open source functional Scala I know of](http://github.com/slamdata/quasar/search?q=Sync&unscoped_q=Sync)) makes liberal use of these type classes, freely embedding side-effects in numerous methods sprawled across the code base.
+Nearly all tagless-final code (including some of the [best open source functional Scala I know of](https://github.com/slamdata/quasar/search?q=Sync&unscoped_q=Sync)) makes liberal use of these type classes, freely embedding side-effects in numerous methods sprawled across the code base.
 
 In a perfect world, perhaps programmers would create hundreds or thousands of fine-grained, testable type classes to represent separate concerns. But in the real world, the vast majority of programmers using tagless-final (even high-skilled, expert-level functional programmers!) are not doing this. Instead, they're requiring type classes like `Sync` that encourage embedding arbitrary side-effects everywhere.
 

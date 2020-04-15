@@ -1,0 +1,515 @@
+I"��<p>Late last year, I wrote my thoughts on what the <a href="/articles/modern-fp">architecture of modern
+functional programs should look like</a>.</p>
+
+<p>The post generated vigorous discussion in the community, perhaps because I
+railed against the <code class="highlighter-rouge">IO</code> monad and advocated for <code class="highlighter-rouge">Free</code> monads, which are now
+used pervasively in <a href="https://github.com/quasar-analytics/quasar/">Quasar Analytics Engine</a>,
+one of the open source projects that <a href="https://slamdata.com">my company</a> develops.</p>
+
+<p>Since then, I’ve had a chance to read responses, look at <a href="https://gist.github.com/ocharles/6b1b9440b3513a5e225e">equivalent
+architectures</a> built upon
+Monad Transformers Library (MTL), and even <a href="https://www.slideshare.net/jdegoes/mtl-versus-free">talk about</a> my recent experiments
+at <a href="https://lambdaconf.us">LambdaConf 2016</a>.</p>
+
+<p>The result is a sequel to my original post, which consists of a newly-minted,
+tricked-out recommendation for architecting modern functional programs, along
+with new ways of thinking about the structure of this architecture.</p>
+
+<h1 id="onion-architecture">Onion Architecture</h1>
+
+<p>The modern architecture for functional programming, which I will henceforth
+call the <em>onion architecture</em> (because of its similarity to <a href="https://jeffreypalermo.com/blog/the-onion-architecture-part-1/">a pattern of the
+same name</a>),
+involves structuring the application as a series of layers:</p>
+
+<ol>
+  <li>At the center of the application, semantics are encoded using the language
+of the domain model.</li>
+  <li>Beginning at the center, each layer is translated into one or more
+languages with lower-level semantics.</li>
+  <li>At the outermost layer of the application, the final language is that of the
+application’s <em>environment</em> — for example, the programming language’s standard
+library or foreign function interface, or possibly even machine instructions.</li>
+</ol>
+
+<p>At the top-level of the program, the final language of the application is
+trivially executed by mapping it onto the environment, which of course involves
+running all the effects the application requires to perform useful work.</p>
+
+<h2 id="the-free-edge">The Free Edge</h2>
+
+<p>The onion architecture can be implemented in object-oriented programming or in
+functional programming.</p>
+
+<p>However, the limitations of type systems in most object-oriented programming
+languages generally imply that implementations are <em>final</em>. Pragmatically
+speaking, what this means is that object-oriented programs written using the
+onion architecture cannot benefit from any sort of runtime introspection and
+transformation.</p>
+
+<p>Within functional programming, the choices are Monad Transformers Library
+(MTL), or something equivalent to it (the <em>final</em> approach, though note that the
+type classes from MTL can be subverted to build Free structures); or Free
+monads, or something equivalent to them (the <em>initial</em> approach).</p>
+
+<p>It’s even possible to mix and match MTL and Free within the same program, which
+comes with the mixed tradeoffs you’d expect.</p>
+
+<p>As shown by <a href="https://gist.github.com/ocharles/6b1b9440b3513a5e225e">Oliver Charles</a>,
+MTL can indeed quite simply implement the onion architecture, without any help
+from Free. However, the following caveats apply:</p>
+
+<ol>
+  <li><strong>Tangled Concerns</strong>. MTL implies a linear stack of monads. Since interpreter
+logic goes into type class instances, this involves tangling concerns. For
+example, a logging interpreter must also delegate to some other interpreter to
+expose the semantics of the logging class.</li>
+  <li><strong>No Introspection</strong>. MTL does not allow introspection of the structure of the
+program for the purpose of applying a dynamic transformation. For one, this means
+program fragments cannot be optimized. Other implications of this limitation are
+being explored as new ways are discovered to use free monads.</li>
+  <li><strong>Over-specified Operations</strong>. Monad classes in MTL must be over-specified
+for performance reasons. If one operation is semantically a composite of others,
+the type class must still express both so that instances can provide high-
+performance implementations. Technically, this is an implication of (2), but
+it’s important enough to call out separately.</li>
+</ol>
+
+<p>Free monads have none of these drawbacks:</p>
+
+<ol>
+  <li>Free monads permit more decoupling between interpreters, because one
+interpreter does not have to produce the result of the operation being
+interpreted (or any result at all, in fact).</li>
+  <li>Free monads permit unlimited introspection and transformation of the structure
+of your program (<em>EDIT</em>: up to the information-theoretic limit; see <a href="https://www.youtube.com/watch?v=H28QqxO7Ihc">my talk on
+Free applicatives</a>, which support
+sequential code just like free monads but allow unbounded peek-ahead).</li>
+  <li>Free monads allow minimal specification of each semantic layer, since
+performance can be optimized via analysis and transformation.</li>
+</ol>
+
+<p>On the second benefit, I have previously discussed optimization of programs via
+<a href="https://www.youtube.com/watch?v=H28QqxO7Ihc">free applicatives</a>, and I also
+recently demonstrated a <a href="https://github.com/slamdata/purescript-mockfree">mocking library</a>
+that exposes composable, type-safe combinators for building expectations —
+something not demonstrated before and apparently impossible using monad
+transformers.</p>
+
+<p>For all these reasons, I endorse free monads as the <em>direction</em> of the future.
+However, most functional programming languages have derived approaches
+that reduce or eliminate some of the boilerplate inherent in the original
+approach (see <a href="https://github.com/ProjectSeptemberInc/freek">FreeK</a> and
+<a href="https://github.com/atnos-org/eff-cats">Eff-Cats</a> in Scala, for example).</p>
+
+<p>In my opinion, the wonderful polymorphism of monad type classes in MTL is the
+best thing about MTL (rather than the transformers themselves), and clearly
+superior to how early Free programs were built.</p>
+
+<p>Nonetheless, Free has an equivalent mechanism, which I’m dubbing <em>Free
+Transformers</em> (FT), which goes head-to-head with MTL and even allows
+developers to target both MTL and Free, for portions of their code.</p>
+
+<h2 id="free-transformers">Free Transformers</h2>
+
+<p>Old-fashioned Free code is monomorphic in the functor type. With functor
+injection, this becomes more polymorphic, but functor injection is just a
+special case of polymorphic functors whose capabilities are described by type
+classes.</p>
+
+<p>Fortunately, we can replicate the success of type classes in MTL in
+straightforward fashion.</p>
+
+<p>Let’s say we’re creating a semantic layer to describe console input. The first
+step is to define a type class which describes the operations of our algebra:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Console</span> <span class="n">f</span> <span class="kr">where</span>
+  <span class="n">readLine</span> <span class="o">::</span> <span class="n">f</span> <span class="kt">String</span>
+
+  <span class="n">writeLine</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="n">f</span> <span class="kt">Unit</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Console</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">readLine</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+
+  <span class="k">def</span> <span class="nf">writeLine</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Notice that unlike in MTL, <code class="highlighter-rouge">Console</code> is <em>not</em> necessarily a monad. This
+weakening allows us to create instances for data types that capture the
+structure of these operations but do not provide a context for composing them.
+This allows code that is polymorphic in the type of data structure used to
+represent the operations.</p>
+
+<p>Of course, monadic instances may be defined for Free, and any code that
+requires monadic or applicative composition can use additional constraints:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">myProgram</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span><span class="o">.</span> <span class="p">(</span><span class="kt">Console</span> <span class="n">f</span><span class="p">,</span> <span class="kt">Monad</span> <span class="n">f</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">f</span> <span class="kt">Unit</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">myProgram</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Console:</span> <span class="kt">Monad</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span></code></pre></figure>
+
+<p>Laws for type classes like this can be specified by embedding the functor into
+a suitable computational context such as <code class="highlighter-rouge">Free</code>.</p>
+
+<p>The name “transformers” comes from the fact that functors compose when nested.
+The outer functor “transforms” the inner functor to yield a new composite
+functor, and Free programs are usually built from compositional functors.</p>
+
+<p>The Free Transformers approach allows maximum polymorphism. In fact, there’s
+enough polymorphism that a lot of your code doesn’t need to <em>care</em> whether you
+implement with Free or monad transformers!</p>
+
+<h2 id="a-worked-example">A Worked Example</h2>
+
+<p>Let’s work a simple example in the onion architecture using free monads and the
+Free Transformers approach to abstracting over functor operations.</p>
+
+<p>Suppose we’re building a banking service with the following requirements:</p>
+
+<ol>
+  <li>The accounts may be listed.</li>
+  <li>The balance in an account may be shown.</li>
+  <li>Cash may be withdrawn from an account in multiples of $20.</li>
+  <li>Cash may be transferred from one account to another.</li>
+</ol>
+
+<p>Our first step is to create a type class to represent the operations available
+in our domain model:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">From</span> <span class="n">a</span> <span class="o">=</span> <span class="kt">From</span> <span class="n">a</span>
+<span class="kr">data</span> <span class="kt">To</span> <span class="n">a</span> <span class="o">=</span> <span class="kt">To</span> <span class="n">a</span>
+
+<span class="kr">type</span> <span class="kt">TransferResult</span> <span class="o">=</span> <span class="kt">Either</span> <span class="kt">Error</span> <span class="p">(</span><span class="kt">Tuple</span> <span class="p">(</span><span class="kt">From</span> <span class="kt">Amount</span><span class="p">)</span> <span class="p">(</span><span class="kt">To</span> <span class="kt">Amount</span><span class="p">))</span>
+
+<span class="kr">class</span> <span class="kt">Banking</span> <span class="n">f</span> <span class="kr">where</span>
+  <span class="n">accounts</span> <span class="o">::</span> <span class="n">f</span> <span class="p">(</span><span class="kt">NonEmptyList</span> <span class="kt">Account</span><span class="p">)</span>
+  <span class="n">balance</span>  <span class="o">::</span> <span class="kt">Account</span> <span class="o">-&gt;</span> <span class="n">f</span> <span class="kt">Amount</span>
+  <span class="n">transfer</span> <span class="o">::</span> <span class="kt">Amount</span> <span class="o">-&gt;</span> <span class="kt">From</span> <span class="kt">Account</span> <span class="o">-&gt;</span> <span class="kt">To</span> <span class="kt">Account</span> <span class="o">-&gt;</span> <span class="n">f</span> <span class="kt">TransferResult</span>
+  <span class="n">withdraw</span> <span class="o">::</span> <span class="kt">Amount</span> <span class="o">-&gt;</span> <span class="n">f</span> <span class="kt">Amount</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">case</span> <span class="k">class</span> <span class="nc">From</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">To</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span>
+
+<span class="k">type</span> <span class="kt">TransferResult</span> <span class="o">=</span> <span class="nc">Either</span><span class="o">[</span><span class="kt">Error</span>, <span class="o">(</span><span class="kt">From</span><span class="o">[</span><span class="kt">Amount</span><span class="o">]</span>, <span class="kt">To</span><span class="o">[</span><span class="kt">Amount</span><span class="o">])]</span>
+
+<span class="k">trait</span> <span class="nc">Banking</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">accounts</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">NonEmptyList</span><span class="o">[</span><span class="kt">Account</span><span class="o">]]</span>
+  <span class="k">def</span> <span class="nf">balance</span><span class="o">(</span><span class="n">account</span><span class="k">:</span> <span class="kt">Account</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Amount</span><span class="o">]</span>
+  <span class="k">def</span> <span class="nf">transfer</span><span class="o">(</span><span class="n">amount</span><span class="k">:</span> <span class="kt">Amount</span><span class="o">,</span> <span class="n">from</span><span class="k">:</span> <span class="kt">From</span><span class="o">[</span><span class="kt">Account</span><span class="o">],</span> <span class="n">to</span><span class="k">:</span> <span class="kt">To</span><span class="o">[</span><span class="kt">Account</span><span class="o">])</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">TransferResult</span><span class="o">]</span>
+  <span class="k">def</span> <span class="nf">withdraw</span><span class="o">(</span><span class="n">amount</span><span class="k">:</span> <span class="kt">Amount</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Amount</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Our next step is to create a data structure for representing these operations
+independent of any computational context:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">BankingF</span> <span class="n">a</span>
+  <span class="o">=</span> <span class="kt">Accounts</span> <span class="p">(</span><span class="kt">NonEmptyList</span> <span class="kt">Account</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">Balance</span> <span class="kt">Account</span> <span class="p">(</span><span class="kt">Amount</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">Transfer</span> <span class="kt">Amount</span> <span class="p">(</span><span class="kt">From</span> <span class="kt">Account</span><span class="p">)</span> <span class="p">(</span><span class="kt">To</span> <span class="kt">Account</span><span class="p">)</span> <span class="p">(</span><span class="kt">TransferResult</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+  <span class="o">|</span> <span class="kt">Withdraw</span> <span class="kt">Amount</span> <span class="p">(</span><span class="kt">Amount</span> <span class="o">-&gt;</span> <span class="n">a</span><span class="p">)</span>
+
+<span class="kr">instance</span> <span class="n">bankingBankingF</span> <span class="o">::</span> <span class="kt">Banking</span> <span class="kt">BankingF</span> <span class="kr">where</span>
+  <span class="n">accounts</span> <span class="o">=</span> <span class="kt">Accounts</span> <span class="n">id</span>
+  <span class="n">balance</span> <span class="n">a</span> <span class="o">=</span> <span class="kt">Balance</span> <span class="n">a</span> <span class="n">id</span>
+  <span class="n">transfer</span> <span class="n">a</span> <span class="n">f</span> <span class="n">t</span> <span class="o">=</span> <span class="kt">Transfer</span> <span class="n">a</span> <span class="n">f</span> <span class="n">t</span> <span class="n">id</span>
+  <span class="n">withdraw</span> <span class="n">a</span> <span class="o">=</span> <span class="kt">Withdraw</span> <span class="n">a</span> <span class="n">id</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">BankingF</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="nc">case</span> <span class="k">class</span> <span class="nc">Accounts</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">next</span><span class="k">:</span> <span class="kt">NonEmptyList</span><span class="o">[</span><span class="kt">Account</span><span class="o">]</span> <span class="k">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">BankingF</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Balance</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">next</span><span class="k">:</span> <span class="kt">Amount</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">BankingF</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Transfer</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span>
+  <span class="n">amount</span><span class="k">:</span> <span class="kt">Amount</span><span class="o">,</span> <span class="n">from</span><span class="k">:</span> <span class="kt">From</span><span class="o">[</span><span class="kt">Account</span><span class="o">],</span> <span class="n">to</span><span class="k">:</span> <span class="kt">To</span><span class="o">[</span><span class="kt">Account</span><span class="o">],</span>
+  <span class="n">next</span><span class="k">:</span> <span class="kt">TransferResult</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">BankingF</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Withdraw</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">amount</span><span class="k">:</span> <span class="kt">Amount</span><span class="o">,</span> <span class="n">next</span><span class="k">:</span> <span class="kt">Amount</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">BankingF</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>Now we can create an instance for Free that can be automatically derived from
+any suitable functor:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">instance</span> <span class="n">bankingFree</span> <span class="o">::</span> <span class="p">(</span><span class="kt">Banking</span> <span class="n">f</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">Banking</span> <span class="p">(</span><span class="kt">Free</span> <span class="n">f</span><span class="p">)</span> <span class="kr">where</span>
+  <span class="n">accounts</span> <span class="o">=</span> <span class="n">liftF</span> <span class="n">accounts</span>
+  <span class="n">balance</span> <span class="n">a</span> <span class="o">=</span> <span class="n">liftF</span> <span class="p">(</span><span class="n">balance</span> <span class="n">a</span><span class="p">)</span>
+  <span class="n">transfer</span> <span class="n">a</span> <span class="n">f</span> <span class="n">t</span> <span class="o">=</span> <span class="n">liftF</span> <span class="p">(</span><span class="n">transfer</span> <span class="n">a</span> <span class="n">f</span> <span class="n">t</span><span class="p">)</span>
+  <span class="n">withdraw</span> <span class="n">a</span> <span class="o">=</span> <span class="n">liftF</span> <span class="p">(</span><span class="n">withdraw</span> <span class="n">a</span><span class="p">)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">implicit</span> <span class="k">def</span> <span class="nf">BankingFree</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]](</span><span class="k">implicit</span> <span class="n">F</span><span class="k">:</span> <span class="kt">Banking</span><span class="o">[</span><span class="kt">F</span><span class="o">])</span><span class="k">:</span> <span class="kt">Banking</span><span class="o">[</span><span class="kt">Free</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">?</span><span class="o">]]</span> <span class="k">=</span>
+  <span class="k">new</span> <span class="nc">Banking</span><span class="o">[</span><span class="kt">Free</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">?</span><span class="o">]]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">accounts</span><span class="k">:</span> <span class="kt">Free</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">NonEmptyList</span><span class="o">[</span><span class="kt">Account</span><span class="o">]]</span> <span class="k">=</span> <span class="nv">Free</span><span class="o">.</span><span class="py">liftF</span><span class="o">(</span><span class="nv">F</span><span class="o">.</span><span class="py">accounts</span><span class="o">)</span>
+    <span class="k">def</span> <span class="nf">balance</span><span class="o">(</span><span class="n">account</span><span class="k">:</span> <span class="kt">Account</span><span class="o">)</span><span class="k">:</span> <span class="kt">Free</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">Amount</span><span class="o">]</span> <span class="k">=</span> <span class="nv">Free</span><span class="o">.</span><span class="py">liftF</span><span class="o">(</span><span class="nv">F</span><span class="o">.</span><span class="py">balance</span><span class="o">(</span><span class="n">account</span><span class="o">))</span>
+    <span class="k">def</span> <span class="nf">transfer</span><span class="o">(</span><span class="n">amount</span><span class="k">:</span> <span class="kt">Amount</span><span class="o">,</span> <span class="n">from</span><span class="k">:</span> <span class="kt">From</span><span class="o">[</span><span class="kt">Account</span><span class="o">],</span> <span class="n">to</span><span class="k">:</span> <span class="kt">From</span><span class="o">[</span><span class="kt">Account</span><span class="o">])</span><span class="k">:</span>
+      <span class="kt">Free</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">TransferResult</span><span class="o">]</span> <span class="k">=</span> <span class="nv">Free</span><span class="o">.</span><span class="py">liftF</span><span class="o">(</span><span class="nv">F</span><span class="o">.</span><span class="py">transfer</span><span class="o">(</span><span class="n">amount</span><span class="o">,</span> <span class="n">from</span><span class="o">,</span> <span class="n">to</span><span class="o">))</span>
+    <span class="k">def</span> <span class="nf">withdraw</span><span class="o">(</span><span class="n">amount</span><span class="k">:</span> <span class="kt">Amount</span><span class="o">)</span><span class="k">:</span> <span class="kt">Free</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">Amount</span><span class="o">]</span> <span class="k">=</span> <span class="nv">Free</span><span class="o">.</span><span class="py">liftF</span><span class="o">(</span><span class="nv">F</span><span class="o">.</span><span class="py">withdraw</span><span class="o">(</span><span class="n">amount</span><span class="o">))</span>
+  <span class="o">}</span></code></pre></figure>
+
+<p>At this point, we can define high-level programs that operate in our business
+domain, without tangling other concerns such as banking protocols, socket
+communication, and logging:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">example</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span><span class="o">.</span> <span class="p">(</span><span class="kt">Inject</span> <span class="kt">BankingF</span> <span class="n">f</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">Free</span> <span class="n">f</span> <span class="kt">Amount</span>
+<span class="n">example</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">as</span> <span class="o">&lt;-</span> <span class="n">accounts</span>
+  <span class="n">b</span>  <span class="o">&lt;-</span> <span class="n">balance</span> <span class="p">(</span><span class="n">head</span> <span class="n">as</span><span class="p">)</span>
+  <span class="n">return</span> <span class="n">b</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">def</span> <span class="n">example</span><span class="p">[</span><span class="kt">F</span><span class="p">[</span><span class="kr">_</span><span class="p">]</span><span class="o">:</span> <span class="kt">Inject</span><span class="p">[</span><span class="kt">BankingF</span><span class="p">,</span> <span class="o">?</span><span class="p">]]</span><span class="o">:</span> <span class="kt">Free</span><span class="p">[</span><span class="kt">F</span><span class="p">,</span> <span class="kt">Amount</span><span class="p">]</span> <span class="o">=</span>
+  <span class="n">for</span> <span class="p">{</span>
+    <span class="n">as</span> <span class="o">&lt;-</span> <span class="kt">F</span><span class="o">.</span><span class="n">accounts</span>
+    <span class="n">b</span>  <span class="o">&lt;-</span> <span class="kt">F</span><span class="o">.</span><span class="n">balance</span><span class="p">(</span><span class="n">as</span><span class="o">.</span><span class="n">head</span><span class="p">)</span>
+  <span class="p">}</span> <span class="n">yield</span> <span class="n">b</span></code></pre></figure>
+
+<p>After we’ve defined our high-level program, we can formally express the meaning
+of this program in terms of the next layer in the onion.</p>
+
+<p>But before we do that, let’s first introduce a notion of <code class="highlighter-rouge">Interpreter</code> that can
+give one layer semantics by defining it in terms of another:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Interpreter</span> <span class="n">f</span> <span class="n">g</span> <span class="o">=</span> <span class="n">forall</span> <span class="n">a</span><span class="o">.</span> <span class="n">f</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Free</span> <span class="n">g</span> <span class="n">a</span>
+
+<span class="kr">infixr</span> <span class="mi">4</span> <span class="kr">type</span> <span class="kt">Interpreter</span> <span class="n">as</span> <span class="o">~&lt;</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">Interpreter</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]]</span> <span class="k">=</span> <span class="n">F</span> <span class="o">~&gt;</span> <span class="nc">Free</span><span class="o">[</span><span class="kt">G</span>, <span class="kt">?</span><span class="o">]</span>
+
+<span class="k">type</span> <span class="kt">~&lt;</span><span class="err">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">],</span> <span class="n">G</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="err">]</span> <span class="k">=</span> <span class="nc">Interpreter</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">G</span><span class="o">]</span></code></pre></figure>
+
+<p>An interpreter <code class="highlighter-rouge">f ~&lt; g</code> (<code class="highlighter-rouge">F ~&lt; G</code>) provides a meaning for each term in <code class="highlighter-rouge">F</code> by
+attaching a sequential program in <code class="highlighter-rouge">G</code>. In other words, interpreters define the
+meaning of one layer of the onion in terms of another.</p>
+
+<p>(Other definitions of interpreters are possible and useful, but this suffices
+for my example.)</p>
+
+<p>These interpreters can be composed horizontally, by feeding the output of one
+interpreter into a second interpreter, or vertically, by feeding values to
+two interpreters and then appending or choosing one of the outputs.</p>
+
+<p>When using this notion of sequential interpretation, it’s helpful to be able to
+define an interpreter that doesn’t produce a value, which can be done using the
+<code class="highlighter-rouge">Const</code>-like construct shown below:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">type</span> <span class="kt">Halt</span> <span class="n">f</span> <span class="n">a</span> <span class="o">=</span> <span class="n">f</span> <span class="kt">Unit</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">Halt</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="n">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span></code></pre></figure>
+
+<p>Then an interpreter from <code class="highlighter-rouge">f</code> to <code class="highlighter-rouge">g</code> which produces no value is simply
+<code class="highlighter-rouge">f ~&lt; Halt g</code> (<code class="highlighter-rouge">F ~&lt; Halt[G, ?]</code>). These interpreters are used purely for their
+effects, and arise frequently when weaving aspects into Free programs.</p>
+
+<p>Now, let’s say that we create the following onion:</p>
+
+<ol>
+  <li>Banking is defined in terms of its protocol, which we want to log.</li>
+  <li>The protocol is defined in terms of socket communication.</li>
+  <li>Logging is defined in terms of file IO.</li>
+</ol>
+
+<p>Finally, at the top level, we define both file IO and socket communication
+in terms of some purely effectful and semantic-less <code class="highlighter-rouge">IO</code>-like monad.</p>
+
+<p>Rather than take the time to define all these interpreters in a realistic
+fashion, I’ll just provide the type signatures:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">bankingLogging</span> <span class="o">::</span> <span class="kt">BankingF</span> <span class="o">~&lt;</span> <span class="kt">Halt</span> <span class="kt">LoggingF</span>
+
+<span class="n">bankingProtocol</span> <span class="o">::</span> <span class="kt">BankingF</span> <span class="o">~&lt;</span> <span class="kt">ProtocolF</span>
+
+<span class="n">protocolSocket</span> <span class="o">::</span> <span class="kt">ProtocolF</span> <span class="o">~&lt;</span> <span class="kt">SocketF</span>
+
+<span class="n">loggingFile</span> <span class="o">::</span> <span class="kt">LoggingF</span> <span class="o">~&lt;</span> <span class="kt">FileF</span>
+
+<span class="n">execFile</span> <span class="o">::</span> <span class="kt">FileF</span> <span class="o">~&gt;</span> <span class="kt">IO</span>
+
+<span class="n">execSocket</span> <span class="o">::</span> <span class="kt">SocketF</span> <span class="o">~&gt;</span> <span class="kt">IO</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">bankingLogging</span> <span class="k">:</span> <span class="kt">BankingF</span> <span class="kt">~&lt;</span> <span class="kt">Halt</span> <span class="kt">LoggingF</span>
+
+<span class="k">val</span> <span class="nv">bankingProtocol</span> <span class="k">:</span> <span class="kt">BankingF</span> <span class="kt">~&lt;</span> <span class="kt">ProtocolF</span>
+
+<span class="k">val</span> <span class="nv">protocolSocket</span> <span class="k">:</span> <span class="kt">ProtocolF</span> <span class="kt">~&lt;</span> <span class="kt">SocketF</span>
+
+<span class="k">val</span> <span class="nv">loggingFile</span> <span class="k">:</span> <span class="kt">LoggingF</span> <span class="kt">~&lt;</span> <span class="kt">FileF</span>
+
+<span class="k">val</span> <span class="nv">execFile</span> <span class="k">:</span> <span class="kt">FileF</span> <span class="kt">~&gt;</span> <span class="kt">IO</span>
+
+<span class="k">val</span> <span class="nv">execSocket</span> <span class="k">:</span> <span class="kt">SocketF</span> <span class="kt">~&gt;</span> <span class="kt">IO</span></code></pre></figure>
+
+<p>After implementing these interpreters, you can wire them together by using a
+bunch of seemingly unfamiliar utility functions that ship with Free
+implementations (more on this later).</p>
+
+<p>The final composed program achieves complete separation of concerns and domains,
+achieving a clarity, modularity, and semantic rigor that’s seldom seen in the
+world of software development.</p>
+
+<p>In my opinion, this clarity, modularity, and semantic rigor — rather than
+the specific reliance on a Free monad — is the future of functional
+programming.</p>
+
+<p>Now let’s take a peek into the structure of this approach and see if we can
+gain some additional insight into why it’s so powerful.</p>
+
+<h1 id="higher-order-category-theory">Higher-Order Category Theory</h1>
+
+<p>If you spend any time writing programs using Free, you’ll become quite good
+at composing interpreters to build other interpreters.</p>
+
+<p>Before long, you will identify similarities between various utility functions
+(such as free’s <code class="highlighter-rouge">liftF</code>, which lifts an <code class="highlighter-rouge">f a</code> into a <code class="highlighter-rouge">Free f a</code> /
+<code class="highlighter-rouge">F[A] =&gt; Free[F, A]</code>) and functions from the standard functor hierarchy (<code class="highlighter-rouge">point</code>).</p>
+
+<p>In fact, these similarities are <em>not</em> coincidental. Due to language limitations,
+the notion of “functor” that we have baked into our functional programming
+libraries are quite specialized and limited.</p>
+
+<p>Beyond this world lies another one, far more powerful, but too abstract for us
+to even express properly in the programming languages of today.</p>
+
+<p>In this world, Free forms a higher-order monad, capable of mapping, applying,
+and joining ordinary (lower-order) functors!</p>
+
+<p>If we want to express this notion in current programming languages, we have to
+introduce an entirely new set of abstractions — a mirror functor
+hierarchy, if you will.</p>
+
+<p>These abstractions would look something like this:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Functor1</span> <span class="n">t</span> <span class="kr">where</span>
+  <span class="n">map1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span> <span class="n">g</span><span class="o">.</span> <span class="p">(</span><span class="kt">Functor</span> <span class="n">f</span><span class="p">,</span> <span class="kt">Functor</span> <span class="n">g</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">f</span> <span class="o">~&gt;</span> <span class="n">g</span> <span class="o">-&gt;</span> <span class="n">t</span> <span class="n">f</span> <span class="o">~&gt;</span> <span class="n">t</span> <span class="n">g</span>
+
+<span class="kr">class</span> <span class="p">(</span><span class="kt">Functor1</span> <span class="n">t</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="kt">Apply1</span> <span class="n">t</span> <span class="kr">where</span>
+  <span class="n">zip1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span> <span class="n">g</span><span class="o">.</span> <span class="p">(</span><span class="kt">Functor</span> <span class="n">f</span><span class="p">,</span> <span class="kt">Functor</span> <span class="n">g</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">Product</span> <span class="p">(</span><span class="n">t</span> <span class="n">f</span><span class="p">)</span> <span class="p">(</span><span class="n">t</span> <span class="n">g</span><span class="p">)</span> <span class="o">~&gt;</span> <span class="n">t</span> <span class="p">(</span><span class="kt">Product</span> <span class="n">f</span> <span class="n">g</span><span class="p">)</span>
+
+<span class="kr">class</span> <span class="p">(</span><span class="kt">Apply1</span> <span class="n">t</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="kt">Applicative1</span> <span class="n">t</span> <span class="kr">where</span>
+  <span class="n">point1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span><span class="o">.</span> <span class="p">(</span><span class="kt">Functor</span> <span class="n">f</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">f</span> <span class="o">~&gt;</span> <span class="n">t</span> <span class="n">f</span>
+
+<span class="kr">class</span> <span class="p">(</span><span class="kt">Functor1</span> <span class="n">t</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="kt">Bind1</span> <span class="n">t</span> <span class="kr">where</span>
+  <span class="n">join1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span><span class="o">.</span> <span class="p">(</span><span class="kt">Functor</span> <span class="n">f</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">t</span> <span class="p">(</span><span class="n">t</span> <span class="n">f</span><span class="p">)</span> <span class="o">~&gt;</span> <span class="n">t</span> <span class="n">f</span>
+
+<span class="kr">class</span> <span class="p">(</span><span class="kt">Bind1</span> <span class="n">t</span><span class="p">,</span> <span class="kt">Applicative1</span> <span class="n">t</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="kt">Monad1</span> <span class="n">t</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Functor1</span><span class="o">[</span><span class="kt">T</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">map1</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span><span class="o">](</span><span class="n">fg</span><span class="k">:</span> <span class="kt">F</span> <span class="kt">~&gt;</span> <span class="kt">G</span><span class="o">)</span><span class="k">:</span> <span class="kt">T</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">?</span><span class="o">]</span> <span class="o">~&gt;</span> <span class="n">T</span><span class="o">[</span><span class="kt">G</span>, <span class="kt">?</span><span class="o">]</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">Apply1</span><span class="o">[</span><span class="kt">T</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">]]</span> <span class="nc">extends</span> <span class="nc">Functor1</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">zip1</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span><span class="o">]</span><span class="k">:</span>
+    <span class="kt">Product</span><span class="o">[</span><span class="kt">T</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">T</span><span class="o">[</span><span class="kt">G</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">?</span><span class="o">]</span> <span class="o">~&gt;</span> <span class="n">T</span><span class="o">[</span><span class="kt">Product</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">G</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">?</span><span class="o">]</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">Applicative1</span><span class="o">[</span><span class="kt">T</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">]]</span> <span class="nc">extends</span> <span class="nc">Apply1</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">point1</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span><span class="o">]</span><span class="k">:</span> <span class="kt">F</span> <span class="kt">~&gt;</span> <span class="kt">T</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">?</span><span class="o">]</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">Bind1</span><span class="o">[</span><span class="kt">T</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">]]</span> <span class="nc">extends</span> <span class="nc">Functor1</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">join1</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span><span class="o">]</span><span class="k">:</span> <span class="kt">T</span><span class="o">[</span><span class="kt">T</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">?</span><span class="o">]</span> <span class="o">~&gt;</span> <span class="n">T</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">?</span><span class="o">]</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">Monad1</span><span class="o">[</span><span class="kt">T</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">]]</span> <span class="nc">extends</span> <span class="nc">Bind1</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="k">with</span> <span class="nc">Applicative1</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span></code></pre></figure>
+
+<p>Composing interpreters together becomes a matter of using ordinary functor
+machinery, albeit lifted to work on a higher-order!</p>
+
+<p>These higher-order abstractions don’t stop at the functor hierarchy. They’re
+everywhere, over every bit of machinery that has a category-theoretic basis.</p>
+
+<p>For example, we can define higher-order categories:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">class</span> <span class="kt">Category1</span> <span class="n">arr1</span> <span class="kr">where</span>
+  <span class="n">id1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span><span class="o">.</span> <span class="p">(</span><span class="kt">Functor</span> <span class="n">f</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">arr1</span> <span class="n">f</span> <span class="n">f</span>
+
+  <span class="n">compose1</span> <span class="o">::</span> <span class="n">forall</span> <span class="n">f</span> <span class="n">g</span> <span class="n">h</span><span class="o">.</span> <span class="p">(</span><span class="kt">Functor</span> <span class="n">f</span><span class="p">,</span> <span class="kt">Functor</span> <span class="n">g</span><span class="p">,</span> <span class="kt">Functor</span> <span class="n">h</span><span class="p">)</span> <span class="o">=&gt;</span>
+    <span class="n">arr1</span> <span class="n">g</span> <span class="n">h</span> <span class="o">-&gt;</span> <span class="n">arr1</span> <span class="n">f</span> <span class="n">g</span> <span class="o">-&gt;</span> <span class="n">arr1</span> <span class="n">f</span> <span class="n">h</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Category1</span><span class="o">[</span><span class="kt">Arr1</span><span class="o">[</span><span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="k">_</span><span class="o">[</span><span class="k">_</span><span class="o">]]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">id1</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span><span class="o">]</span><span class="k">:</span> <span class="kt">Arr1</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">F</span><span class="o">]</span>
+
+  <span class="k">def</span> <span class="nf">compose1</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span>, <span class="kt">H</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Functor</span><span class="o">](</span>
+    <span class="n">gh</span><span class="k">:</span> <span class="kt">Arr1</span><span class="o">[</span><span class="kt">G</span>, <span class="kt">H</span><span class="o">],</span> <span class="n">fg</span><span class="k">:</span> <span class="kt">Arr1</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">G</span><span class="o">])</span><span class="k">:</span> <span class="kt">Arr1</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">H</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>The advantage of recognizing these abstractions and pulling them out into type
+classes is that we can make our code <em>way</em> more generic.</p>
+
+<p>For example, we can write code to compose and manipulate interpreters that
+doesn’t depend on Free, but can operate on other suitable computational
+contexts (such as <code class="highlighter-rouge">FreeAp</code>).</p>
+
+<p>The discovery of whole new ways of building programs may depend on our ability
+to see past the crippled notions of category theory baked into our libraries.
+Notions ultimately rooted in the limitations of our programming languages.</p>
+
+<h1 id="denotational-semantics">Denotational Semantics</h1>
+
+<p>Denotational semantics is a mathematical and compositional way of giving meaning
+to programs. The meaning of the program as a whole is defined by the meaning of
+the terms comprising the program.</p>
+
+<p>Denotational semantics provide an unprecedented ability to reason about programs
+in a composable and modular fashion.</p>
+
+<p>The <em>onion architecture</em> provides a way of specifying <em>whole programs</em> using
+denotational semantics, where the meaning of one domain is precisely and
+compositionally defined in terms of another domain.</p>
+
+<h1 id="recursion-schemes">Recursion Schemes</h1>
+
+<p>Recursion schemes are generic ways of traversing and transforming data structures
+that are defined using fixed-point types (which are capable of “factoring out”
+the recursion from data structures).</p>
+
+<p>Recursion schemes are useful in lots of places, but where they really shine is
+complex analysis and transformation of recursive data types. They are used in
+compilers for translating between higher-level layers (such as a program’s AST)
+to lower-level layers (such as an intermediate language or assembly language),
+and for performing various analyses and optimizations.</p>
+
+<p>If you know about recursion schemes and start using free monads, eventually you
+discover that <code class="highlighter-rouge">Free</code> is a fixed-point type for describing value-producing
+programs whose unfolding structure depends on runtime values.</p>
+
+<p>What this means is that you can leverage suitably-generic recursion schemes to
+analyze and transform Free programs!</p>
+
+<p>Any program written using the onion architecture can be viewed as a compiler.
+The source language is incrementally and progressively translated to the target
+language (through one or more composable intermediate languages).</p>
+
+<p>With the onion architecture, all programs are just compilers!</p>
+
+<p>Recall the rise and fall of domain specific languages (DSLs), which held enormous
+promise, but were too costly to implement and maintain. <code class="highlighter-rouge">Free</code>, combined with a
+suitably powerful type system, provides a way to create type-safe domain-specific
+languages, and give them precise semantics, without any of the usual overhead.</p>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>The onion architecture has proven an enormously useful tool for structuring
+large-scale functional programs in a composable and modular way. This
+architecture isolates separate concerns and separate domains, and allows a
+rigorous treatment of program semantics.</p>
+
+<p>While the onion architecture can be implemented in many ways, I prefer
+implementations using <code class="highlighter-rouge">Free</code>-like structures, because of the better separation
+of concerns and potential for program introspection and transformation. When
+combined with the Free analogue of MTL’s type classes, the approach becomes
+easier to use and much more polymorphic.</p>
+
+<p>This architecture’s connection to denotational semantics, the surprising
+emergence of higher-order abstractions from category theory that arise from
+composing interpreters, and the natural applicability of recursion schemes, are
+all promising glimpses at the future of functional programming.</p>
+
+<p>To be clear, I don’t think <code class="highlighter-rouge">Free</code> is the future of functional programming. The
+<code class="highlighter-rouge">Free</code> structure itself is insufficiently rich, a mere special case of something
+far more general. But it’s enough to point the way, both to a “post-Free” world,
+and to a distinctly <em>algebraic</em> future for programming.</p>
+
+<p>To get <em>all</em> the way there with high performance and zero boilerplate, we’re
+going to need not just new <em>libraries</em>, but most likely, whole new <em>programming
+languages</em>.</p>
+
+<p>But there’s still a lot of development possible in our current programming
+languages, and lots of people are working in the space.</p>
+
+<p>Stay tuned for more, and please share your own thoughts below.</p>
+
+<p><strong>EDIT</strong>: Please see <a href="https://github.com/notxcain/onion-architecure">this repository</a>
+for an example implementation in Scala/Cats constructed by <a href="https://twitter.com/notxcain">Denis Mikhaylov</a>.</p>
+:ET

@@ -16,7 +16,7 @@ It *isn't* easy. If not properly directed, many of the skills that make you an *
 
 But it *is* possible. To help you get there, I want to share some of the lessons I've learned over the years.
 
-These aren't *generic* lessons for starting your own company. You can find those [elsewhere](http://degoes.net/articles/precog-lessons-learned/). These are lessons that *engineers* in particular need to learn.
+These aren't *generic* lessons for starting your own company. You can find those [elsewhere](https://degoes.net/articles/precog-lessons-learned/). These are lessons that *engineers* in particular need to learn.
 
 ### Make sure you have something to lose.
 

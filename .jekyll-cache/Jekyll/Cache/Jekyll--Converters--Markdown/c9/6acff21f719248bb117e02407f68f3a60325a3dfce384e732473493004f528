@@ -1,0 +1,253 @@
+I"c^<p>It’s been more than a year since Precog was <a href="https://techcrunch.com/2013/08/14/richrelevance-acquires-precog-to-add-large-scale-analytics-engine-to-e-commerce-personalization-platform/">acquired by RichRelevance</a>, and I’ve had some time to reflect on what I learned from my experiences there.</p>
+
+<h2 id="born-to-build">Born to Build</h2>
+
+<p>My Mom used to say that I was practically <em>born</em> an entrepreneur, albeit not in the Valley sense of the word.</p>
+
+<p>I taught myself BASIC when I was 8, and in my early teens, I started selling my first shareware product (Home Movies for Windows, a video cataloging system).</p>
+
+<p>Before I graduated high school, I had developed and sold no less than three software programs, as well as written a best-selling book on 3D game programming.</p>
+
+<p>During college, I co-founded GameInstitute (as well as a competitor!), and wrote curriculum and taught classes in everything from artificial intelligence to game mathematics. I went on to found N-Brain, where I funded and helped build a 400K LOC collaborative IDE for software developers.</p>
+
+<p>Between and sometimes during these adventures, I managed to find time to consult for dozens of companies (mostly contract software development) and work for a few large ones.</p>
+
+<p>I got sucked into the Valley in 2009, when I went to work as VP of Engineering for SocialMedia.com during their reboot due to the collapse of independent Facebook ad networks.</p>
+
+<p>At SocialMedia.com, I was instrumental in helping turn around their technology, rebuild their engineering team, and finally selling the company to LivingSocial (though we had a number of suitors at the time).</p>
+
+<p>Precog, however, was my first experience founding and building a “real” startup.</p>
+
+<h2 id="getting-serious">Getting Serious</h2>
+
+<p>What’s a <em>real</em> startup? In my mind, it’s one where you put everything on the line.</p>
+
+<p>You quit your day job. You put money into the company. You’re all in, and your only safety net is the cold hard concrete which will smash you into a bloody pulp if you step too far to the right or left.</p>
+
+<p>That’s exactly what I did at Precog.</p>
+
+<h2 id="precog-in-10-seconds">Precog in 10 Seconds</h2>
+
+<p>In 2011, I applied to <a href="https://www.techstars.com/program/locations/boulder/">TechStars Boulder</a>, and managed to get in despite having a terrible demo, a practically worthless product hacked together in a few weekends, and a strongly  engineering-biased background.</p>
+
+<p>I invested my own money in the company, often took no salary or minimum wage, and worked like a dog.</p>
+
+<p>Days turned to weeks, weeks to months, and months to years.</p>
+
+<p>By the end of the two year saga, I had raised almost $3M in capital, built what was arguably the best Scala engineering team on the planet, and designed a solution that, to this day, still has ardent fans using the technology.</p>
+
+<p>We were acquired by RichRelevance a couple months after we came out of beta. In those few months before acquisition, our revenue went from $0 to nearly $200k ARR, thanks to the efforts of my colleague Jeff Carr.</p>
+
+<p>Yet, we weren’t looking to be acquired. Our technology had finally matured to the point where we could charge more than $1k / month per customer. We were just beginning to figure out how to position and sell the technology.</p>
+
+<p>It felt like, after years in beta, we were <em>just</em> getting started.</p>
+
+<p>We sold Precog not because we <em>wanted</em> to, but because we <em>had</em> to. We were in that tricky spot between seed and Series A that some have called the <em>Series A Crunch</em>.</p>
+
+<p>We hadn’t made enough progress to justify a Series A, and we’d already taken almost $3M in seed funding. I tried desperately to raise a bridge round, but that didn’t work out, and it was literally <em>sell</em> or <em>shutdown</em>.</p>
+
+<p>The last-minute acquisition by RichRelevance was not the outcome I preached to investors or employees.</p>
+
+<p>We weren’t a billion dollar company redefining data analytics for the 21st century, or even hundred million dollar company. We were a broke little startup shit out of options.</p>
+
+<h2 id="mistakes-were-made">Mistakes Were Made</h2>
+
+<p>Precog was my first real startup. My first experience as CEO. My first experience fund-raising. My first experience making difficult decisions that would impact other people’s lives.</p>
+
+<p>In retrospect, I had a <em>lot</em> to learn.</p>
+
+<p><em>Mistakes were made</em>, as they say, and I’ve had a lot of time to think about what they were.</p>
+
+<p>In this post, I’ve tried to distill ten of these learnings.</p>
+
+<p>No single mistake was fatal. Indeed, the history of every successful startup is littered with countless mis-steps and blunders. But I do believe that, if I knew <em>then</em> what I know <em>now</em>, the outcome would have been very different.</p>
+
+<h3 id="1-go-deep-not-broad">1. Go Deep Not Broad</h3>
+
+<p>Probably the single most important lesson I learned from Precog is that you need to apply <em>super-human focus</em> to solving an extremely <em>well-defined pain</em> held by an extremely <em>well-defined market</em>.</p>
+
+<p>Make your solution so <em>impossibly good</em> that no one who has the pain would even <em>consider</em> using anything else. If you don’t have the resources to do that, it means you need more focus.</p>
+
+<p>At Precog, we were building a very broad platform to solve a huge range of use cases. The reasons why this strategy doesn’t work so well are pretty obvious in retrospect:</p>
+
+<ol>
+  <li><strong>Broad solutions cannot easily compete against deep ones.</strong> If you choose to go broad, you will be competing with numerous point solutions across different domains and markets, all of which were cheaper to build and evolve much faster than your solution. Users are more likely to choose the deep solution because it’s easier to find, easier to understand, easier to use, solves their exact problem in an obvious way, and delivers value sooner… <em>even if in the long-run, they might have preferred your solution.</em></li>
+  <li><strong>You can monetize earlier and at a higher price point with a deep solution.</strong> This reduces the need to raise money, extends your runway, and accelerates the growth of your business. It also has profound ramifications if you run into any trouble: a broad solution is like a massive cruise ship that requires huge resources to propel forward or change direction, while a point solution is more like a yacht.</li>
+</ol>
+
+<p>Starting deep doesn’t mean you can’t end up broad. Starting deep will give you the traction you need to have the luxury of considering whether or not broad makes sense for your solution.</p>
+
+<p>There are clearly places where broad technology is needed. Most solutions like this are open source (e.g. Hadoop or httpd), and I personally wouldn’t recommend companies attempt to build proprietary broad solutions unless they can raise whatever they like (I personally can’t command a $20M raise on a PowerPoint deck, but some clearly can).</p>
+
+<h3 id="2-be-non-disruptively-disruptive">2. Be Non-Disruptively Disruptive</h3>
+
+<p>Many startups are fond of saying how “disruptive” their technology or solution is.</p>
+
+<p>What I now know is that there is a <em>good</em> way to be disruptive, and a <em>bad</em> way:</p>
+
+<ul>
+  <li><strong>Good Disruption</strong>. Your solution solves some aspect of a problem <em>so astoundingly well</em>, that a segment of users would tolerate many other deficiencies in order to benefit from your solution. An example is Google Docs: it gets collaboration so phenomenally right, a segment of users put up with a laundry list of deficiencies about as big as the feature list in Microsoft Word.</li>
+  <li><strong>Bad Disruption</strong>. To adopt your solution, users must be completely re-educated, or they must completely rip out and replace parts of their existing solution, or your solution doesn’t easily fit with all the other pieces of the bigger picture. Note: it doesn’t matter how technologically or architecturally or philosophically superior your solution is — all these forms of disruption are bad and will impair your business (albeit, not necessarily kill it).</li>
+</ul>
+
+<p>At Precog, you had to learn a new query language called <em>Quirrel</em>, which was a brilliant piece of work and highly acclaimed… by those who took the time to learn it, anyway.</p>
+
+<p>Beyond that, you had to copy all your data to our cloud analytics platform, and learn our tools and APIs.</p>
+
+<p>That’s an example of both good and bad disruption. Strive to be the former, <em>not</em> the latter.</p>
+
+<p>Now, if you really <em>have</em> to be disruptive along both dimensions (and you probably <em>don’t</em>!), then you need to combine either high usability or deep pain (ideally both) with the open source model. That combination has proven a fairly reliable way to introduce “disruptively disruptive” solutions to the market, but it slows the business down by <em>years</em> (see Hadoop, MongoDB, Neo4j, etc.).</p>
+
+<h3 id="3-keep-your-game-plan-unfundable">3. Keep your Game Plan Unfundable</h3>
+
+<p>Many investors say they’ll only invest in “billion dollar ideas”. The trouble with billion dollar ideas is that, if you try to execute on them directly, you’ll likely run your company into the ground.</p>
+
+<p>Billion dollar tech companies have massive sales, marketing, support, and engineering teams, and extremely complex products with a bewildering array of confusing features, because that’s what was necessary to keep an existing customer or land a new whale.</p>
+
+<p>The billion dollar idea behind Precog was to become the data analytics infrastructure powering all business applications and serving up all manner of insights to the users of those applications across all domains.</p>
+
+<p>That’s a big, exciting, bold vision. In the end, it proved too difficult to execute on.</p>
+
+<p>I now believe that your <em>game plan</em> should be <em>unfundable</em>. If you tell an investor what <em>you’re actually doing</em>, and they tell you, “that’s not a standalone business,” then there’s a good chance you’re on the right track.</p>
+
+<p>It seems pretty obvious, in retrospect, as there are plenty of examples: if Facebook had tried to be the social network for the world, they’d be a footnote in history. Instead, they executed on an unfundable game plan (social network for a college), and are now doing nearly $10B in annual revenue.</p>
+
+<p>Yes, have a big vision that gets investors excited, and makes you want to get up in the morning. But keep your game plan <em>unfundable</em>: small and immediate, focused not on the billion dollar idea, but on producing something that someone somewhere gives a shit about.</p>
+
+<p>Succeeding <em>there</em> will give you the traction necessary to go after that billion dollar idea.</p>
+
+<h3 id="4-choose-a-right-sized-problem">4. Choose a Right-Sized Problem</h3>
+
+<p>Success in early fund-raising is heavily dependent on your pedigree, education, connections, and past successes.</p>
+
+<p>If you were engineer number #2 at Facebook, have a Stanford degree, know the right people, and have prior successful exits, you can raise a <em>lot</em> of money on a PowerPoint.</p>
+
+<p>Otherwise, you’re probably not going to be so lucky.</p>
+
+<p>If you don’t have the luxury of raising whatever you want, then <em>it’s a mistake to assume you can work on any problem.</em> At Precog, we bit off a problem too hard for our capital constraints, and we tried to make the difference up with incredibly smart engineers and an insane work ethic. It wasn’t enough, and I’ve learned my lesson.</p>
+
+<p>Choose a <em>right-sized problem</em> for your capital constraints. Don’t try to build the next space shuttle if you only have capital to build the next bicycle.</p>
+
+<h3 id="5-deep-domain-knowledge-is-your-most-powerful-asset">5. Deep Domain Knowledge is Your Most Powerful Asset</h3>
+
+<p>When I started Precog, I already had chops in big data analytics. I was an early adopter of Hadoop and other relevant technologies, and as a consultant, I had architected, implemented, or worked on many large-scale distributed data processing systems (EDA rule checker, gravity wave simulator, 3D density reconstructor, etc).</p>
+
+<p>So I thought of myself as a “big data analytics expert”, but I found out I was totally wrong.</p>
+
+<p>Understanding the technology is <em>one</em> thing. Understanding the business is <em>completely</em> different.</p>
+
+<p>To understand the <em>business</em>, you need to have a firm grasp on at least the following:</p>
+
+<ul>
+  <li><strong>The pains.</strong> Yes, I mean <em>all</em> of the pains in the space you are in. Multiple pains lead to multiple solutions, which lead to integration of solutions, and you have to understand not just the pain <em>you</em> solve, but how you fit (or do not fit) in to all the other related solutions the customer has.</li>
+  <li><strong>The solutions.</strong> You have to understand how customers solve their existing pains. Which departments solve which pains? What do those solutions look like? How do they integrate with each other?</li>
+  <li><strong>The competition.</strong> If I rattle off the name of a competitor, you should be able to tell me without thinking what they do, how it differs from your solution (and why that difference will drive sales), what their price points are, what their typical customer looks like, how much they’ve raised and roughly what their revenue is like, and so forth. Too many CEOs hide in the sand and actively avoid looking at the competition (for reasons that befuddle me).</li>
+  <li><strong>The sales cycle.</strong> Who are your champions? Who are your saboteurs? Who discovers your solution and why? Who makes the purchasing decision? What ROI metrics will be used to evaluate your solution?</li>
+</ul>
+
+<p>It took me hundreds of calls, several proof-of-concepts, and dozens of in-person meetings to finally understand the <em>business</em> of analytics, especially in the Enterprise, which is a completely different animal than the typical tech company.</p>
+
+<p>Now I almost feel obligated to stick in the same space, if only to leverage years of building domain knowledge.</p>
+
+<h3 id="6-be-responsive-but-stay-focused">6. Be Responsive, but Stay Focused</h3>
+
+<p>Towards the end of Precog, we had thousands of users, and we had several calls with prospects every single day.</p>
+
+<p>Many times, a prospect’s use case would be <em>dangerous close enough</em> to our technology. We’d juggle around some priorities, shift the product roadmap, devote some engineers to adding a bell or whistle.</p>
+
+<p>I’ve seen firsthand how destructive that pattern is to becoming <em>phenomenally</em> good at <em>something</em> to <em>someone</em> (which, as covered above, is a key ingredient of success).</p>
+
+<p>In the quest for product / market fit, one of your most powerful weapons is the word <em>no</em>. As in, <em>No</em>, we’re not going to add that feature. <em>No</em>, your use case isn’t a fit for our product. <em>No, no, no!</em></p>
+
+<p>To become great, truly great, at something, you have to accept being terrible at a lot of other stuff (at least initially).</p>
+
+<p>That doesn’t mean you have a license to ignore prospects or customers. On the contrary, you have to pay extreme attention to feedback, who it comes from, how big the pain is, and how deep the pockets are. But you have to pick and choose your battles, and saying no <em>a lot</em> will give you the ability to say <em>yes</em> to the one or two things that can move the needle.</p>
+
+<h3 id="7-choose-investors-carefully">7. Choose Investors Carefully</h3>
+
+<p>At Precog, the reason we weren’t able to raise a bridge round was because of negative signaling around one investor’s refusal to participate (and of course they had no obligation to participate).</p>
+
+<p>This same investor also inadvertently harmed our fund-raising efforts by giving erroneous information to third-party investors, thus painting our company in a negative light.</p>
+
+<p>With a bridge round, I can’t guarantee the outcome would have been any different, but I do feel we had an excellent shot at hitting at least $1M in ARR on a relatively conservative bridge.</p>
+
+<p>The lesson I’ve learned is that it only takes one bad egg.</p>
+
+<p>In an ideal world, everyone would invest solely based on the merits of the company. In the real world, signaling dominates. However, I think you can protect yourself with a few steps:</p>
+
+<ol>
+  <li><strong>Insist on experience.</strong> Don’t accept money from a green investor unless the investor is unknown and the amount is small. If a name-brand investor or (worse) a venture fund gets cold feet at any bump in the road, the negative signaling can doom the entire enterprise.</li>
+  <li><strong>Syndicate the round.</strong> While you do want someone who is highly committed to your success, I think you should aim to raise from several “equally prominent” investors. In fact, recently I’ve heard this same advice from VCs: “Don’t raise a seed from just us, because if we don’t participate in the next round (and we often don’t!), it will kill your company.”</li>
+  <li><strong>Talk to references.</strong> Don’t talk to the ones experiencing meteoric growth. Talk to the ones that were shut down or are struggling or which took a while to get off the ground.</li>
+  <li><strong>Find out their bridging policy.</strong> You may expect a meteoric rise to super-stardom, but what if you hit a few snags? You want to make sure the majority of your investors have a <em>demonstrated track record</em> of bridging companies that fall between rounds.</li>
+</ol>
+
+<h3 id="8-dont-create-a-burn-out-culture">8. Don’t Create a Burn-out Culture</h3>
+
+<p>The company values of Precog could best be summarized as <em>intelligence</em> and <em>hard work</em>. A lot of smart people worked at Precog, and they worked very, very hard.</p>
+
+<p>I always strove to be the hardest working person in the company. The day after my Mom died, I worked an 18 hour day. Yes, part of that was just me trying to (not) deal with the grief, but I wasn’t working alone, either (in fact, for most of the day, I was pair programming with another engineer).</p>
+
+<p>While we got a lot done — sometimes it astounds me how fast we moved — the ripples of that culture could be felt months after the acquisition. Most ex-Precogs stopped tweeting, stopped blogging, stopped replying to emails, and stopped contributing to open source projects. They were totally and utterly burnt out.</p>
+
+<p>It took months for some to recover, and it may take years for others. I’m only beginning to recover myself.</p>
+
+<p>While in the thick of it, I came to believe that we were aiming too high for the capital we had raised, but that we could possibly overcome our lack of capital by working harder. It was a race against the clock.</p>
+
+<p>Now I see the toll that wrought on people, and that it didn’t really change anything, and I have adopted a different philosophy: if the only way you can succeed is by burning out your employees, then you’re working on the wrong problem.</p>
+
+<p>That doesn’t mean you shouldn’t work hard. That goes without saying. And yeah, sometimes, you may have to put in some time on the nights or weekends. But generally, you should run the company as if you will be running it for 10 or 20 years.</p>
+
+<p>As the saying goes, it’s a <em>marathon</em>, not a <em>sprint</em>.</p>
+
+<h3 id="9-no-one-really-knows-anything">9. No One Really Knows Anything</h3>
+
+<p>I’ve pitched to most of the top-tier VC firms, and met some of the most famous personalities in venture capital. I’ve chatted with and learned from CEOs from all walks of life. I’ve had mentors and advisors galore, both official and not.</p>
+
+<p>I have stories of warmth and intelligence and stories of stupidity and pomposity.</p>
+
+<p>But if there’s one thing I’ve learned from all this, it’s that there’s no such thing as an all-knowing oracle. No one <em>really</em> knows which paths will lead to success, and which to failure.</p>
+
+<p>Mentors, even those from the same industry, often <em>fiercely</em> disagree with each other. Investors, including venture capitalists, have <em>no idea</em> why they do or do not invest. While they sometimes give reasons, those reasons are made up after the fact, which is why they’re usually inconsistent with other investments.</p>
+
+<p>Finally, ideas that seem ridiculously stupid (like, “We’re gonna create an app that lets you share touched-up photos with your friends!”, or “We’re gonna help people rent out their spare rooms!”) can sometimes pan out in a big way.</p>
+
+<p>There’s a lesson in all of this: listen to everyone, and take all criticism to heart, because no point of view is <em>entirely</em> wrong. There’s a kernel of truth in everything.</p>
+
+<p>But at the end of the day, realize that no one <em>really</em> knows anything. There’s no wizard behind the curtain.</p>
+
+<p>It’s up to <em>you</em> to become master of your business, to become that oracle who can help you guide your business to success.</p>
+
+<h3 id="10-dont-let-failure-destroy-you">10. Don’t Let Failure Destroy You</h3>
+
+<p>Failure isn’t easy to deal with, either socially or professionally.</p>
+
+<p>I’ve seen firsthand some of the fallout:</p>
+
+<ul>
+  <li>A former mentor studiously avoided me and couldn’t even make eye-contact when we ran into each other at tech functions. It was like I had the plague, and it might be contagious, so they had to keep their distance.</li>
+  <li>I ran into a Precog investor on the street, and the investor stopped me, and accused me of being a quitter, insisting that if I <em>really</em> believed in the company, I would have found a way to make the bridge round happen.</li>
+  <li>One investor whom I’ve never met or even exchanged emails with told a friend of mine, <em>“I’d never invest in any company that John De Goes was a part of.”</em> Hmmm, OK.</li>
+  <li>Several fellow entrepreneurs whom I knew well from the Precog days couldn’t even be bothered to return my emails. I’m not one of the cool kids anymore.</li>
+</ul>
+
+<p>Intellectually, I know that even if you do <em>a lot</em> of things right, that doesn’t mean you will succeed. There’s a large element of chance, and failure is something that <em>every</em> entrepreneur may have to contend with.</p>
+
+<p>For all the stories of last-minute miracles, <a href="https://techcrunch.com/2013/10/19/phil-libin-evernote/">like the one that saved Evernote</a>, there are a hundred more startups that <em>might</em> have turned out just as well.</p>
+
+<p>We’ll never know, because they never got a last-minute miracle.</p>
+
+<p>Emotionally, however, scraping off that bloody pulp from the concrete and trying to turn it into something resembling a normal human being is a difficult undertaking.</p>
+
+<p>Good thing we entrepreneurs were born to do the impossible, right? Or at least, born crazy enough to <em>think</em> so, which is sometimes all that matters.</p>
+
+<h2 id="continuing-the-journey">Continuing the Journey</h2>
+
+<p>While things didn’t turn out the way I hoped for Precog, I wouldn’t take back the experience for anything.</p>
+
+<p>Our life experiences mold us into the people we become. I learned so much over such a short span of time, and it’s fundamentally changed the way I think about business and look at the world.</p>
+
+<p>I will be taking all of these lessons and many others with me into my next great adventure. And some years down the road, I hope I’m lucky enough to be able to write <em>another</em> post like this one, and reflect on all the <em>new</em> lessons I’ve learned.</p>
+
+<p>Until <em>then</em>, it’s time for me to show that concrete who’s boss…</p>
+:ET

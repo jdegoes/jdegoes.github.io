@@ -6,7 +6,7 @@ category:     articles
 tags:         [functional programming, ml, haskell, scala, idris, purescript]
 ---
 
-My [last post](/articles/principled-typeclasses) talked about what's wrong with type classes (in general, but also specifically in Haskell). This post generated some [great feedback on Reddit](http://www.reddit.com/r/haskell/comments/2dw3zq/haskells_type_classes_why_we_can_do_better/), including some valid criticism that I didn't explain why I hated on newtypes so much.
+My [last post](/articles/principled-typeclasses) talked about what's wrong with type classes (in general, but also specifically in Haskell). This post generated some [great feedback on Reddit](https://www.reddit.com/r/haskell/comments/2dw3zq/haskells_type_classes_why_we_can_do_better/), including some valid criticism that I didn't explain why I hated on newtypes so much.
 
 I took some of that feedback and incorporated it into a [revised version](/articles/principled-typeclasses) of the post, but I have even *more* to say about "newtypes", so I decided to write another blog post.
 
@@ -108,7 +108,7 @@ The best solution to a great many newtype problems, I believe, is creating a dat
 
 That is, creating a data model such that there exists no regions in our data's state space which correspond to invalid states.
 
-Email is a simple example, because there are [well-defined models](http://tools.ietf.org/html/rfc5322#section-3.4) for what constitutes a data model, which can be translated into data declarations in straightforward, if tedious fashion.
+Email is a simple example, because there are [well-defined models](https://tools.ietf.org/html/rfc5322#section-3.4) for what constitutes a data model, which can be translated into data declarations in straightforward, if tedious fashion.
 
 (To some extent, it's a failure of most languages I know that such specifications cannot be easily translated into code without tedious boilerplate!)
 

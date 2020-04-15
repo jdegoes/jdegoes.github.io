@@ -6,9 +6,9 @@ category:     articles
 tags:         [fp, functional programming, type classes, scala, monads, effects, reactive, scalaz, fp-oop, zio, oop]
 ---
 
-At [Scalapeño](http://scalapeno2018.com/) this year, I [argued in my keynote](https://www.youtube.com/watch?v=v8IQ-X2HkGE) that the best and most unique parts of Scala are the ones suited to functional programming&mdash;including traits (when used for type classes, modules, and sum types), case classes (when used for product types), higher-kinded types, dot method syntax (which is useful for method chaining and namespacing), and various features of Scala's type system.
+At [Scalapeño](https://scalapeno2018.com/) this year, I [argued in my keynote](https://www.youtube.com/watch?v=v8IQ-X2HkGE) that the best and most unique parts of Scala are the ones suited to functional programming&mdash;including traits (when used for type classes, modules, and sum types), case classes (when used for product types), higher-kinded types, dot method syntax (which is useful for method chaining and namespacing), and various features of Scala's type system.
 
-In the [Twitter](http://twitter.com/jdegoes) aftermath that followed, I further argued that object-oriented programming&mdash;by which I mean inheritance hierarchies (typified by the Scala collections inheritance hierarchy) and subtyping (beyond its use for modeling sum types, modules, and type classes)&mdash;isn't useful. That is, it doesn't have any real world practical benefits over functional programming.
+In the [Twitter](https://twitter.com/jdegoes) aftermath that followed, I further argued that object-oriented programming&mdash;by which I mean inheritance hierarchies (typified by the Scala collections inheritance hierarchy) and subtyping (beyond its use for modeling sum types, modules, and type classes)&mdash;isn't useful. That is, it doesn't have any real world practical benefits over functional programming.
 
 Some [claimed](https://twitter.com/adriaanm/status/1017054795214020609) without supporting evidence that Scala's embrace of object-oriented programming helps working programmers solve real problems. To settle the issue once and for all (at least for some people), I issued the following public challenge:
 

@@ -1,0 +1,112 @@
+I",-<p>My <a href="/articles/principled-typeclasses">last post</a> talked about what’s wrong with type classes (in general, but also specifically in Haskell). This post generated some <a href="https://www.reddit.com/r/haskell/comments/2dw3zq/haskells_type_classes_why_we_can_do_better/">great feedback on Reddit</a>, including some valid criticism that I didn’t explain why I hated on newtypes so much.</p>
+
+<p>I took some of that feedback and incorporated it into a <a href="/articles/principled-typeclasses">revised version</a> of the post, but I have even <em>more</em> to say about “newtypes”, so I decided to write another blog post.</p>
+
+<h2 id="whats-in-a-newtype">What’s in a Newtype</h2>
+
+<p>Newtypes are a feature of Haskell that let you define a new type in terms of an existing type.</p>
+
+<p>In the following example, I create a newtype for <code class="highlighter-rouge">Email</code>, which “holds” a <code class="highlighter-rouge">String</code>.</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">newtype</span> <span class="kt">Email</span> <span class="o">=</span> <span class="kt">Email</span> <span class="kt">String</span></code></pre></figure>
+
+<p>They are similar to type synonyms (<code class="highlighter-rouge">type Email = String</code>), except that type synonyms don’t create new types, they just allow you to refer to existing types by other names.</p>
+
+<p>Every newtype can be easily translated into a data declaration. In fact, only the keyword changes:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">data</span> <span class="kt">Email</span> <span class="o">=</span> <span class="kt">Email</span> <span class="kt">String</span></code></pre></figure>
+
+<p>There’s a slight semantic difference between the two, but for purposes of this blog post, any criticism I have against newtypes apply equally to similar constructs modeled with <code class="highlighter-rouge">type</code> or <code class="highlighter-rouge">data</code>.</p>
+
+<h2 id="the-promise-of-newtypes">The Promise of Newtypes</h2>
+
+<p>Newtypes are used to provide and select between alternate implementations of type classes for some base types. I think that’s a hack (albeit a necessary one), but I’ve <a href="/articles/principled-typeclasses">already talked about this</a> so I won’t belabor it here.</p>
+
+<p>The other promise of newtypes is that we can use them to make our code more type safe. Instead of passing around <code class="highlighter-rouge">String</code> as an email, for example, we can create a super lightweight “wrapper” around <code class="highlighter-rouge">String</code> called <code class="highlighter-rouge">Email</code>, and make it an error to use a <code class="highlighter-rouge">String</code> wherever an <code class="highlighter-rouge">Email</code> is expected.</p>
+
+<p>This practice isn’t restricted to Haskell. Even in Java, it’s considered good coding practice to wrap primitives with classes whose names denote the meaning of the wrapper (Email, SSN, Address, etc.).</p>
+
+<p>There’s a part of this promise that’s <em>certainly</em> true. If I have to define a function accepting four parameters, and three of them are strings, but one of those strings denotes an email, then I have two choices:</p>
+
+<ol>
+  <li>Model the email parameter with a <code class="highlighter-rouge">String</code>. In this case, I may accidentally use the email where I intended to use the other two string parameters, or I may use one of the other two string parameters where I intended to use the email. Considering just these choices, there are <strong>five</strong> ways my program may go wrong if I use the wrong name in the wrong position.</li>
+  <li>Model the email parameter with a <code class="highlighter-rouge">newtype</code>. In this case, I cannot use the email where I intended to use the other two string parameters, because the compiler may stop me. Similarly, I cannot use the other two string parameters where I intended to use the email, for the same reason. Looking at just these choices, there are <strong>0</strong> ways my program may go wrong.</li>
+</ol>
+
+<p>Thus, newtypes, like all good FP practices, <em>reduce the number of ways my program can go wrong.</em></p>
+
+<p>Unfortunately, in my opinion, <em>they don’t go nearly far enough.</em></p>
+
+<h2 id="false-security">False Security</h2>
+
+<p>For most intent and purposes, newtypes are <em>isomorphic</em> to the single value they hold.</p>
+
+<p>In my preceding example, given a <code class="highlighter-rouge">String</code>, I can get an email (<code class="highlighter-rouge">Email "foo"</code>). Given an <code class="highlighter-rouge">Email</code>, I can also get a <code class="highlighter-rouge">String</code>, e.g. by pattern matching on the <code class="highlighter-rouge">Email</code> constructor.</p>
+
+<p>Stated differently, and also approximately because I’m ignoring bottom: the <code class="highlighter-rouge">String</code> and <code class="highlighter-rouge">Email</code> types are isomorphic; they contain the same inhabitants, for any useful definition of “same”. The only substantive difference between the preceding <code class="highlighter-rouge">String</code> and <code class="highlighter-rouge">Email</code> is the name of the data constructor (call <code class="highlighter-rouge">Email</code> an <code class="highlighter-rouge">AbergrackleFoozyWatzit</code>, and what has changed?).</p>
+
+<p>Hence, my previous criticism of newtypes as “programming by name”.</p>
+
+<p>By themselves, newtypes don’t <em>really</em> reduce the number of ways my program can go wrong. They just make it a bit harder to go wrong. But any newtype is isomorphic to the value it holds, and it’s trivial to convert between the two.</p>
+
+<p>In fact, if my code doesn’t need to convert between the two (either directly or indirectly), then it’s better off generic. That is, if I never need to convert an <code class="highlighter-rouge">Email</code> to a <code class="highlighter-rouge">String</code>, or a <code class="highlighter-rouge">String</code> to an <code class="highlighter-rouge">Email</code>, then I should really write the code generically to work with any value (even if that means making data structures or functions more polymorphic).</p>
+
+<p>Parametricity provides a massive reduction in the number of ways my program can go wrong. Newtypes, on the other hand, just make it a bit harder to go wrong, by adding one layer of indirection.</p>
+
+<p>In this example, as with many newtypes, I’ve created a bad isomorphism. The domain model of an email is not isomorphic to the data model of a string. But by using a newtype, I have implicitly declared that they <em>are</em> isomorphic.</p>
+
+<p>Calling a string an email may make me <em>feel</em> better, because of the different name, but fundamentally, with a newtype, it’s still a string, and I’m only ever <em>one more step away</em> from going wrong.</p>
+
+<p>In my experience, too many newtypes create an isomorphism between things that, properly modeled, are <em>not</em> isomorphic.</p>
+
+<p>Fortunately, there’s a well-worn <em>workaround</em> that lets us get more mileage out of newtypes.</p>
+
+<h2 id="smart-constructors">Smart Constructors</h2>
+
+<p>If I define <code class="highlighter-rouge">Email</code> in a module, I can make its data constructor private, and export a helper function to construct an <code class="highlighter-rouge">Email</code>. Such helper functions are called <em>smart constructors</em>.</p>
+
+<p>They can be used to <em>break</em> the natural isomorphisms created by newtyping.</p>
+
+<p>An example is shown below:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">newtype</span> <span class="kt">Email</span> <span class="o">=</span> <span class="kt">MkEmail</span> <span class="kt">String</span>
+
+<span class="n">mkEmail</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="kt">Maybe</span> <span class="kt">Email</span>
+<span class="n">mkEmail</span> <span class="n">s</span> <span class="o">=</span> <span class="o">...</span></code></pre></figure>
+
+<p>In this example, I create a smart constructor which does <em>not</em> promise that it can turn <em>every</em> string into an email. It promises only that it <em>might</em> be able to turn a string into an email, by returning a <code class="highlighter-rouge">Maybe Email</code>.</p>
+
+<p>With the smart constructor approach, I’ve modeled the fact that while <em>every</em> email has a string representation, not <em>every</em> string has an email representation.</p>
+
+<p>Going back to my earlier example of passing same-typed parameters to a function, if I use a smart constructor, then while I can still use an email anywhere a string is expected (by converting), I can’t use a string anywhere an email is expected. (Well, ignoring the <code class="highlighter-rouge">fromJust</code> abomination!)</p>
+
+<h3 id="smart-constructors-dumb-data">Smart Constructors, Dumb Data</h3>
+
+<p>Smart constructors take us one step closer toward modeling data in a type safe fashion.</p>
+
+<p>Unfortunately, I <em>still</em> don’t think it’s far enough.</p>
+
+<p>With smart constructors, our data model is fundamentally <em>underconstrained</em>, so we patch that up by restricting who can create the data. That’s putting a band-aid on the real problem.</p>
+
+<p>Why not just solve the root issue — viz., that our data model is underconstrained?</p>
+
+<h2 id="dumb-constructors-smart-data">Dumb Constructors, Smart Data</h2>
+
+<p>The best solution to a great many newtype problems, I believe, is creating a data model where there is a <em>true</em> isomorphism between the entity modeled by our data and the values passed to the data constructor.</p>
+
+<p>That is, creating a data model such that there exists no regions in our data’s state space which correspond to invalid states.</p>
+
+<p>Email is a simple example, because there are <a href="https://tools.ietf.org/html/rfc5322#section-3.4">well-defined models</a> for what constitutes a data model, which can be translated into data declarations in straightforward, if tedious fashion.</p>
+
+<p>(To some extent, it’s a failure of most languages I know that such specifications cannot be easily translated into code without tedious boilerplate!)</p>
+
+<p>When our data declaration precisely fits our data model specification, there’s no need for smart constructors, and no need for newtypes. There’s far fewer ways that code can go wrong, and because our domain model is captured precisely by our data model, we can transform that data model in ways that make semantic sense (e.g. transforming just the name part of an email, since we’re now in the realm of structured data).</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>As I’ve explained in this blog post, I don’t <em>really</em> hate newtypes. I think they’re very useful, and I <em>do</em> use them, because they make it more difficult for my programs to go wrong.</p>
+
+<p>Ultimately, however, I think a lot of problems solved with newtypes (modeling coordinates, positions, emails, etc.) are better solved by more precise data modeling. That is, by making our programs stop <em>lying</em> about isomorphisms.</p>
+
+<p>Precision may be tedious due to limitations of the languages we work in, but honestly, what’s more tedious than debugging broken code?</p>
+:ET

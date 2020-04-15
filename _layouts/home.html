@@ -7,7 +7,7 @@
 {% include _head.html %}
 </head>
 
-<body class="home" itemscope itemtype="http://schema.org/WebPage">
+<body class="home" itemscope itemtype="https://schema.org/WebPage">
 
 {% include _browser-upgrade.html %}
 
@@ -27,10 +27,10 @@
   {% include _carbon.html %}
 </div>
 
-<div id="index" itemprop="mainContentOfPage" itemscope itemtype="http://schema.org/Blog">
+<div id="index" itemprop="mainContentOfPage" itemscope itemtype="https://schema.org/Blog">
   <h1><a href="{{ site.url}}/articles/">Recent Articles</a></h1>
   {% for post in site.posts limit:5 %}
-  <article itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost">
+  <article itemscope itemtype="https://schema.org/BlogPosting" itemprop="blogPost">
     <h3 itemprop="headline"><a href="{{ site.url }}{{ post.url }}" rel="bookmark" title="{{ post.title }}">{{ post.title }}</a></h3>
     <p itemprop="text">{% if post.description %}{{ post.description }}{% else %}{{ post.content | strip_html | strip_newlines | truncate: 120 }}{% endif %}</p>
   </article>

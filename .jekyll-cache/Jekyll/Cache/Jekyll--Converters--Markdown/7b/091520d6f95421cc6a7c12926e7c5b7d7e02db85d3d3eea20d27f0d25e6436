@@ -1,0 +1,132 @@
+I"?+<p>Dear Engineer:</p>
+
+<p>I’m so excited that you’re interested in starting your own company! The world needs more entrepreneurial engineers, who blend a vision for a better future with the technical chops to get there.</p>
+
+<p>You’ll be in good company. Bill Gates, Mark Zuckerberg, and many others transitioned from coding to building their own companies.</p>
+
+<p>It <em>isn’t</em> easy. If not properly directed, many of the skills that make you an <em>amazing</em> engineer can actually work <em>against you</em> as you try to build a business.</p>
+
+<p>But it <em>is</em> possible. To help you get there, I want to share some of the lessons I’ve learned over the years.</p>
+
+<p>These aren’t <em>generic</em> lessons for starting your own company. You can find those <a href="https://degoes.net/articles/precog-lessons-learned/">elsewhere</a>. These are lessons that <em>engineers</em> in particular need to learn.</p>
+
+<h3 id="make-sure-you-have-something-to-lose">Make sure you have something to lose.</h3>
+
+<p>The biggest divide you have to cross is the employer / employee divide.</p>
+
+<p>When you’re an employee, it’s easy to complain and find faults in everything. You can complain about low pay, lack of benefits, technical debt, crappy technologies, pivots, troublesome customers, and so much more.</p>
+
+<p>If <em>you</em> were in charge, you’d fix all those problems, because that’s what engineers do: fix problems. <em>Right?</em></p>
+
+<p>It’s all a matter of perspective. While there are plenty of crappy employers, there are lots of <em>good</em> ones who struggle to do the best they can with the meager resources they have.</p>
+
+<p>To truly cross the divide, you need <em>your own skin</em> in the game. Invest your own money, go without a salary until the business achieves break-even, or live hand-to-mouth until you get the company off the ground.</p>
+
+<p><em>Anyone</em> can complain about their employer. <em>Anyone</em> can spend someone else’s money like crazy. <em>Anyone</em> can succeed in a world of infinite time and money. But very few can make the <em>difficult trade-offs</em> that come from choosing between a large number of suboptimal solutions to an inherently over-constrained problem.</p>
+
+<h3 id="be-wary-of-generalizing-the-pain">Be wary of generalizing the pain.</h3>
+
+<p>As an engineer, one of your most powerful skills is that of <em>abstraction</em>.</p>
+
+<p>You see patterns everywhere, and this ability helps you generalize from specific examples to highly abstract code that can easily and robustly solve a wide range of problems.</p>
+
+<p>Unfortunately, this ability to see patterns can prove <em>catastrophic</em> as you attempt to build your own company. The more you generalize the <em>solution</em> to a particular pain, the further removed it becomes from that <em>specific</em> pain. While it might end up being able to solve a <em>lot</em> of pains, it won’t be very good at solving any <em>particular</em> one.</p>
+
+<p>An example will make this clearer. Let’s say you believe in the following pain:</p>
+
+<blockquote>
+  <p>People are fed up with the high price of hotels.</p>
+</blockquote>
+
+<p>From this pain, you use your engineer’s mind to come up with a solution: A lot of people have spare rooms they aren’t using, so why not build a solution that lets them rent out those rooms to people looking for cheaper options?</p>
+
+<p>You don’t stop there, however. You see this pain is just a specific example of a more general pattern: the pattern of connecting price-sensitive buyers with sellers having remnant inventory.</p>
+
+<p>You then build a fancy marketplace solution that does everything from Uber to Airbnb, and while it might be possible to buy or sell <em>anything</em> on your platform, it’s not very good at any one thing in particular, and you get lost in an infinite sea of noise.</p>
+
+<p>More importantly, you fail to build <em>Airbnb</em>.</p>
+
+<p>Or maybe the user’s pain is that they want to know which online channels are driving the most lifetime revenue, so they can shift marketing dollars to them. But you end up generalizing the solution to a monster analytics platform that can do <em>anything at all</em>, but isn’t particularly good at doing the one thing the user wanted.</p>
+
+<p>It’s quite natural for <em>maturing companies</em> to generalize their solutions to siphon dollars from adjacent markets, but <em>premature generalization</em> can kill your company faster than most other techniques combined.</p>
+
+<p>So fight your instinct to generalize, and instead, <em>specialize</em>.</p>
+
+<p>In geek-speak, you don’t want a transducer. You don’t even want a generic sorting algorithm. You’re looking for an merge sort specialized to 32-bit unsigned integers that runs only on Xeon E3 1240v2 processors.</p>
+
+<h3 id="dont-run-from-messy-pains">Don’t run from messy pains.</h3>
+
+<p>As as engineer, you probably have a bias toward elegant solutions. You like order and have a strong aversion to chaos. Systems that run according to well-defined, deterministic laws are easier to understand and easier to predict.</p>
+
+<p>In business, this tendency toward elegance, order, and simplicity can work against you.</p>
+
+<p>You might learn that hospitals are looking for better reporting on patient medical records. But the deeper you dig into the problem, the messier it seems:</p>
+
+<ul>
+  <li>Medical records aren’t stored in one format, they’re stored in literally thousands of totally incompatible formats.</li>
+  <li>Medical record systems are fragmented, incompatible, and hospitals are sometimes using versions of software that pre-date the Internet.</li>
+  <li>Hospitals don’t standardize on terminology; so what one hospital calls <em>gender</em> another hospital calls <em>sex</em>.</li>
+  <li>Access and storage of medical data is regulated by HIPAA and other laws, as well as hospital-specific policies.</li>
+</ul>
+
+<p>Your first instinct to uncovering this mess is probably repulsion (as it should be!). But there are two quite different ways you can respond:</p>
+
+<ol>
+  <li><strong>Avoid the mess.</strong> Solve the problem with a generic, self-service solution that requires customers themselves deal with the messy bits.</li>
+  <li><strong>Embrace the mess.</strong> Solve the problem with a full-service solution that relies on a crap-load of integration middleware and maybe even services.</li>
+</ol>
+
+<p>Most first-time <em>engineer-entrepreneurs</em> will choose the first option. Instead of solving the customer’s pain, they’ll build a tool, or a “platform”, that lets customers <em>solve their own pains</em>.</p>
+
+<p>Unfortunately, this approach usually ends in disaster. The messy parts of any problem are the ones that cause the <em>most</em> pain, and the ones that drive differentiation, high business value, and rapid growth.</p>
+
+<p>So instead, I urge you to <em>run</em> to messy pains, and use that geeky brain of yours to find out how to solve them in a scalable way that delights the customer.</p>
+
+<h3 id="remember-that-technology-is-irrelevant">Remember that technology is irrelevant.</h3>
+
+<p>As engineers, we love technology. Great programming languages dazzle us, and powerful libraries fill us with awe and wonder.</p>
+
+<p>But one of the most important lessons you can learn is that <em>the customer doesn’t give a shit about technology</em>.</p>
+
+<p>A spaghetti-code PHP 3.0 application that uses text files for its database may be an engineer’s worst nightmare.  But customers care only about the surface area they interact with: elegant architecture, beautiful abstractions, brilliant programming languages, and world-class libraries don’t mean squat.</p>
+
+<p><em>You and I know</em> that all these things have an effect on long-term maintainability, ease of adding new members to the team, testability of the code, defect rates, engineer satisfaction, and lots more. And I don’t want to discount any of these measures, just to emphasize the following: your business will succeed or fail <em>not based on the technology</em>, but based on how well it solves customer pain (which is <em>almost</em> completely independent of the technology!).</p>
+
+<p>If anything, you are likely to become <em>too distracted</em> by technology, so much so you may forget the customer in your quest to build something really cool.</p>
+
+<p>If you can’t check that quest for cool tech at the door, <em>don’t start your own business</em>.</p>
+
+<h3 id="embrace-inferior-but-successful-crap">Embrace inferior but successful crap.</h3>
+
+<p>In many tech businesses, your success is going to depend on how well you integrate with stuff the customer is <em>already using</em>.</p>
+
+<p>This holds true even when <em>the customer is using utter crap</em>.</p>
+
+<p>As engineers, we gravitate toward well-engineered systems, and we have a tendency to <em>strongly</em> prefer supporting and integrating with these systems.</p>
+
+<p>Unfortunately, the best-engineered systems do not often win: rather, what wins are the systems that are “good enough” to get the job done (but just passably), and which have the lowest barrier to entry. This means there’s a lot of successful crap out there, which is poorly engineered, buggy, and far from best-in-class.</p>
+
+<p>Look for what your customers are already using, whether that’s SOAP, Internet Explorer 6, or whatever. Then build your product to integrate well with these technologies, in a seamless way.</p>
+
+<p>Deal with your repulsion to crap with hot showers, <em>not</em> by avoiding it in your business.</p>
+
+<h3 id="dont-confuse-yourself-with-the-customer">Don’t confuse yourself with the customer.</h3>
+
+<p>One of the worst mistakes you can make as an engineer is building something that you would use. Although there are exceptions, by and large, if you build something that <em>you</em> would use, you’ll be building for a <em>market of one</em>.</p>
+
+<p>You are <em>not</em> your customer. You probably <em>won’t</em> be interested in using whatever you build, <em>even if you are targeting a market of developers</em>.</p>
+
+<p>Your product decisions need to be driven by the needs of your target market, who are going to have a profile that you gradually discover as you find product-market fit.</p>
+
+<h3 id="finally-dont-get-cocky">Finally, don’t get cocky.</h3>
+
+<p>We are makers. Creators of beautiful and intricately-engineered systems that power the modern world.</p>
+
+<p>By all means, be proud of your maker heritage. But remember, just because you <em>can</em> build anything, doesn’t mean you <em>will</em> build something that people <em>actually want</em>.</p>
+
+<p>Your capacity to build is something you should be thankful for every day. But it’s not enough.</p>
+
+<p>More than knowing <em>how</em> to build, you’re going to have to figure out <em>what</em> to build that can drive revenue. That, in the end, is going to be the most difficult problem your engineer’s mind will ever have to solve.</p>
+
+<p>Good luck.</p>
+:ET

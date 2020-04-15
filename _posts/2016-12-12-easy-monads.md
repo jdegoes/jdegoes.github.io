@@ -848,7 +848,7 @@ overhead — sounds good to me!
 5. Beyond just logging, you can add whole aspects to your program at runtime.
 For example, adding authentication, authorization, and auditing into a program
 by composing together interpreters (this is how my company produces a secure
-version of the [Quasar Analytics](http://github.com/quasar-analytics/quasar))
+version of the [Quasar Analytics](https://github.com/quasar-analytics/quasar))
 project without tampering with the code base. It's like aspect-oriented
 programming, but type safe and much more flexible!
 

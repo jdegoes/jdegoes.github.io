@@ -12,12 +12,12 @@ functional programs should look like](/articles/modern-fp).
 The post generated vigorous discussion in the community, perhaps because I
 railed against the `IO` monad and advocated for `Free` monads, which are now
 used pervasively in [Quasar Analytics Engine](https://github.com/quasar-analytics/quasar/),
-one of the open source projects that [my company](http://slamdata.com) develops.
+one of the open source projects that [my company](https://slamdata.com) develops.
 
 Since then, I've had a chance to read responses, look at [equivalent
 architectures](https://gist.github.com/ocharles/6b1b9440b3513a5e225e) built upon
-Monad Transformers Library (MTL), and even [talk about](http://www.slideshare.net/jdegoes/mtl-versus-free) my recent experiments
-at [LambdaConf 2016](http://lambdaconf.us).
+Monad Transformers Library (MTL), and even [talk about](https://www.slideshare.net/jdegoes/mtl-versus-free) my recent experiments
+at [LambdaConf 2016](https://lambdaconf.us).
 
 The result is a sequel to my original post, which consists of a newly-minted,
 tricked-out recommendation for architecting modern functional programs, along
@@ -27,7 +27,7 @@ with new ways of thinking about the structure of this architecture.
 
 The modern architecture for functional programming, which I will henceforth
 call the *onion architecture* (because of its similarity to [a pattern of the
-same name](http://jeffreypalermo.com/blog/the-onion-architecture-part-1/)),
+same name](https://jeffreypalermo.com/blog/the-onion-architecture-part-1/)),
 involves structuring the application as a series of layers:
 
 1. At the center of the application, semantics are encoded using the language

@@ -8,7 +8,7 @@ redirect_from: "/articles/balajis-leaves-twitter"
 ---
 
 On January 13th, Balaji Srinivasan&mdash;a successful entrepreneur, a board
-partner at Andreesson Horowitz, and the current CEO of [21.co](http://21.co)&mdash;
+partner at Andreesson Horowitz, and the current CEO of [21.co](https://21.co)&mdash;
 mysteriously and unexpectedly deleted all of his tweets.
 
 In their place, he posted a [single tweet](https://twitter.com/balajis/status/820139852041777152)
@@ -30,11 +30,11 @@ his tweets on technology, politics, and society.
 
 When Balaji quit Twitter, it was a shock to me and countless others. Speculation
 abounded, but all discussions seemed to center on a rumor that Balaji was being
-[considered by Trump to head up the FDA](https://www.bloomberg.com/news/articles/2017-01-13/trump-said-to-consider-another-thiel-associate-to-lead-fda), an idea I find [incredibly attractive](http://slatestarcodex.com/2017/01/18/watch-new-health-picks/).
+[considered by Trump to head up the FDA](https://www.bloomberg.com/news/articles/2017-01-13/trump-said-to-consider-another-thiel-associate-to-lead-fda), an idea I find [incredibly attractive](https://slatestarcodex.com/2017/01/18/watch-new-health-picks/).
 
-Gizmodo [speculated](http://gizmodo.com/why-did-trumps-top-fda-pick-delete-all-his-tweets-1791227569)
+Gizmodo [speculated](https://gizmodo.com/why-did-trumps-top-fda-pick-delete-all-his-tweets-1791227569)
 that Mr. Srinivasan deleted his tweets because he had previously posted
-unflattering tweets about Trump. Recode, [in much harsher words](http://www.recode.net/2017/1/14/14276530/balaji-srinivasan-trump-fda-twitter-andreessen-horowitz), argued that Balaji's outspoken criticism of the FDA was to blame.
+unflattering tweets about Trump. Recode, [in much harsher words](https://www.recode.net/2017/1/14/14276530/balaji-srinivasan-trump-fda-twitter-andreessen-horowitz), argued that Balaji's outspoken criticism of the FDA was to blame.
 
 Personally, I have a different theory about why Balaji quit Twitter: he quit
 because [Twitter's fucked](/articles/fuck-twitter).

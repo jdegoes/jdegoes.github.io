@@ -1,0 +1,807 @@
+I"0k<p>The essential core of functional programming is quite simple: build programs
+by composing functions.</p>
+
+<p>In this context, “function” does not refer to a “computer science” function,
+that is, a hunk of machine code, but rather, a <em>mathematical function</em>:</p>
+
+<ol>
+  <li><strong>Totality</strong>. A function must yield a value for every possible input.</li>
+  <li><strong>Determinism</strong>. A function must yield the <em>same</em> value for the <em>same</em> input.</li>
+  <li><strong>Purity</strong>. A function’s only effect must be the computation of its return value.</li>
+</ol>
+
+<p>Together, these properties give you an unprecedented ability to reason about
+your code: call a function with any input, and you’ll always get a valid value,
+it will be the same value every time you call the function with that input, and
+the function won’t try to do anything else funky like launch a nuclear missile.</p>
+
+<p>Such a tiny idea has a profoundly simplifying effect on large-scale
+software engineering, because it means there’s less your brain has to keep track
+of in order to understand the behavior of your program. In fact, you can
+understand the behavior of the program by understanding the behavior of its
+individual parts — without having to keep it all in your head at one time!</p>
+
+<p>Now, function programming does not always have a reputation for <em>being</em> simple,
+but I think that’s because of several factors:</p>
+
+<ol>
+  <li><strong>Unfamiliarity</strong>. Functional programming is quite different than the type of
+ programming that most professionals are used to. Because it’s unfamiliar, it
+ can seem difficult. It’s best to compare functional programming with the
+ experience of learning to program <em>for the first time</em> (rather than the
+ experience of, say, learning a new programming language that’s modestly
+ different than one you already know).</li>
+  <li><strong>Jargon</strong>. There’s a lot of jargon in functional programming, such as
+ “immutability”, “recursion”, “induction”, “hylomorphism”, “transducer”,
+ “functor”, and the list goes on. These concepts are not necessarily hard, but
+ they have scary-sounding names and having lots of experience programming the
+ imperative way doesn’t help you understand any of the new terminology.</li>
+  <li><strong>Motivation</strong>. From my experience, people learn things more easily when
+ they can clearly see <em>how</em> they can be useful to accomplishing the goals these
+ people have. Yet, although the situation is improving as more and more people
+ learn functional programming (and share their knowledge with others), there’s
+ not much motivation of the core concepts in functional programming.</li>
+</ol>
+
+<p>Some might add that “functional programming” is <em>sometimes</em> associated with
+<em>advanced statically-typed functional programming</em>. In these cases, people
+learning “functional programming” are really learning two things at once:
+functional programming, and an advanced type system (most imperative programming
+languages have relatively simple type systems).</p>
+
+<p>However, one can program functionally with untyped programming languages, or
+program imperatively with more advanced type systems. So the two are not
+necessarily linked.</p>
+
+<p>Many of us functional programmers would like to show people why we’re so excited
+about functional programming. Yet, most of the content that I write is not
+geared at the functionally-curious, or even beginner functional programmers.
+Rather, I write about what interests me, which tends to be more intermediate to
+advanced functional programming, intended to be useful to people who have been
+programming functionally for years.</p>
+
+<p>So I’m trying an experiment: I’m going to demonstrate a few ideas in functional
+programming that help us build real-world programs. But I’m going to do it in a
+way that is hopefully somewhat aware of the above factors.</p>
+
+<p>It’s a functional programming blog post for people who aren’t functional
+programmers. Or maybe for people who know a <em>little</em> but wish they understood <em>more</em>.</p>
+
+<p>Hopefully you’ll find it useful — but more than useful, I hope you find it
+<em>inspiring</em>. Inspiring enough to invest the effort necessary to push forward
+your knowledge of functional programming, <em>despite</em> of how difficult it might
+seem.</p>
+
+<p>Or who knows, maybe after this post, it’ll all seem easy!</p>
+
+<h2 id="impractical-fp">Impractical FP</h2>
+
+<p>A canonical example of the power of functional programming is the following
+generic sort function:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">sort</span><span class="o">[</span><span class="kt">A:</span> <span class="kt">Ordering</span><span class="o">](</span><span class="n">as</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="n">as</span> <span class="k">match</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">Nil</span> <span class="k">=&gt;</span> <span class="nc">Nil</span>     
+  <span class="k">case</span> <span class="n">a</span> <span class="o">::</span> <span class="n">as</span> <span class="k">=&gt;</span>        
+    <span class="nf">val</span> <span class="o">(</span><span class="n">before</span><span class="o">,</span> <span class="n">after</span><span class="o">)</span> <span class="k">=</span> <span class="n">as</span> <span class="nf">partition</span> <span class="o">(</span><span class="k">_</span> <span class="o">&lt;</span> <span class="n">a</span><span class="o">)</span>
+
+    <span class="nf">sort</span><span class="o">(</span><span class="n">before</span><span class="o">)</span> <span class="o">++</span> <span class="o">(</span><span class="n">a</span> <span class="o">::</span> <span class="nf">sort</span><span class="o">(</span><span class="n">after</span><span class="o">))</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>It’s a beautiful example because it demonstrates how functional programming can
+have a simplifying effect on how we reason about software.</p>
+
+<p>After looking at the code, you can probably convince yourself of the following:</p>
+
+<ol>
+  <li>A sorted empty list is an empty list.</li>
+  <li>A sorted non-empty list with a first element <code class="highlighter-rouge">a</code> and subsequent elements <code class="highlighter-rouge">as</code>
+is the concatenation of the sort of all those elements less than <code class="highlighter-rouge">a</code>, followed
+by the concatenation of <code class="highlighter-rouge">a</code>, followed by the concatenation of the sort of all
+those elements <em>not</em> less than <code class="highlighter-rouge">a</code>.</li>
+</ol>
+
+<p>Every part of this function can be reasoned about independently. If we believe
+the pieces are correct, we can trust the correctness of the whole.</p>
+
+<p>Moreover, this <code class="highlighter-rouge">sort</code> function, because it’s a function <em>in the mathematical
+sense</em>, is easy to test and reuse. We can send any list to the function and
+expect it will return the sort of the list. Further, we know that the function
+will always return the same output for the same input.</p>
+
+<p>So our tests can be stated quite simply:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nf">assert</span><span class="o">(</span><span class="n">sort</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="nc">Nil</span><span class="o">)</span> <span class="o">==</span> <span class="nc">Nil</span><span class="o">)</span>
+<span class="nf">assert</span><span class="o">(</span><span class="n">sort</span><span class="o">[</span><span class="kt">Int</span><span class="o">](</span><span class="mi">3</span> <span class="o">::</span> <span class="mi">2</span> <span class="o">::</span> <span class="mi">1</span> <span class="o">::</span> <span class="nc">Nil</span><span class="o">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">::</span> <span class="mi">2</span> <span class="o">::</span> <span class="mi">3</span> <span class="o">::</span> <span class="nc">Nil</span><span class="o">)</span></code></pre></figure>
+
+<p>(In fact, they can be stated much more powerfully in functional programming, but
+that’s a topic for another post.)</p>
+
+<p>While explaining the benefits of functional programming in this one case seem
+simple enough, it’s a big stretch to imagine if or how these benefits might
+scale as our example moves beyond a toy example.</p>
+
+<p>In fact, the number one objection to functional programming is that it only
+works for toy examples, but fails utterly in “real-world” programming.</p>
+
+<p>Let’s take the simplest real-world problem I can think of: a function that
+doesn’t return a value because it doesn’t succeed.</p>
+
+<h2 id="totality">Totality</h2>
+
+<p>I’ve defined a function as <em>total</em> and <em>deterministic</em>. What happens if we drop
+the totality requirement?</p>
+
+<p>Well, the function need not return anything. Practically speaking, this means
+the function either runs forever, or “escapes” the need to return a value by
+using some other mechanism supported by the host language — typically
+by “throwing” an exception.</p>
+
+<p>Functions that never return because they run forever are clearly broken (runaway
+loop due to an edge condition, or similar), but what about exceptions?</p>
+
+<p>In the days before exceptions, programmers just used return values to indicate
+the success or failure of a function. In C code, for example, we’d write long
+sequences of code that looked like this:</p>
+
+<figure class="highlight"><pre><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="nf">parse_config</span><span class="p">(</span><span class="n">config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">FileHandle</span> <span class="n">handle</span><span class="p">;</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">bytes</span><span class="p">;</span>
+
+  <span class="n">handle</span> <span class="o">=</span> <span class="n">new_handle</span><span class="p">();</span>
+
+  <span class="n">handle</span> <span class="o">=</span> <span class="n">file_open</span><span class="p">(</span><span class="s">"config.cfg"</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+  <span class="kt">char</span> <span class="o">*</span><span class="n">bytes</span> <span class="o">=</span> <span class="n">file_read</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">bytes</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+
+  <span class="p">...</span>
+
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In this world, the introduction of exception handling seemed almost magical.
+Programmers could avoid tangling error-handling concerns with application logic,
+and benefit from the short-circuiting behavior of exceptions.</p>
+
+<p>The main problem with exceptions is that, in a language that supports them, you
+have no guarantee where they will occur. Which means they can occur <em>everywhere</em>.
+Which means that, over a sufficiently long period of time, they <em>do</em> occur
+virtually everywhere (even in Java, unchecked exceptions can be thrown anywhere
+and often contain “checked” exceptions inside them!).</p>
+
+<p>As with nulls, a proliferation of exceptions leads to defensive and aggressive
+exception handling, even in cases where it doesn’t make sense, which leads to
+more bugs and bizarre edge cases.</p>
+
+<p>Fortunately, we can easily achieve both totality <em>and</em> clean code, but it
+requires more machinery than older programming languages supported.</p>
+
+<p>To develop this idea, let’s take a function which returns the first element of a
+list:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">head</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">as</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=</span> <span class="nv">as</span><span class="o">.</span><span class="py">head</span></code></pre></figure>
+
+<p>This function is not total. Depending on which list you pass the function, it
+may or may not return the first element of the list. If you pass it an empty
+list, the function will never return, but instead throw an exception.</p>
+
+<p>To make this function a total function, we need only introduce a data structure
+that can model the concept of <em>optionality</em> — something that <em>might</em> or
+<em>might not</em> be there.</p>
+
+<p>Let’s call this <code class="highlighter-rouge">Maybe</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">Maybe</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="nc">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">There</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Maybe</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">NotThere</span><span class="o">[</span><span class="kt">A</span><span class="o">]()</span> <span class="k">extends</span> <span class="nc">Maybe</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>With this data structure, we can turn the <code class="highlighter-rouge">head</code> pseudo-function into a real
+function:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">head</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">as</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">Maybe</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="n">as</span> <span class="k">match</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">Nil</span> <span class="k">=&gt;</span> <span class="nc">NotThere</span><span class="o">[</span><span class="kt">A</span><span class="o">]()</span>
+  <span class="k">case</span> <span class="n">a</span> <span class="o">::</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">There</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">a</span><span class="o">)</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Now when we think about code that uses the function, we don’t have to consider
+the possibility the function won’t return. Because the function will <em>always</em>
+return. Since we don’t have to consider this possibility, our reasoning about
+code that uses the <code class="highlighter-rouge">head</code> function is simpler, containing fewer cases to analyze.</p>
+
+<p>The <code class="highlighter-rouge">Maybe</code> data structure doesn’t provide the same power as exceptions,
+however. For one, it doesn’t have any information on the error, which is perhaps
+OK in the case of the <code class="highlighter-rouge">head</code> function (because we know what the error is), but
+isn’t going to work well for most other functions.</p>
+
+<p>To solve this problem, we can introduce a new data structure, called <code class="highlighter-rouge">Result</code>,
+which models the concept of <em>exceptionality</em>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="nc">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Error</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">](</span><span class="n">error</span><span class="k">:</span> <span class="kt">E</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Success</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>This type lets us make functions like <code class="highlighter-rouge">file_open</code> total functions:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">file_open</span><span class="o">(</span><span class="n">path</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">FileError</span>, <span class="kt">FileHandle</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span></code></pre></figure>
+
+<p>Now we have all the same information that exceptions provide us with. However,
+if we have lots of different operations to perform, and each of them returns a
+<code class="highlighter-rouge">Result</code>, then it looks like we would need a lot of boilerplate, reminiscent of
+the days before exceptions:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">parse_config</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">FileError</span>, <span class="kt">Config</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="nf">file_open</span><span class="o">(</span><span class="s">"config.cfg"</span><span class="o">)</span> <span class="k">match</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+    <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">handle</span><span class="o">)</span> <span class="k">=&gt;</span>
+      <span class="nf">file_read</span><span class="o">(</span><span class="n">handle</span><span class="o">)</span> <span class="k">match</span> <span class="o">{</span>
+        <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+        <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">bytes</span><span class="o">)</span> <span class="k">=&gt;</span>
+          <span class="o">???</span>
+      <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>We’ve made the functions <code class="highlighter-rouge">file_open</code>, <code class="highlighter-rouge">file_read</code>, and so on <em>total</em>, which
+simplifies our reasoning about them, but at the same time, we have introduced
+additional boilerplate, which makes the code harder to read.</p>
+
+<p>To recapture the detangling and short-circuiting benefits of exceptions, we
+need to recognize the pattern in the above code. If you study the code for a
+few minutes, you should be able to see the following pattern:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="n">doX</span> <span class="k">match</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+  <span class="k">case</span> <span class="nc">Value</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">doY</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="k">match</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+    <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">y</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">doZ</span><span class="o">(</span><span class="n">y</span><span class="o">)</span> <span class="k">match</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+      <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">z</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">doW</span><span class="o">(</span><span class="n">w</span><span class="o">)</span> <span class="k">match</span> <span class="o">{</span>
+        <span class="o">...</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>If you examine what the types of <code class="highlighter-rouge">doY</code>, <code class="highlighter-rouge">doZ</code>, and <code class="highlighter-rouge">doW</code> must be, you discover
+they accept the <code class="highlighter-rouge">A</code> of the <code class="highlighter-rouge">Result[E, A]</code> of the previous operation, and using
+this <code class="highlighter-rouge">A</code>, they produce a new <code class="highlighter-rouge">Result[E, B]</code>.</p>
+
+<p>This suggests we can factor out the duplication by introducing a <code class="highlighter-rouge">chain</code> method:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">chain</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">result</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">])(</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+  <span class="n">result</span> <span class="k">match</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+    <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">a</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">f</span><span class="o">(</span><span class="n">a</span><span class="o">)</span>
+  <span class="o">}</span></code></pre></figure>
+
+<p>Indeed, we can use such a <code class="highlighter-rouge">chain</code> method in our original <code class="highlighter-rouge">parse_config</code> method:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">parse_config</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">FileError</span>, <span class="kt">Config</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="nf">chain</span><span class="o">(</span><span class="nf">file_open</span><span class="o">(</span><span class="s">"config.cfg"</span><span class="o">))</span> <span class="o">{</span> <span class="n">handle</span> <span class="k">=&gt;</span>
+    <span class="nf">chain</span><span class="o">(</span><span class="nf">file_read</span><span class="o">(</span><span class="n">handle</span><span class="o">))</span> <span class="o">{</span> <span class="n">bytes</span> <span class="k">=&gt;</span>
+      <span class="o">???</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>This reduces the boilerplate to calling <code class="highlighter-rouge">chain</code> on every <code class="highlighter-rouge">Result[E, A]</code>. In
+doing this, we achieve the short-circuiting benefits of exceptions, and the
+error-handling logic is factored out into the <code class="highlighter-rouge">chain</code> method, so the application
+logic doesn’t need to concern itself with it.</p>
+
+<p>If you use a structure like <code class="highlighter-rouge">Result</code> to model exceptional cases, eventually
+you’ll find yourself in need of a utility function that looks like this:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="c1">// Change the `A` in a `Result[E, A]` into a `B` by using the provided</span>
+<span class="c1">// function `f`:</span>
+<span class="k">def</span> <span class="nf">change</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="n">result</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">])(</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="n">result</span> <span class="k">match</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+  <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">a</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Success</span><span class="o">(</span><span class="nf">f</span><span class="o">(</span><span class="n">a</span><span class="o">))</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>This is a map-like function (similar to mapping the elements of an array into a
+different type). If you like programming in an object-oriented style, you can make the functions <code class="highlighter-rouge">chain</code> and <code class="highlighter-rouge">change</code> methods on the <code class="highlighter-rouge">Result</code> class:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">change</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="k">this</span> <span class="k">match</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+    <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">a</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Success</span><span class="o">(</span><span class="nf">f</span><span class="o">(</span><span class="n">a</span><span class="o">))</span>
+  <span class="o">}</span>
+
+  <span class="k">def</span> <span class="nf">chain</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="k">this</span> <span class="k">match</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Error</span><span class="o">(</span><span class="n">e</span><span class="o">)</span>
+    <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">a</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">f</span><span class="o">(</span><span class="n">a</span><span class="o">)</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Error</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">](</span><span class="n">error</span><span class="k">:</span> <span class="kt">E</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Success</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Result</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>This makes the code read a little better:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">parse_config</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">FileError</span>, <span class="kt">Config</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="nf">file_open</span><span class="o">(</span><span class="s">"config.cfg"</span><span class="o">).</span><span class="py">chain</span> <span class="o">{</span> <span class="n">handle</span> <span class="k">=&gt;</span>
+    <span class="nf">file_read</span><span class="o">(</span><span class="n">handle</span><span class="o">).</span><span class="py">chain</span> <span class="o">{</span> <span class="n">bytes</span> <span class="k">=&gt;</span>
+      <span class="o">???</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Further, if you call the <code class="highlighter-rouge">change</code> and <code class="highlighter-rouge">chain</code> methods <code class="highlighter-rouge">map</code> and <code class="highlighter-rouge">flatMap</code>,
+respectively, then Scala provides some handy syntax that can further simplify
+the way the code looks:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">parse_config</span><span class="k">:</span> <span class="kt">Result</span><span class="o">[</span><span class="kt">FileError</span>, <span class="kt">Config</span><span class="o">]</span> <span class="k">=</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="n">handle</span> <span class="k">&lt;-</span> <span class="nf">file_open</span><span class="o">(</span><span class="s">"config.cfg"</span><span class="o">)</span>
+    <span class="n">bytes</span>  <span class="k">&lt;-</span> <span class="nf">file_read</span><span class="o">(</span><span class="n">handle</span><span class="o">)</span>
+  <span class="o">}</span> <span class="k">yield</span> <span class="o">???</span></code></pre></figure>
+
+<p>At this point, we have regained totality of our functions, but with the full
+benefits of exceptions (short-circuiting and untangled concerns).</p>
+
+<p>All we needed was the <code class="highlighter-rouge">chain</code> function (AKA <code class="highlighter-rouge">flatMap</code>) and the <code class="highlighter-rouge">Result</code> data
+structure. The rest falls into place naturally.</p>
+
+<p>Note that the <code class="highlighter-rouge">chain</code> function accepts a function as a parameter. This parameter
+is supplied as an anonymous function (which captures arbitrary references in its
+context), which should help demonstrate why this technique never really emerged
+in C code. If C had first-class functions and garbage collection or
+reference counting, it’s quite probable this pattern would have emerged on its
+own, without any input from the functional programming community.</p>
+
+<p>The remaining requirements for functions are determinism and purity. Let’s take
+a look at these requirements in the next section.</p>
+
+<h2 id="determinism--purity">Determinism &amp; Purity</h2>
+
+<p>Functions that aren’t deterministic or which do more than just compute a return
+value can be notoriously difficult to reason about.</p>
+
+<p>For example, I have used libraries (and probably created some!), which perform
+IO inside a constructor:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">Logging</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="nc">OutputStream</span> <span class="n">ostream</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">Logging</span><span class="o">(</span><span class="nc">File</span> <span class="n">file</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">ostream</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FileOutputStream</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>This constructor may throw exceptions, which is very unexpected!</p>
+
+<p>As another example, the <code class="highlighter-rouge">URL</code> class in Java may perform a network connection if
+you place an instance of this class into a data structure (whoa!). This happens
+because the equals &amp; hash code methods may trigger resolution of the address.</p>
+
+<p>In addition to the unexpected nature of impure functions (who knows what they
+will do and when they will do it!), non-determinism makes testing and reasoning
+about the functions particularly difficult. You may be forced to mock code or
+reason about the external state that can affect the behavior of such a function.</p>
+
+<p>Pure, deterministic functions don’t do anything dirty behind the scenes, and
+you can count on them to always return the same output for the same input, which
+means the code is easier to test and easier to understand.</p>
+
+<p>But if you try to make all your functions total, deterministic, and pure, you’ll
+quickly hit into a wall when you try to perform any input/output or other effects
+—a wall that has convinced too many that functional programming is
+impractical for real-world software.</p>
+
+<p>In fact, the wall has long since been shattered, but rather than go down those
+paths, let’s look at a simple example of IO and see if we can bootstrap a solution.</p>
+
+<h3 id="console-io">Console IO</h3>
+
+<p>Let’s say we are developing a console program, which needs to read input from
+the console, and write output to the console. Many useful problems can be
+solved with console programs, and if we can figure out how to make a console
+program deterministic and pure, we can generalize to other types of programs.</p>
+
+<p>If you think about the problem for a while, you may come up with the following
+idea: instead of calling functions that aren’t deterministic or pure, we can
+build up a data structure that describes the console effects that comprise
+our program.</p>
+
+<p>Suppose that <code class="highlighter-rouge">ConsoleIO</code> is a description of our program. To start with, we need
+a way to describe the effect of writing output to the console.</p>
+
+<p>One approach might look like this:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span></code></pre></figure>
+
+<p>This approach is a bit too simple, because we can only build a program that
+writes a single line of text to the console:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">helloWorld</span><span class="k">:</span> <span class="kt">ConsoleIO</span> <span class="o">=</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"Hello World!"</span><span class="o">)</span></code></pre></figure>
+
+<p>This is a total, deterministic, and pure function—however, it’s not that
+useful. At most it can describe a program that writes a single line of text to
+the console. The text can change, of course, even be fed in as a parameter to
+the function, but ultimately, the program will have just a single effect on the
+console.</p>
+
+<p>Fortunately, it’s pretty easy to extend the structure to support <em>multiple</em>
+effects in sequence. Here’s one way:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">then</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span></code></pre></figure>
+
+<p>Using this approach, we can construct more complex descriptions of effectful
+programs, such as this example:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">infiniteHelloWorld</span><span class="k">:</span> <span class="kt">ConsoleIO</span> <span class="o">=</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"Hello World"</span><span class="o">,</span> <span class="n">infiniteHelloWorld</span><span class="o">)</span></code></pre></figure>
+
+<p>If we introduced a “thunk” to avoid blowing the stack during construction, this
+structure would describe a program that writes “Hello World” an infinite number
+of times to the console. Infinite programs like this aren’t that useful, but
+we can fix this problem by adding another term to <code class="highlighter-rouge">ConsoleIO</code>, one which allows
+program termination:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">then</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">object</span> <span class="nc">End</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span></code></pre></figure>
+
+<p>Now we can construct, for example, a description of a program that repeats
+the printing of a certain line of text a certain number of times:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">printTextNTimes</span><span class="o">(</span><span class="n">text</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">n</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">ConsoleIO</span> <span class="o">=</span>
+  <span class="nf">if</span> <span class="o">(</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="nc">End</span>
+  <span class="k">else</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">text</span><span class="o">,</span> <span class="nf">printTextNTimes</span><span class="o">(</span><span class="n">text</span><span class="o">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">))</span></code></pre></figure>
+
+<p>This function is total, pure, and deterministic. Of course, it doesn’t actually
+print anything out to the console, but we’ll get to that soon enough.</p>
+
+<p>Currently, we can only describe programs that write text to the console. It’s
+easy enough to extend this approach so we can read text from the console:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">then</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ReadLine</span><span class="o">(</span><span class="n">process</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span> <span class="nc">ConsoleIO</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">object</span> <span class="nc">End</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span></code></pre></figure>
+
+<p>Notice how constructing a <code class="highlighter-rouge">ReadLine</code> value requires we supply a function that,
+given the line of input read from the console, returns another <code class="highlighter-rouge">ConsoleIO</code>,
+representing the rest of the effectful program.</p>
+
+<p>We pass our function to <code class="highlighter-rouge">ReadLine</code>, and it’s a promise that at some point in the
+future, someone will give us a <code class="highlighter-rouge">String</code> (the line of input from the console)
+that we can use to return the “rest” of the program.</p>
+
+<p>This structure is sufficiently powerful for us to describe interactive programs.
+For example, the following program asks you for your name, then prints out “Hello”
+followed by your name:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">socialProgram</span><span class="k">:</span> <span class="kt">ConsoleIO</span> <span class="o">=</span> <span class="nc">WriteLine</span><span class="o">(</span>
+  <span class="s">"Hello, what is your name?"</span><span class="o">,</span>
+  <span class="nc">ReadLine</span><span class="o">(</span><span class="n">name</span> <span class="k">=&gt;</span>
+    <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"Hello, "</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">,</span> <span class="nc">End</span><span class="o">)</span>
+  <span class="o">)</span>
+<span class="o">)</span></code></pre></figure>
+
+<p>Remember this function is total, deterministic, and pure. One can imagine
+building very complex descriptions of effectul programs using this structure.
+In fact, <em>any program</em> that requires just console IO effects could be described
+with this structure!</p>
+
+<p>Notice that any program described by <code class="highlighter-rouge">ConsoleIO</code> simply terminates at some point.
+These programs cannot return a value.</p>
+
+<p>If we want “composable programs” that is, programs which produce things that
+other programs can depend on, then we’ll need to generalize the <code class="highlighter-rouge">End</code> term to
+accept some value of type <code class="highlighter-rouge">A</code>, which will necessitate we add a new type
+parameter <code class="highlighter-rouge">A</code> to <code class="highlighter-rouge">ConsoleIO</code> and thread it through the other terms.</p>
+
+<p>The end result looks only slightly more complex:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="nc">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">then</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ReadLine</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">process</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">EndWith</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>Now, <code class="highlighter-rouge">ConsoleIO[A]</code> is a description of a program that can read and write from
+the console, and terminate with a value of type <code class="highlighter-rouge">A</code>. This lets us build programs
+that produce values, which can be consumed by other programs.</p>
+
+<p>Using this structure, we can build the “Hello, <name>!" program of before, but
+this time, we can return the name of the user from the program:</name></p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">userNameProgram</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="nc">WriteLine</span><span class="o">(</span>
+  <span class="s">"Hello, what is your name?"</span><span class="o">,</span>
+  <span class="nc">ReadLine</span><span class="o">(</span><span class="n">name</span> <span class="k">=&gt;</span>
+    <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"Hello, "</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">,</span> <span class="nc">EndWith</span><span class="o">(</span><span class="n">name</span><span class="o">))</span>
+  <span class="o">)</span>
+<span class="o">)</span></code></pre></figure>
+
+<p>The only capability we are missing from <code class="highlighter-rouge">ConsoleIO</code> is the ability to change
+the return value into some other type. For example, what if we want to build
+another console program which does not return the name of the user, but returns
+how  many characters are in the name, by reusing <code class="highlighter-rouge">userNameProgram</code>?</p>
+
+<p>Currently, this is not possible. We need something more powerful to capture
+this notion. If we had a list, we would be able to “map” over its elements to
+change the result type. This is precisely the capability we need for <code class="highlighter-rouge">ConsoleIO</code>.</p>
+
+<p>We can add such a map function directly to <code class="highlighter-rouge">ConsoleIO</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">then</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ReadLine</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">process</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">EndWith</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">A0</span>, <span class="kt">A</span><span class="o">](</span><span class="n">v</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A0</span><span class="o">],</span> <span class="n">f</span><span class="k">:</span> <span class="kt">A0</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>Now given any <code class="highlighter-rouge">ConsoleIO[A]</code>, we can map it into a <code class="highlighter-rouge">ConsoleIO[B]</code>, given a function
+<code class="highlighter-rouge">A =&gt; B</code>. So we can write a new program, <code class="highlighter-rouge">userNameLenProgram</code>, which computes the
+number of characters in the user’s name, by writing the following snippet:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">userNameLenProgram</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="nv">userNameProgram</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">length</span><span class="o">)</span></code></pre></figure>
+
+<p>With the addition of <code class="highlighter-rouge">map</code>, the utility of <code class="highlighter-rouge">EndWith</code> has changed: we no longer
+need it to return a value from the program, because we can map whatever value
+we have to the return value. For example, if we have <code class="highlighter-rouge">ConsoleIO[String]</code>, we can
+map that to <code class="highlighter-rouge">ConsoleIO[Int]</code> by specifying a function <code class="highlighter-rouge">String =&gt; Int</code>.</p>
+
+<p>However, <code class="highlighter-rouge">EndWith</code> could still be used to construct a “pure” program that performs
+no effects (which can be composed with other programs). So it’s still useful,
+although not for its original purpose. Therefore, we can rename it to <code class="highlighter-rouge">Pure</code> as
+follows:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">then</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ReadLine</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">process</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Pure</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">A0</span>, <span class="kt">A</span><span class="o">](</span><span class="n">v</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A0</span><span class="o">],</span> <span class="n">f</span><span class="k">:</span> <span class="kt">A0</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>With these capabilities, we can build and reuse descriptions of console IO
+programs without any limitation or restrictions. All such descriptions are
+total, deterministic, and pure, and therefore benefit from the enhanced
+abilities of functional code: easier to understand, easier to test, easier to
+change safely, and easier to compose.</p>
+
+<p>Ultimately, however, we have to <em>convert</em> a description of a program into
+an actual program—something that can actually perform effects (which means indeterminism and impurity). Typically, this process is called <em>interpretation</em>.</p>
+
+<p>One can write a straightforward, if indeterministic and impure, interpreter for
+<code class="highlighter-rouge">ConsoleIO[A]</code> using code similar to the following:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">interpret</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">program</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=</span> <span class="n">program</span> <span class="k">match</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="o">,</span> <span class="n">next</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="n">line</span><span class="o">);</span> <span class="nf">interpret</span><span class="o">(</span><span class="n">next</span><span class="o">)</span>
+  <span class="k">case</span> <span class="nc">ReadLine</span><span class="o">(</span><span class="n">process</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">interpret</span><span class="o">(</span><span class="nf">process</span><span class="o">(</span><span class="nf">readLine</span><span class="o">()))</span>
+  <span class="k">case</span> <span class="nc">Pure</span><span class="o">(</span><span class="n">value</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">value</span>
+  <span class="k">case</span> <span class="nc">Map</span><span class="o">(</span><span class="n">v</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">f</span><span class="o">(</span><span class="nf">interpret</span><span class="o">(</span><span class="n">v</span><span class="o">))</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>There are better ways, but we shall not cover them there. For now, I think it’s
+interesting enough that we have both been able to describe effectful programs,
+which satisfy the requirements of totality, determinism, and purity, and which
+can be easily converted into real-world programs that perform effects.</p>
+
+<p>Note that the conversion could (and should!) happen at the end of the program.
+In Haskell, it happens outside the main function, in Haskell’s runtime. However,
+for other languages that don’t have the same level of FP machinery baked in,
+you can always effectfully interpret your programs at the entry point of your
+program.</p>
+
+<p>What this does is ensure you have maximum totality, determinism, and pureness
+throughout the vast majority of your program. At the edge, you have a nasty
+little layer that may be hard to reason about, but which faithfully translates
+the description of your program into executable effects on the substrate.</p>
+
+<h3 id="extensibility">Extensibility</h3>
+
+<p>This approach works well in a world where the set of effects is fixed. In our
+cases so far, it has been console IO — reading and writing lines to and from a
+console. However, in real world programs, the set of effects under consideration
+is far more complex and we benefit from the ability to compose programs with
+different effects into a union of all their effects.</p>
+
+<p>The first step is to recognize additional structure. In essence, we can break down
+our description of a console program into parts that produce values (<code class="highlighter-rouge">WriteLine</code>)
+or expect values (<code class="highlighter-rouge">ReadLine</code>). The rest of the program consists of pure
+boilerplate: either changing one program into another by mapping over the value
+it returns (<code class="highlighter-rouge">map</code>), or by chaining two programs together in such a fashion that
+the second depends on the value output by the first (<code class="highlighter-rouge">chain</code> / <code class="highlighter-rouge">flatMap</code>).</p>
+
+<p>If this doesn’t make any sense, study the following types for a while:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span>
+  <span class="k">def</span> <span class="nf">flatMap</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Chain</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ReadLine</span><span class="o">()</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Pure</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Chain</span><span class="o">[</span><span class="kt">A0</span>, <span class="kt">A</span><span class="o">](</span><span class="n">v</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A0</span><span class="o">],</span> <span class="n">f</span><span class="k">:</span> <span class="kt">A0</span> <span class="o">=&gt;</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">A0</span>, <span class="kt">A</span><span class="o">](</span><span class="n">v</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A0</span><span class="o">],</span> <span class="n">f</span><span class="k">:</span> <span class="kt">A0</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>This is just a different, admittedly more confusing way to represent the same
+thing. Using this new structure, our interactive program becomes a little more
+complex to express:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">userNameProgram</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nc">Chain</span><span class="o">[</span><span class="kt">Unit</span>, <span class="kt">String</span><span class="o">](</span>
+    <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">),</span>
+    <span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">Chain</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">String</span><span class="o">](</span>
+      <span class="nc">ReadLine</span><span class="o">(),</span>
+      <span class="n">name</span> <span class="k">=&gt;</span> <span class="nc">Chain</span><span class="o">[</span><span class="kt">Unit</span>, <span class="kt">String</span><span class="o">](</span>
+        <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"Hello, "</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">),</span>
+        <span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">Pure</span><span class="o">(</span><span class="n">name</span><span class="o">))))</span></code></pre></figure>
+
+<p>In this model, a <code class="highlighter-rouge">ConsoleIO</code> has the sort of generic-looking <code class="highlighter-rouge">Chain</code>, <code class="highlighter-rouge">Map</code>, and
+<code class="highlighter-rouge">Pure</code> terms, which don’t really talk about the effects of our console program,
+and then it has two additional terms, which describe those effects: the <code class="highlighter-rouge">ReadLine</code>
+and <code class="highlighter-rouge">WriteLine</code> effect, which have been simplified under this model.</p>
+
+<p>An interpreter for this model is only a bit more involved:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">interpret</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">program</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=</span> <span class="n">program</span> <span class="k">match</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="n">line</span><span class="o">);</span> <span class="o">();</span>
+  <span class="k">case</span> <span class="nc">ReadLine</span><span class="o">()</span> <span class="k">=&gt;</span> <span class="nf">readLine</span><span class="o">()</span>
+  <span class="k">case</span> <span class="nc">Pure</span><span class="o">(</span><span class="n">value</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">value</span>
+  <span class="k">case</span> <span class="nc">Map</span><span class="o">(</span><span class="n">v</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">f</span><span class="o">(</span><span class="nf">interpret</span><span class="o">(</span><span class="n">v</span><span class="o">))</span>
+  <span class="k">case</span> <span class="nc">Chain</span><span class="o">(</span><span class="n">v</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">interpret</span><span class="o">(</span><span class="nf">f</span><span class="o">(</span><span class="nf">interpret</span><span class="o">(</span><span class="n">v</span><span class="o">)))</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>This formulation may not seem all that different, but the key insight is that
+there are only 2 terms that describe effects. The rest is pure machinery. This
+machinery can be abstracted into <em>another</em> class and reused for <em>all possible
+effect types</em>. For example:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="k">this</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span>
+
+  <span class="k">def</span> <span class="nf">flatMap</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Chain</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span>, <span class="kt">B</span><span class="o">](</span><span class="k">this</span><span class="o">,</span> <span class="n">f</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Effect</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">](</span><span class="n">fa</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Pure</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">](</span><span class="n">value</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Chain</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A0</span>, <span class="kt">A</span><span class="o">](</span><span class="n">v</span><span class="k">:</span> <span class="kt">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A0</span><span class="o">],</span> <span class="n">f</span><span class="k">:</span> <span class="kt">A0</span> <span class="o">=&gt;</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A0</span>, <span class="kt">A</span><span class="o">](</span><span class="n">v</span><span class="k">:</span> <span class="kt">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A0</span><span class="o">],</span> <span class="n">f</span><span class="k">:</span> <span class="kt">A0</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span><span class="o">]</span>
+
+<span class="k">sealed</span> <span class="k">trait</span> <span class="nc">ConsoleF</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="nc">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">ConsoleF</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">ReadLine</span><span class="o">()</span> <span class="k">extends</span> <span class="nc">ConsoleF</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+
+<span class="k">type</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">ConsoleF</span>, <span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>The <code class="highlighter-rouge">Sequential</code> class doesn’t directly reference <code class="highlighter-rouge">ConsoleIO</code>, so it can be
+reused for may different effect types.</p>
+
+<p>This allows us to cleanly separate effects from computational machinery. The new
+version of the hello world program is below:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">userNameProgram</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nc">Chain</span><span class="o">[</span><span class="kt">ConsoleF</span>, <span class="kt">Unit</span>, <span class="kt">String</span><span class="o">](</span>
+    <span class="nc">Effect</span><span class="o">[</span><span class="kt">ConsoleF</span>, <span class="kt">Unit</span><span class="o">](</span><span class="nc">WriteLine</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">)),</span>
+    <span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">Chain</span><span class="o">[</span><span class="kt">ConsoleF</span>, <span class="kt">String</span>, <span class="kt">String</span><span class="o">](</span>
+      <span class="nc">Effect</span><span class="o">[</span><span class="kt">ConsoleF</span>, <span class="kt">String</span><span class="o">](</span><span class="nc">ReadLine</span><span class="o">()),</span>
+      <span class="n">name</span> <span class="k">=&gt;</span> <span class="nc">Chain</span><span class="o">[</span><span class="kt">ConsoleF</span>, <span class="kt">Unit</span>, <span class="kt">String</span><span class="o">](</span>
+        <span class="nc">Effect</span><span class="o">[</span><span class="kt">ConsoleF</span>, <span class="kt">Unit</span><span class="o">](</span><span class="nc">WriteLine</span><span class="o">(</span><span class="s">"Hello, "</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">)),</span>
+        <span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">Pure</span><span class="o">(</span><span class="n">name</span><span class="o">))))</span></code></pre></figure>
+
+<p>If we take advantage of Scala’s <code class="highlighter-rouge">for</code> notation, and add a single implicit class
+to make it easier to wrap the effects inside the <code class="highlighter-rouge">Effect</code> constructor, we end
+up with the following simplification:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">userNameProgram</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
+    <span class="k">for</span> <span class="o">{</span>
+      <span class="k">_</span>    <span class="k">&lt;-</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">).</span><span class="py">effect</span>
+      <span class="n">name</span> <span class="k">&lt;-</span> <span class="nc">ReadLine</span><span class="o">().</span><span class="py">effect</span>
+      <span class="k">_</span>    <span class="k">&lt;-</span> <span class="nc">WriteLine</span><span class="o">(</span><span class="s">"Hello, "</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">).</span><span class="py">effect</span>
+    <span class="o">}</span> <span class="k">yield</span> <span class="n">name</span></code></pre></figure>
+
+<p>This approach can be simplified even further — for example, adding helper
+functions for all the terms (such as <code class="highlighter-rouge">writeLine</code>, <code class="highlighter-rouge">readLine</code>, and so forth).
+Such helpers make the program even simpler:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">userNameProgram</span><span class="k">:</span> <span class="kt">ConsoleIO</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="k">_</span>    <span class="k">&lt;-</span> <span class="nf">writeLine</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">)</span>
+    <span class="n">name</span> <span class="k">&lt;-</span> <span class="nf">readLine</span><span class="o">()</span>
+    <span class="k">_</span>    <span class="k">&lt;-</span> <span class="nf">writeLine</span><span class="o">(</span><span class="s">"Hello, "</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">)</span>
+  <span class="o">}</span> <span class="k">yield</span> <span class="n">name</span></code></pre></figure>
+
+<p>There’s no major difference between this and an imperative program. The
+structure is roughly the same, and the syntax differs only a little. In our
+case, however, we’ve built a <em>description</em> of a program, which is total,
+deterministic, and pure, but which itself has no effects on the outside world
+(aside from utilizing memory and CPU to compute the structure).</p>
+
+<p>Moreover, with this clean separation, the actual set of effects can be extended,
+too, which means we can take two programs with different effects, and combine
+them together into a program which has the effects of both.</p>
+
+<p>Do to this, all you need is some sort of “EitherOr” term that can say it’s one
+effect (console IO) or another (file IO):</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">trait</span> <span class="nc">EitherOr</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="nc">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">IsLeft</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">](</span><span class="n">left</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">EitherOr</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">G</span>, <span class="kt">A</span><span class="o">]</span>
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">IsRight</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">G</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">](</span><span class="n">right</span><span class="k">:</span> <span class="kt">G</span><span class="o">[</span><span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">EitherOr</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">G</span>, <span class="kt">A</span><span class="o">]</span>
+
+<span class="k">type</span> <span class="kt">CompositeProgram</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Sequential</span><span class="o">[</span><span class="kt">EitherOr</span><span class="o">[</span><span class="kt">ConsoleIO</span>, <span class="kt">FileIO</span>, <span class="kt">?</span><span class="o">]</span>, <span class="kt">A</span><span class="o">]</span></code></pre></figure>
+
+<p>Interpreters can be written on this structure quite simply, and can reuse other
+interpreters for the individual effect types (console versus file).</p>
+
+<p>While we’ve developed it from first principles and without any jargon, this
+abstraction that you see is actually the legendary “Free monad”, which strikes
+terror into unsuspecting Scala developers everywhere!</p>
+
+<p>That wasn’t so bad, was it?</p>
+
+<p>Let’s take a look at a few perks of this abstraction before we wrap up the tour.</p>
+
+<h2 id="perks-of-pure">Perks of Pure</h2>
+
+<p>A common reaction to this sort of encoding of effects is, “What’s the point?”</p>
+
+<p>There are a few really practical benefits that come out of this style of describing
+effectful programs:</p>
+
+<ol>
+  <li>The types of your program describe exactly what it’s capable of doing.
+Reasoning about the code becomes tremendously simpler because there are no
+“hunks of machine code” embedded everywhere that can literally do anything.
+Instead, you precisely describe exactly what effects your program requires in a
+declarative fashion (and in more advanced versions, you describe how effects at
+one layer of abstraction translate to effects at a lower level of abstraction).</li>
+  <li>You can separate the description of a program from what it actually does. For
+example, a web program can build HTML, but that description can be interpreted to
+HTML on a DOM node, HTML on a Canvas node, or PDF on the server.</li>
+  <li>You can mock out dependencies. If your external dependencies (such as file
+systems, network systems, APIs, etc.) are all described by data structures, then
+you can easily traverse such data structures to make sure that when you feed them
+the right values, they return the right responses. Unlike mocking libraries, this
+approach is totally type-safe and doesn’t require any runtime support.</li>
+  <li>You can inspect the program as it’s being run. For example, you can add logging
+lines to print out what each instruction is about to do, and what it succeeded in
+doing. These log lines are quite detailed and can replace the need for manual logging.
+Moreover, since they can be “weaved in” during the act of composing interpreters,
+logging can truly have no overhead when it is disabled. No boilerplate and no
+overhead — sounds good to me!</li>
+  <li>Beyond just logging, you can add whole aspects to your program at runtime.
+For example, adding authentication, authorization, and auditing into a program
+by composing together interpreters (this is how my company produces a secure
+version of the <a href="https://github.com/quasar-analytics/quasar">Quasar Analytics</a>)
+project without tampering with the code base. It’s like aspect-oriented
+programming, but type safe and much more flexible!</li>
+</ol>
+
+<p>In addition to all these benefits, you get the very tangible benefits of being
+able to reason about total, pure, deterministic code, even in the presence of
+effects (at least, for the majority of your code). The benefits of that cascade
+to new development, maintaining existing code, adding tests, fixing bugs, adding
+team members, and so much more.</p>
+
+<h1 id="summary">Summary</h1>
+
+<p>I hope at least some of what we’ve covered in this post made sense. More than
+that, I hope you have a glimpse for how we can write full programs using total,
+deterministic, pure functions — and how that such an approach leads to other
+benefits, some of which we are just starting to discover.</p>
+
+<p>If nothing else, this is a call to learn more functional programming! To persevere
+in spite of the strange names, incomplete documentation, and confusing types.</p>
+
+<p>There is power in functional programming. <em>Tremendous</em> power. In my experience,
+those who take the time to learn functional programming end up becoming very
+passionate about it and never return to the old ways. Functional programming
+gives developers superpowers—the ability to write software in simpler ways
+that result in cleaner code, lower cost of maintenance, lower technical debt, easier
+composition, easier reasoning, and much more.</p>
+
+<p>If you’re intrigued, I urge you to stick with it, and if you get stuck, please
+know that myself and numerous other members of the functional programming
+community have your back. We’ll help you get to the next level, value by value,
+type by type, lambda by lambda.</p>
+
+<p>See you on the other side, partner!</p>
+:ET

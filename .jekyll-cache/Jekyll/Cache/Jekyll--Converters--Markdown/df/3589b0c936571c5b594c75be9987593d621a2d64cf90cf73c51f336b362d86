@@ -1,0 +1,157 @@
+I"�X<p>I’m one of those crazy functional programming zealots and the architect of <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>, a purely-functional effect system for Scala.</p>
+
+<p>I use the purely-functional <code class="highlighter-rouge">IO</code> in Scala to model <em>all</em> my effects—not out of any ideological commitment to functional programming, but because it makes my life easier and makes my programs faster, clearer and better.</p>
+
+<p>In general, we functional programmers prefer to use <code class="highlighter-rouge">IO</code> in Scala for all of the following reasons:</p>
+
+<ol>
+  <li><strong>Uniform Reasoning</strong></li>
+  <li><strong>Uniform Purity</strong></li>
+  <li><strong>Reified Programs</strong></li>
+  <li><strong>Performance &amp; Power</strong></li>
+  <li><strong>Flexibility</strong></li>
+  <li><strong>Industry Proven</strong></li>
+</ol>
+
+<p>In the sections that follow, I’ll explain each of these reasons.</p>
+
+<h3 id="uniform-reasoning">Uniform Reasoning</h3>
+
+<p>When you use immutable data structures like Scala’s collections, or when you rely on pattern matching and recursion to manipulate your own immutable data structures, you are able to rely on very powerful reasoning properties of functional code:</p>
+
+<ol>
+  <li><strong>Equational Reasoning</strong>. When you see an expression like <code class="highlighter-rouge">list ++ list</code>, you know the meaning of this expression by inlining the value of <code class="highlighter-rouge">list</code>, and simplifying. More generally, in any functional code, you always know what an expression means through substitution and simplification. This makes it easier to understand what your programs do, and lets you refactor safely, without worrying that you’re changing the behavior of your programs.</li>
+  <li><strong>Type-Directed Reasoning</strong>. When you see a type like <code class="highlighter-rouge">List[A] =&gt; (A =&gt; B) =&gt; List[B]</code> in functional code, you have some idea of what this function can and cannot do, merely by looking at the type. In Java, a method like <code class="highlighter-rouge">(InetAddress, InetAddress) =&gt; Boolean</code> could perform network IO (and in fact, <code class="highlighter-rouge">equals</code> on <code class="highlighter-rouge">InetAddress</code> does just this!), which means you need to thoroughly study implementations to understand what functions do.</li>
+  <li><strong>Inversion of Control</strong>. As a consequence of (1), when you see a functional expression like <code class="highlighter-rouge">list.map(f)</code>, you know that the <code class="highlighter-rouge">map</code> method cannot modify the original <code class="highlighter-rouge">list</code>. In functional code, the callee cannot change or do anything (only the caller), which means you don’t have to program defensively and you can push decisions higher in your code base, resulting in more flexible programs with less wiring.</li>
+  <li><strong>Local Reasoning</strong>. As a consequence of (1) and (2), it becomes possible to reason about quite a lot of code locally. Global understanding of the entire program is not necessary to verify local correctness, so it becomes faster and easier to make safe changes to the code.</li>
+</ol>
+
+<p>These reasoning properties only hold for functional code. You have to use different reasoning properties for non-functional code, which involve examining the implementation of methods (to see what they do, since the types don’t tell you!) and simulating their stateful execution in your head.</p>
+
+<p>Human brains aren’t particularly good at computation, and so many of us don’t like to study lots of code and simulate stateful execution in our heads just to make a small change.</p>
+
+<p>If you mix functional code and non-functional code, then you have to constantly change the way you reason about the code, depending on whether you are in a functional section, or a non-functional section. The process of constantly switching how you reason about the code is mentally exhausting and error-prone.</p>
+
+<p>Contrast this with <code class="highlighter-rouge">IO</code>, which is just an ordinary immutable value, exactly like <code class="highlighter-rouge">List</code>. All methods on <code class="highlighter-rouge">IO</code> return new <code class="highlighter-rouge">IO</code> values derived from the original. Because <code class="highlighter-rouge">IO</code> is an immutable data structure, you can model effects while still benefiting from all the reasoning properties of functional code.</p>
+
+<p>The functional approach gives you a powerful tools to understand and safely change your code, and it eliminates the need to switch back and forth between functional and non-functional reasoning.</p>
+
+<h3 id="uniform-purity">Uniform Purity</h3>
+
+<p>It’s well-known that functional code mixes poorly with non-functional code. For example, if you’re using a functional data structure like <code class="highlighter-rouge">Stream</code>, and you map over the <code class="highlighter-rouge">Stream</code>, it doesn’t actually do anything. If you place a <code class="highlighter-rouge">println</code> in the <code class="highlighter-rouge">map</code> function, you’re not going to see anything.</p>
+
+<p>It’s not obvious from the types alone where you can insert side-effects in higher-order functional code, and have them do what you want them to do, when you want them to do it.</p>
+
+<p><code class="highlighter-rouge">IO</code> lets you use effects anywhere and gives you the tools to reason about them at compile-time. If you map over a <code class="highlighter-rouge">Stream[A]</code> and convert each <code class="highlighter-rouge">A</code> to <code class="highlighter-rouge">IO[B]</code>, then you end up with a <code class="highlighter-rouge">Stream[IO[B]]</code>. This type tells you it’s now a stream of effects. In order to do anything, you have to pull those effects out and combine them together. One way to do that is to call <code class="highlighter-rouge">IO.sequence</code>, which transforms <code class="highlighter-rouge">Stream[IO[B]]</code> into <code class="highlighter-rouge">IO[Stream[B]]</code>.</p>
+
+<p>There are other ways, but no matter how you choose to transform the stream of effects into an effect, the types tell you what you must do in order to compose the effect together with the <code class="highlighter-rouge">IO</code> of your main program. You can’t do something that doesn’t make sense, because the compiler won’t let you.</p>
+
+<p>With <code class="highlighter-rouge">IO</code>, you never have to worry mixing pure and impure code, because everything is uniformly pure.</p>
+
+<h3 id="reified-programs">Reified Programs</h3>
+
+<p>In languages like Scala, procedural programs are not first-class citizens. You can’t pass a bunch of statements around from one function to another. You can’t store them inside data structures. You can’t combine them in an expression-oriented way.</p>
+
+<p>Sometimes this limitation cripples the functionality of your programs. For example, an undo/redo manager requires the ability to model effects as values, so you can store them in a stack; user-interfaces are usefully modeled as infinite trees, where different user actions correspond to different paths down the tree; and so on.</p>
+
+<p>Other times, the lack of first-class programs means poor expressivity. Expressions, like <code class="highlighter-rouge">1 + 2 * 2</code>, provide enormous power in a compact package, allowing us to easily build larger expressions from smaller ones. Yet, because procedural statements are not first-class values, we don’t have this same power with our programs.</p>
+
+<p><code class="highlighter-rouge">IO</code> cleanly solves these issues by turning our programs into first-class values. We can pass these values around, we can store them in data structures, and we can combine them in an expression-oriented way to yield other programs.</p>
+
+<p>I’ll show you a few examples with <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> to demonstrate the power of this approach.</p>
+
+<p>Suppose we want to define a combinator which retries a program until it succeeds:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">retry</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">](</span><span class="n">io</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="n">io</span> <span class="n">orElse</span> <span class="nf">retry</span><span class="o">(</span><span class="n">io</span><span class="o">)</span></code></pre></figure>
+
+<p>Or suppose we want to define a combinator to run an action forever:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">forever</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">](</span><span class="n">io</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">A</span><span class="o">])</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">Nothing</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nv">io</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="k">_</span> <span class="k">=&gt;</span> <span class="nf">forever</span><span class="o">(</span><span class="n">io</span><span class="o">))</span></code></pre></figure>
+
+<p>Or suppose we want to continuously take values from a queue and upload them to S3 (logging failures), in a separate thread:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">queue</span><span class="o">.</span><span class="py">take</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="n">uploadToS3</span> <span class="n">orElse</span> <span class="n">logFailure</span><span class="o">).</span><span class="py">forever</span><span class="o">.</span><span class="py">fork</span></code></pre></figure>
+
+<p>Or suppose we want to spin up 1000 threads to load test a web server, adding a random delay before each worker starts, and timing out the whole load test after 60 seconds, cleanly shutting down each worker:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nv">IO</span><span class="o">.</span><span class="py">parAll</span><span class="o">(</span><span class="nv">List</span><span class="o">.</span><span class="py">fill</span><span class="o">(</span><span class="mi">1000</span><span class="o">)(</span>
+  <span class="nv">randomTime</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span><span class="nv">IO</span><span class="o">.</span><span class="py">sleep</span><span class="o">).</span>
+    <span class="nf">flatMap</span><span class="o">(</span><span class="k">_</span> <span class="k">=&gt;</span>  <span class="n">doLoadTest</span><span class="o">))).</span><span class="py">timeout</span><span class="o">(</span><span class="mf">60.</span><span class="n">seconds</span><span class="o">)</span></code></pre></figure>
+
+<p>Because we can define and use combinators on our programs, we can solve very complex problems with very little code. These solutions don’t have distracting clutter or irrelevant details; their structure cleanly reflects their intended semantics.</p>
+
+<h3 id="performance--power">Performance &amp; Power</h3>
+
+<p>The final very attractive property of an effect monad like <a href="https://github.com/scalaz/scalaz-zio">ZIO</a> (and similar ones like Monix <code class="highlighter-rouge">Task</code>) is that it can provide us with a level of performance and power that cannot be obtained elsewhere.</p>
+
+<p>For example, in a <a href="https://github.com/scalaz/scalaz-zio/tree/master/benchmarks/src/main/scala/scalaz/zio">variety of benchmarks</a>, ZIO is 100x or more faster than Scala’s own <code class="highlighter-rouge">Future</code>. <code class="highlighter-rouge">Future</code> is not functional code, and it has all the drawbacks of dysfunctional code, including a different reasoning model and poor interop with pure code.</p>
+
+<p>That’s not all, though. Programs written using ZIO can be maximally “lazy”, without effort, thanks to a feature of ZIO called <em>interruption</em>. <em>Interruption</em> allows the runtime system for ZIO to interrupt any “thread” immediately and safely release resources.</p>
+
+<p>This happens automatically in many places. For example, if a web response depends on some key piece of information that’s not available, then all the other computations running in parallel will be gracefully shut down, reducing latency, network bandwidth, and CPU overhead. Similarly, if you race a bunch of computations, then as soon as one of them succeeds, the others will be terminated immediately.</p>
+
+<p>ZIO models both synchronous and asynchronous effects in a uniform way. An <code class="highlighter-rouge">IO[A]</code> represents an arbitrary composition of both synchronous and asynchronous effects. But as a user, you don’t have to care about this. If you don’t use <code class="highlighter-rouge">IO</code>, then you need to structure your code quite differently, as a combination of both statements and callbacks—every bit of code is painfully aware of whether it’s synchronous or asynchronous.</p>
+
+<p>ZIO gives you other superpowers, too:</p>
+
+<ul>
+  <li>Concurrency using <em>fibers</em> instead of threads, which are a user-land implementation of green threads, so you can have hundreds of thousands of them running at a time.</li>
+  <li>A <code class="highlighter-rouge">try</code> / <code class="highlighter-rouge">finally</code> construct called <code class="highlighter-rouge">bracket</code>, which lets you perform resource acquisition and release safely, even across asynchronous boundaries, and even in the presence of interruption or catastrophic errors.</li>
+  <li>The ability to supervise child fibers spawned by a parent, so you can take action if they crash.</li>
+  <li>The ability to automatically terminate child fibers when the parent fiber finishes.</li>
+</ul>
+
+<p>All of these capabilities rely on the functional nature of ZIO. Because <code class="highlighter-rouge">IO</code> is just an ordinary immutable value, your main function needs to call the runtime system to interpret the effectful program modeled by the data structure. This separate interpretation process allows the runtime to add very powerful features that you can’t get from a non-functional approach.</p>
+
+<p>Even if you <em>hate</em> functional programming, the benefits of purely functional programming are so compelling, you might be tempted to use a full-featured <code class="highlighter-rouge">IO</code> type anyway!</p>
+
+<h3 id="flexibility">Flexibility</h3>
+
+<p>Although I have mentioned using <code class="highlighter-rouge">IO</code> data types, and you’ll hear functional programmers talk about writing <code class="highlighter-rouge">IO</code> programs, it’s more common these days to define type classes to abstract over fine-grained effects, and to make programs polymorphic in the effect type, so long as they provide the required capabilities.</p>
+
+<p>This pattern, sometimes called <em>final tagless</em> or <em>mtl-style</em>, is very powerful. It lets you easily plug-in new implementations of type classes without changing any code.</p>
+
+<p>While there are many uses for this functionality, a powerful use case is testing systems thoroughly without having to rely on error-prone, type-unsafe mocking frameworks built on byte code rewriting and custom class-loading.</p>
+
+<h3 id="industry-proven">Industry Proven</h3>
+
+<p>Other proposed solutions for modeling effects in Scala are interesting research projects—worthy of exploration in labs, but they have not been proven in industry.</p>
+
+<p>For example, a Scala 3 proposal to use implicit function types for effect capabilities (<code class="highlighter-rouge">CanIO</code>) has a variety of drawbacks that render it Dead On Arrival:</p>
+
+<ul>
+  <li><strong>Strictly Synchronous</strong>. Implicit function types are not powerful enough to model asynchronous effects, generators, or other effects that require continuations. If you combine them with continuations, then you now have two effect systems, when you really only need one (continuations are actually powerful enough to implement everything else!). The stitched-together creation adds complexity, confusion, and cognitive and runtime overhead.</li>
+  <li><strong>Stack Suicide</strong>. Functional programming relies on recursion to perform (possibly infinite) iteration, and while <code class="highlighter-rouge">IO</code> types in Scala are built for unbounded, safe recursion, implicit function types will stack overflow on recursion, making them unsuitable for general-purpose programming.</li>
+  <li><strong>Escaped Effects</strong>. Implicit function types require a linear type system in order to guarantee that no capabilities are leaked. Because Scala does not have linear typing, it cannot guarantee that capabilities won’t leak. Monadic approaches are much simpler and don’t need linear types to avoid leaking capabilities. <em>Note: I saw an attempt to hack special case magic to the compiler to prevent leaking, but like all magic, it may interact poorly with other parts of Scala or have edge cases.</em></li>
+  <li><strong>Dysfunctional Drawbacks</strong>. Implicit function types encourage you to write non-functional code, and therefore have all the drawbacks of dysfunctional code—you cannot reason about them in the same way, they mix poorly with pure code, they don’t reify effects as values, and so on.</li>
+  <li><strong>Runaway Resources</strong>. Implicit function types do not solve the fundamental problem of how to perform <code class="highlighter-rouge">try</code> / <code class="highlighter-rouge">finally</code> across asynchronous, synchronous, and concurrent sections of code (because this requires continuations), which means they will be prone to leaking resources in exceptional cases. Modern <code class="highlighter-rouge">IO</code> types solve this easily.</li>
+  <li><strong>Monstrous Monomorphism</strong>. Unlike monadic approaches, which, via final tagless / mtl-style, permit you to write code that is polymorphic across different implementations (a mock implementation for testing, an asynchronous one for production, etc.), implicit function types are too monomorphic to achieve this degree of flexibility—unless you use them to wrap monads, in which case, what’s the point?</li>
+</ul>
+
+<p>Contrast an effect system based on implicit function types with monadic approaches based on <code class="highlighter-rouge">IO</code>, which have had 30 years of active development and have seen significant use in industry (including at my <a href="https://github.com/slamdata/quasar">last company</a>, where they were used to build large-scale analytics infrastructure).</p>
+
+<p>Indeed, monads have proven so successful at solving all of the above problems (and more!), you can now find monadic effect systems implemented in PureScript, Kotlin, Scala, Javascript, Java, C#, F#, and numerous other programming languages.</p>
+
+<p>If you want to get work done and write functional code <em>everywhere</em> (and not everyone does!), then monads are the only general-purpose, industry-proven technique available.</p>
+
+<h3 id="summary">Summary</h3>
+
+<p>In summary, functional programmers like me don’t use <code class="highlighter-rouge">IO</code> for ideological reasons. Instead, we use <code class="highlighter-rouge">IO</code> for very practical, real-world benefits.</p>
+
+<p>A lot of these benefits are about making it easier for us to refactor our programs and to know what our programs mean and what they do, without having to study their implementations and simulate their runtime behavior in our head.</p>
+
+<p>Other benefits include uniform purity, so we don’t have to worry about mixing pure and impure code; and the ability to turn our programs into first-class values, so we can pass them around, store them in data structures, and combine them in expressions—giving us insane levels of expressivity.</p>
+
+<p>Beyond all this, there is a strong business case for using an <code class="highlighter-rouge">IO</code> effect system like <a href="https://github.com/scalaz/scalaz-zio">ZIO</a>, Monix <code class="highlighter-rouge">Task</code>, or equivalent. ZIO includes features like super fast performance, a uniform interface for synchronous and asynchronous effects, lazy evaluation (<em>interruption</em>) that safely eliminates wasted resources (memory, network, CPU), parallelism, concurrency, scalability, and so much more.</p>
+
+<p>Unlike implicit function types and other academic curiosities, monadic effects are battle-tested and industry-proven. We know how they work, how they compose, and how they perform, and they are becoming pervasive across purely functional programming communities, regardless of language.</p>
+
+<p>Maybe these reasons aren’t compelling enough to get you to use <code class="highlighter-rouge">IO</code> (which is fine!). But they should <em>at least</em> be compelling enough to get you to <em>try</em> <code class="highlighter-rouge">IO</code>.</p>
+
+<p>In my experience, people are usually put off by <code class="highlighter-rouge">IO</code> not because it’s more complex or doesn’t have obvious, tangible benefits, but because it’s <em>different</em> and <em>unfamiliar</em>. With practice, unfamiliarity turns into familiarity, and many fall in love with the many benefits described in this article.</p>
+
+<p>After all, the growing armies of developers across many different communities all using monadic effects to solve everyday problems can’t all be crazy! (Or can we?)</p>
+
+<p><em>Note: Post originally inspired by a <a href="https://www.reddit.com/r/scala/comments/8ygjcq/can_someone_explain_to_me_the_benefits_of_io/">Reddit thread</a> on the benefits of IO.</em></p>
+:ET

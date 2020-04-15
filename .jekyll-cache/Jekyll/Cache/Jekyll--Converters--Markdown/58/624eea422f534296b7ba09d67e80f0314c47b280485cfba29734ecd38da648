@@ -1,0 +1,163 @@
+I"76<p>The world has changed unimaginably in the past few weeks.</p>
+
+<p>Watching a show on Netflix last night, I was struck by how everyday events now seem so completely alien: traveling between countries, eating out at restaurants, using subways without face masks.</p>
+
+<p>That was the world of a few weeks ago. A world that, with each passing day, becomes an ever-receding memory.</p>
+
+<p>Without question, the COVID-19 pandemic has radically altered the entire world at a speed no generation has ever witnessed—because the world is more interconnected now than at any time in the history of our species.</p>
+
+<p>This event will affect everyone on the planet. Including every software developer.</p>
+
+<p>In addition to heavy costs on human life and health, the pandemic will derail careers and cost many tech jobs, as the largest recession in decades begins taking form.</p>
+
+<p>In this post, I offer my tips to help developers prepare for what’s coming.</p>
+
+<h2 id="the-economic-meltdown">The Economic Meltdown</h2>
+
+<p>The economic impact of the pandemic started the instant people altered their spending habits. It intensified greatly as countries shut down flights, established curfews, enforced lockdowns, and ordered non-essential retailers to close shop.</p>
+
+<p>Unlike tech giants like Apple and Google, small-time retailers don’t have the luxury of hoarding profit that they can use to weather economic storms.</p>
+
+<p>Instead, retailers have significant liabilities, ranging from lease agreements, to employees, to purchase orders, to business loans. Due to competition, they frequently operate at close to margins, which means they are vulnerable to being crushed by negative swings of any significant magnitude or lasting duration.</p>
+
+<p>Their options for reacting to economic downturns are limited:</p>
+
+<ul>
+  <li>Cost cutting measures (principally layoffs)</li>
+  <li>Delaying payments to suppliers</li>
+  <li>Increasing debt</li>
+</ul>
+
+<p>Relying too much on any of these tactics results in a death spiral; but worse, with the growing recession, the latter two tactics are becoming less viable.</p>
+
+<p>Retailers are going to be hit hard, and many of them will <em>never</em> recover.</p>
+
+<p>National and international chains selling non-essential goods will be forced to cut costs as revenue plummets, which means some tech workers will lose their jobs.</p>
+
+<p>However, most smaller retailers don’t employ developers. Does that mean developers will be insulated from the recession?</p>
+
+<p>Not even remotely! The entire economy is interconnected. What happens to some of us affects all of us.</p>
+
+<p>Retailers leverage B2B software to run their business (inventory management, supply chain management, point-of-sale software, marketing software, and much more), because they don’t have technical resources themselves. Retailers also spend a lot of money on advertising, which sustains massive portions of the freemium tech economy—ranging from search engines to email providers to mobile games to social networks.</p>
+
+<p>Retailers pay their employees, who spend some portion of their income on consumer web apps, consumer mobile apps, and various other forms of consumption services powered by the tech industry. As these employees lose their jobs, their disposable income drops, which negatively impacts some consumer tech companies.</p>
+
+<p>Moreover, as the pandemic has raged on, the impact has gone way beyond just retailers. The travel, services, and hospitality industries have already nose-dived—without hope of a near-term recovery—and these industries count in their number not just tech companies like Airbnb, Yelp, Expedia, and many others, but also innumerable software vendors that facilitate logistics, supply chain management, resource planning, and much more.</p>
+
+<p>The disruption of retail, travel, hospitality, and services will all impact pure-play tech companies, both directly in the ways described above, and also indirectly, as second-level effects ripple throughout the interconnected economy.</p>
+
+<p>The full economic impact of the pandemic is hard to predict, but it’s manifestly clear that these changes will lead to the loss of many developer jobs.</p>
+
+<h2 id="a-survival-strategy">A Survival Strategy</h2>
+
+<p>As others have discussed, one can minimize the impact of a recession by maximizing one’s <em>personal runway</em>, which involves cost-cutting measures (including, potentially, re-location to areas with a lower cost of living).</p>
+
+<p>Beyond economic preparation, however, I encourage developers to take an active role in their career development, using one or more of the following tactics:</p>
+
+<ol>
+  <li><strong>Orient</strong>. Develop a model of the effects of the pandemic on hiring and layoffs in different industries.</li>
+  <li><strong>Focus</strong>. Don’t let distraction become a liability during the crisis, but rather, turn focus into an asset.</li>
+  <li><strong>Adapt</strong>. Modify your unique value proposition as a software engineer so that you become more valuable to your employer.</li>
+  <li><strong>Improve</strong>. Improve in-demand knowledge and skills in an effort to differentiate yourself from others.</li>
+  <li><strong>Innovate</strong>. If you are so inclined, use your skills as a software developer to help the world through this time.</li>
+  <li><strong>Don’t Panic</strong>. Life is full of setbacks, but where there is life, there is hope.</li>
+</ol>
+
+<p>I’ll expand on these recommendations in the sections that follow.</p>
+
+<h2 id="orient">Orient</h2>
+
+<p>The pandemic will affect some industries more than others, and your own career risk partially depends on what type of company you work for and what kind of project you work on.</p>
+
+<p>Some likely candidates for early downsizing:</p>
+
+<ul>
+  <li>Products targeting non-essential box-store retail, restaurant, travel, and hospitality industries;</li>
+  <li>Startups without exceptional metrics;</li>
+  <li>Consulting, outsourcing, and development shops that target primarily non-tech companies (excluding the government);</li>
+  <li>Expansion and speculative products and projects inside every industry; if there aren’t existing customers driving significant revenue, or internal users driving significant value, it’s a candidate for cancellation.</li>
+</ul>
+
+<p>Some industries will actually benefit from the pandemic, and could enjoy accelerated hiring, even while companies in other industries are forced to downsize.</p>
+
+<p>The following types of companies should benefit:</p>
+
+<ul>
+  <li>Companies enabling individuals and companies to shift more day-to-day activities to the cloud. For example, companies that facilitate remote collaboration, online retail, fulfillment, delivery, socializing, and so forth.</li>
+  <li>Low-cost entertainment, such as games and streaming films and shows.</li>
+  <li>Low-cost retailers of essential goods, such as groceries, medicine, household consumables.</li>
+  <li>Personal health and fitness materials and supplies, and survival goods.</li>
+</ul>
+
+<p>Though some companies will be downsizing, others will be hiring more developers, providing a source of new jobs to those who have the right knowledge, skills, and experience.</p>
+
+<h2 id="focus">Focus</h2>
+
+<p>The pandemic has thrust a justly distracted public into remote work environments that they are not properly equipped to deal with, resulting in lower productivity.</p>
+
+<p>Further affecting productivity is continuous media coverage of the pandemic, including real-time reports on infection rates, early research into treatments and vaccine developments, celebrity hospitalizations and deaths, and endless memes.</p>
+
+<p>It’s easy to spend hours a day keeping up with what’s going on. While some information is essential, because it can lead to actions that help you improve or save lives, consuming too much news can impact your work productivity.</p>
+
+<p>In hard times, managers are sometimes asked to rank employees in order of least essential to most essential. These “kill lists” make it easier to cut costs quickly and precisely in response to slashed budgets and cancelled projects.</p>
+
+<p>When your company does layoffs—and for many companies, it will be <em>when</em>, not <em>if</em>—you probably don’t want to be at the top of the kill list, especially in a recession.</p>
+
+<p>So stay as informed as you need to be, but also stay focused on your career.</p>
+
+<h2 id="adapt">Adapt</h2>
+
+<p>Hard times change people and they change companies—everyone becomes more risk averse, less open, and more fiscally conservative.</p>
+
+<p>While companies <em>always</em> care about the bottom line, a recession of unknown duration and magnitude means there is intense pressure to <em>do more with fewer resources</em>.</p>
+
+<p>Developers who deeply internalize this imperative and adapt will have more successful careers than those that don’t.</p>
+
+<p>Here are some tangible ways you can adapt to uncertain times:</p>
+
+<ul>
+  <li><strong>Minimize reinvention</strong>. Many developers love to build rather than reuse, partially because building results in a better solution, and partially because reusing existing solutions is painful due to learning curves and edge cases. Yet, while a booming economy funded extreme reinvention (some companies invented databases, programming languages, query languages, and far more!), a recession demands a frugal use of developer time, and one way to do that is to reuse as much software as possible. <em>Become good at figuring out how to reuse and adapt existing software for new use cases.</em></li>
+  <li><strong>Maximize productivity</strong>. Frameworks that are closer to a business problem can allow higher productivity than a random assortment of libraries; cutting the right corners can accelerate time-to-feedback; proven approaches can be less risky than experimental approaches; static type systems and property checking can reduce the need for voluminous hand-written automated tests. <em>Draw from your strengths to help you and your team deliver more value to the business in less time.</em></li>
+  <li><strong>Minimize expenses</strong>. Cloud infrastructure and costly web services can add up to hundreds of thousands or millions, even for relatively small companies. There will be increasing pressure to minimize these costs, and to replace high-priced services with those that have low total cost of ownership. <em>Be proactive about these cost-cutting measures, looking for ways to save your company money.</em></li>
+</ul>
+
+<h2 id="improve">Improve</h2>
+
+<p>Even in the best of times, the tech industry changes rapidly. Languages, frameworks, libraries, and technologies all rise and fall.</p>
+
+<p>Beyond constant technological change, the relevancy of every developer’s knowledge and skills changes continuously. Some knowledge and skills that used to be in-demand (such as debugging ActiveX components running in Internet Explorer) become irrelevant.</p>
+
+<p>Recessions are hard on everyone, but they are especially hard on developers who stagnate.</p>
+
+<p>In times like these, push yourself to learn more. Shore up your weak skills. And even if you’re lucky enough to have a great employer, don’t count on your employer to invest in your education, because educational budgets won’t last long in a recession.</p>
+
+<h2 id="innovate">Innovate</h2>
+
+<p>Necessity, as they say, is the mother of invention, and social and economic challenges open new doors to innovation.</p>
+
+<p>For the very entrepreneurial, as society attempts to survive the pandemic, and then rebuild around new values and modes of interaction, there will be countless opportunities for innovation at every level.</p>
+
+<p>In the early days, this includes helping individuals be successful working and living in the cloud, and dealing with the devastation wrought by growing unemployment and the recession; and helping smaller businesses transition into a cloud-first mindset.</p>
+
+<p>Software developers are makers, and as makers, we have the ability to create software that is part of the solution to these problems.</p>
+
+<p>Beyond just opportunities for product-level innovation, there will be opportunities in the world of open source. There will be demand for new kinds of technologies, and more productive solutions to pervasive and resource-consuming pains.</p>
+
+<h2 id="dont-panic">Don’t Panic</h2>
+
+<p>No matter how much any of us prepares, there are no guarantees in life—other than death and taxes.</p>
+
+<p>If you do lose your job, try not to panic: a lot of changes are coming in the world, but for the foreseeable future, the need for skilled software developers remains constant.</p>
+
+<p>If you pay attention to demand, and are willing and able to adjust your knowledge and skills in response to the changing environment, you <em>will</em> find a job.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>The pandemic has changed the world forever. These changes are rapidly spreading throughout the interconnected global economy, and while early ripples of a growing recession can be felt now, the worst is still ahead.</p>
+
+<p>Many startups will not survive, and many developers across even some large tech companies will be laid off—not all at once, but in waves, as financial stress propagates from sector to sector, industry to industry, company to company.</p>
+
+<p>Aside from being frugal, developers can prepare for these changes by being aware of the global economic picture; by staying focused; by adapting to times of scarcity; by improving their knowledge and skills; and, if so inclined, by innovating in areas that they know well.</p>
+
+<p>Above all, panicking won’t help anyone. Stay calm. It’s going to be painful, and it’s going to take a while, but eventually the economy <em>will</em> recover.</p>
+:ET

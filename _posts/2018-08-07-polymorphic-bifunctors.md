@@ -6,7 +6,7 @@ category:     articles
 tags:         [zio, bifunctor, fp, functional programming, scala, monads, effects, reactive, scalaz, cats, tagless-final, finally tagless, mtl]
 ---
 
-Since launching [ZIO](http://github.com/scalaz/scalaz-zio/) a few months ago (formerly known as the _Scalaz 8 IO monad_), one of the most common questions I get is how to use its `IO` type with [*tagless-final*](https://blog.scalac.io/exploring-tagless-final.html).
+Since launching [ZIO](https://github.com/scalaz/scalaz-zio/) a few months ago (formerly known as the _Scalaz 8 IO monad_), one of the most common questions I get is how to use its `IO` type with [*tagless-final*](https://blog.scalac.io/exploring-tagless-final.html).
 
 In this post, I'll explain how ZIO works with tagless-final, and when it makes sense to modify your type classes to take advantage of the new power provided by ZIO for modeling typed errors.
 
@@ -14,9 +14,9 @@ In this post, I'll explain how ZIO works with tagless-final, and when it makes s
 
 In ZIO, a value of type `IO[E, A]` is an immutable value that describes an effectful program. The program may fail with some error of type `E`, or produce a value of type `A`.
 
-As I've [previously argued](http://degoes.net/articles/fpoop-vs-fp), this purely functional model has many practical benefits that make it [extremely attractive](http://degoes.net/articles/fpoop-vs-fp), even for developers who don't care about functional programming.
+As I've [previously argued](https://degoes.net/articles/fpoop-vs-fp), this purely functional model has many practical benefits that make it [extremely attractive](https://degoes.net/articles/fpoop-vs-fp), even for developers who don't care about functional programming.
 
-Other popular Scala libraries like [Monix](https://github.com/monix/monix) also have effect types, but ZIO is the only one that provides [typed errors](http://degoes.net/articles/bifunctor-io). The other effect types fix the error type to `Throwable`, which means it is not possible to constrain if and how effects may fail at compile-time, leading to bugs and poor reasoning properties.
+Other popular Scala libraries like [Monix](https://github.com/monix/monix) also have effect types, but ZIO is the only one that provides [typed errors](https://degoes.net/articles/bifunctor-io). The other effect types fix the error type to `Throwable`, which means it is not possible to constrain if and how effects may fail at compile-time, leading to bugs and poor reasoning properties.
 
 This difference in power means that the *kinds* of `IO` and other effect types differ:
 

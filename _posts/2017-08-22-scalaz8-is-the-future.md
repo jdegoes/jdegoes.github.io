@@ -14,11 +14,11 @@ The JVM was built for Java, which is object-oriented, not functional, and Scala 
 
 Some things that are easy in other programming languages, like Monad Transformers Library or profunctor optics, are downright tricky in Scala. Doing full-blown functional programming in Scala really pushes the boundaries of what is possible with the language and the JVM platform.
 
-Thankfully, since at least 2010, the Scala ecosystem has had libraries to make functional programming in Scala easier and more practical. The most mature library with [highest adoption](https://www.jetbrains.com/research/devecosystem-2017/scala/) is [Scalaz](http://github.com/scalaz/scalaz).
+Thankfully, since at least 2010, the Scala ecosystem has had libraries to make functional programming in Scala easier and more practical. The most mature library with [highest adoption](https://www.jetbrains.com/research/devecosystem-2017/scala/) is [Scalaz](https://github.com/scalaz/scalaz).
 
 Scalaz pioneered many of techniques that enable purely functional programming on the JVM, such as trampolined monadic computation. It has a rich history of delivering the most principled approach to problems facing real-world functional programmers.
 
-These, among other reasons, are why my company, [SlamData](http://slamdata.com) chose Scalaz to power the [Quasar analytics compiler](http://github.com/quasar-analytics/quasar/), which is easily the largest purely functional Scala open source application in existence.
+These, among other reasons, are why my company, [SlamData](https://slamdata.com) chose Scalaz to power the [Quasar analytics compiler](https://github.com/quasar-analytics/quasar/), which is easily the largest purely functional Scala open source application in existence.
 
 The current version of Scalaz 7, while the most feature-complete and widely deployed library for functional programming in Scala, is also showing signs of age. We now know better ways to model some things (like type classes and lenses), and several new abstractions have proven themselves enough to become viable for mainstream use.
 
@@ -233,10 +233,10 @@ A unified, batteries-included architecture, a commitment to principled design, a
 
 Many more Scalaz resources are currently in the works:
 
- * I'm [unveiling Scalaz 8's effect system](http://sched.co/BLvT) at [Scale By The Bay](http://sched.co/BLvT). This is one of only about 2 conferences I speak at each year, so if you're around, don't miss it!
- * [Sam Halliday](http://twitter.com/fommil) is writing a book on functional programming for Scalaz, entitled [Functional Programming in Scala for Mortals](https://leanpub.com/fp-scala-mortals). If you're confused by functional programming in Scala or by Scalaz, you'll soon have a fantastic resource to help you become a proficient at FP with the leading Scala FP library.
+ * I'm [unveiling Scalaz 8's effect system](https://sched.co/BLvT) at [Scale By The Bay](https://sched.co/BLvT). This is one of only about 2 conferences I speak at each year, so if you're around, don't miss it!
+ * [Sam Halliday](https://twitter.com/fommil) is writing a book on functional programming for Scalaz, entitled [Functional Programming in Scala for Mortals](https://leanpub.com/fp-scala-mortals). If you're confused by functional programming in Scala or by Scalaz, you'll soon have a fantastic resource to help you become a proficient at FP with the leading Scala FP library.
  * I'll be revamping my popular workshop on *Advanced Functional Programming in Scala*. The new workshop will be titled, *Mastering Functional Programming in Scala with Scalaz 8*, and will help individuals and teams quickly come up to speed on leveraging Scalaz 8 to write robust, performant, real-world software using pure FP.
- * My current plan is to try to get my company's [Matryoshka](http://github.com/slamdata/matryoshka) library folded into Scalaz 8, ensuring that Scalaz has a production-ready package for recursion schemes, which can be tightly integrated into the rest of the standard library (data structures and lenses).
+ * My current plan is to try to get my company's [Matryoshka](https://github.com/slamdata/matryoshka) library folded into Scalaz 8, ensuring that Scalaz has a production-ready package for recursion schemes, which can be tightly integrated into the rest of the standard library (data structures and lenses).
 
 If you're not already doing FP in Scala, there's never been a better time to start learning Scalaz. You'll be well-supported and in great company!
 

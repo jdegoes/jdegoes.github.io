@@ -6,7 +6,7 @@ category:     articles
 tags:         [fp, functional programming, type classes, scala, monads, lenses, effects, reactive, scalaz, cats, mtl, monad transformers, zio, reader, environmental effects]
 ---
 
-Cats Effect has become the ["Reactive Streams"](http://www.reactive-streams.org) of the functional Scala world, enabling a diverse ecosystem of libraries to work together.
+Cats Effect has become the ["Reactive Streams"](https://www.reactive-streams.org) of the functional Scala world, enabling a diverse ecosystem of libraries to work together.
 
 Many great libraries like http4s, FS2, and Doobie are built on the Cats Effect type classes, and effect libraries like [ZIO](https://github.com/scalaz/scalaz-zio) and Monix provide instances of these type classes for their effect types. 
 

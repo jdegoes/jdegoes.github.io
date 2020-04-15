@@ -1,0 +1,203 @@
+I"�m<p>Scala developers have more choices than ever to represent effectful computation. Broadly speaking, these choices are divided into three categories: <em>non-functional</em>, <em>mostly functional</em>, and <em>purely functional</em>.</p>
+
+<p>The <em>non-functional</em> solutions focus on concurrency, and are difficult to use in functional programs because they violate referential transparency:</p>
+
+<ul>
+  <li><a href="https://www.scala-lang.org/api/current/scala/concurrent/Future.html">scala.concurrent.Future</a></li>
+  <li><a href="https://www.scala-lang.org/api/current/scala/concurrent/Promise.html">scala.concurrent.Promise</a></li>
+  <li><a href="https://twitter.github.io/finagle/guide/Futures.html">com.twitter.util.Future</a></li>
+</ul>
+
+<p>The <em>mostly functional</em> solutions have a core that can be used in functional programs, but they do expose features that aren’t purely functional.</p>
+
+<p>In order of increasing purity:</p>
+
+<ul>
+  <li><a href="https://monix.io/docs/2x/eval/task.html">monix.eval.Task</a></li>
+  <li><a href="https://monix.io/docs/2x/eval/coeval.html">monix.eval.Coeval</a></li>
+  <li><a href="https://github.com/scalaz/scalaz/blob/series/7.3.x/concurrent/src/main/scala/scalaz/concurrent/Task.scala">scalaz.concurrent.Task</a></li>
+  <li><a href="https://github.com/typelevel/cats-effect/blob/master/core/shared/src/main/scala/cats/effect/IO.scala">cats.effect.IO</a></li>
+  <li><a href="https://github.com/scalaz/scalaz/blob/series/7.3.x/effect/src/main/scala/scalaz/effect/IO.scala">scalaz.effect.IO</a> (7.x)</li>
+</ul>
+
+<p>Solutions in the <em>purely functional</em> category expose only purely functional interfaces, including <a href="https://degoes.net/articles/scalaz8-is-the-future">Scalaz 8’s IO</a>, which has no impure methods on <code class="highlighter-rouge">IO</code>, no impure execution contexts (implicit or otherwise), and no side-effecting combinators.</p>
+
+<p>There are <a href="https://github.com/alexknvl/sio/blob/master/core/src/main/scala/sio/core/IO.scala">lots</a> <a href="https://github.com/aloiscochard/scato/tree/master/io/src/main/scala">of</a> <a href="https://github.com/tel/scala-tk">other</a> <a href="https://github.com/ThoughtWorksInc/future.scala">designs</a> in the wild at various stages of development and production usage.</p>
+
+<p>While all these choices are no doubt confusing for Scala developers, I’m a big fan of competing solutions. They quickly explore the landscape of design alternatives. In the end, the “best” solutions end up winning, usually for several different and conflicting definitions of <em>best</em>.</p>
+
+<p>While the competition is undoubtedly beneficial, I recently encountered what I consider to be a myth in the Scala community: that the proliferation of effect types is <em>necessary</em>, because unlike Haskell, Scala programs have needs that are <em>too diverse</em> to be met by a single <code class="highlighter-rouge">IO</code> type.</p>
+
+<p>Today, I’m going to debunk this myth once and for all.</p>
+
+<h2 id="one-io-per-program">One IO per Program</h2>
+
+<p>It’s easy enough to show that for any given purely functional Scala program, it only makes sense to use a <em>single</em> effect monad.</p>
+
+<p>The reason for this is that a purely functional program will necessarily be expressed as a single value of type <code class="highlighter-rouge">F[Unit]</code>, where <code class="highlighter-rouge">F[_]</code> is the effect monad of the program (such as <code class="highlighter-rouge">Future</code> or <code class="highlighter-rouge">Task</code> or <code class="highlighter-rouge">IO</code>).</p>
+
+<p>Conventionally, we call this value <code class="highlighter-rouge">main</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">MyApp</span> <span class="k">extends</span> <span class="nc">SafeApp</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">main</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">...</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Purely functional programs are expressed in terms of <em>composition</em>. Smaller fragments are composed to form larger fragments. For example, if we have some fragment <code class="highlighter-rouge">F[A]</code>, representing a computation producing some value <code class="highlighter-rouge">A</code>, and another fragment <code class="highlighter-rouge">F[B]</code>, then we can compose them in various ways to yield another fragment <code class="highlighter-rouge">F[C]</code>, producing another value.</p>
+
+<p>But if we have one fragment expressed as <code class="highlighter-rouge">F[A]</code>, and another expressed as <code class="highlighter-rouge">G[B]</code>, where both <code class="highlighter-rouge">F[_]</code> and <code class="highlighter-rouge">G[_]</code> are <em>different</em> effect monads, then we have a problem: they don’t compose! We can’t take a <code class="highlighter-rouge">Task</code> and a <code class="highlighter-rouge">Future</code> and compose them together, for example.</p>
+
+<p>In order to compose two effect monads, we’d have to convert the <code class="highlighter-rouge">F[_]</code> to the <code class="highlighter-rouge">G[_]</code>, or the <code class="highlighter-rouge">G[_]</code> to the <code class="highlighter-rouge">F[_]</code>. But if we can convert from one to the other, we have proven the second is at least as powerful as the first, <em>so there is no reason to use both</em>. We only need the more powerful effect monad.</p>
+
+<p>Using two different effect monads, and then converting from one to another, just increases overhead, because many more structures will be allocated and many more virtual methods will be invoked. So not only is there <em>no reason</em> to use two effect monads in the same program, but there are (performance) reasons to <em>not</em> do so!</p>
+
+<p>This is why purely functional Scala programs have only <em>one</em> base effect type.</p>
+
+<h2 id="one-io-per-ecosystem">One IO per Ecosystem</h2>
+
+<p>Hopefully by now, you’re convinced that any given Scala application needs only one effect monad such as <code class="highlighter-rouge">Task</code> or <code class="highlighter-rouge">IO</code>. However, you <em>might</em> still think that different applications might require <em>different</em> effect monads that provide fundamentally different feature sets.</p>
+
+<p>For example, maybe Twitter’s “effect monad” needs cancelation, to avoid wasting network resources, so they have to use a different <code class="highlighter-rouge">Future</code> than other applications.</p>
+
+<p>This myth rests on the (false) premise that different types of applications require fundamentally distinct capabilities that cannot be provided in a single effect monad.</p>
+
+<p>To dispel it, I will now present the <em>ultimate</em> <code class="highlighter-rouge">IO</code> monad, which can provide <em>any capability</em> required by <em>any application</em> whatsoever.</p>
+
+<p>Brace yourself for the overwhelming torrent of Scala code:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">sealed</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">IO</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="k">val</span> <span class="nv">unsafePerformIO</span><span class="k">:</span> <span class="o">()</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">ab</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+    <span class="k">new</span> <span class="nc">IO</span><span class="o">(()</span> <span class="k">=&gt;</span> <span class="nf">ab</span><span class="o">(</span><span class="nf">unsafePerformIO</span><span class="o">()))</span>
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">flatMap</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">afb</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">IO</span><span class="o">[</span><span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+    <span class="k">new</span> <span class="nc">IO</span><span class="o">(()</span> <span class="k">=&gt;</span> <span class="nf">afb</span><span class="o">(</span><span class="nf">unsafePerformIO</span><span class="o">()).</span><span class="py">unsafePerformIO</span><span class="o">())</span>
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">attempt</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Either</span><span class="o">[</span><span class="kt">Throwable</span>, <span class="kt">A</span><span class="o">]]</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">IO</span><span class="o">(()</span> <span class="k">=&gt;</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="nc">Right</span><span class="o">(</span><span class="nf">unsafePerformIO</span><span class="o">())</span>
+    <span class="k">catch</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="n">t</span> <span class="k">:</span> <span class="kt">Throwable</span> <span class="o">=&gt;</span> <span class="nc">Left</span><span class="o">(</span><span class="n">t</span><span class="o">)</span>
+    <span class="o">}</span>
+  <span class="o">})</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">IO</span> <span class="o">{</span>
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">apply</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">a</span><span class="k">:</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">IO</span><span class="o">(()</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">)</span>
+
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">fail</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">t</span><span class="k">:</span> <span class="kt">Throwable</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">IO</span><span class="o">(()</span> <span class="k">=&gt;</span> <span class="k">throw</span> <span class="n">t</span><span class="o">)</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>That wasn’t so bad, was it?</p>
+
+<p>This <code class="highlighter-rouge">IO</code> monad is defined in just 17 lines of extravagantly spacious code. It can do anything that <em>any</em> other effect monad in the entire Scala ecosystem can do!</p>
+
+<p>To show this, it suffices to point out two facts:</p>
+
+<ol>
+  <li>All other effect monads must be implemented in terms of the imperative subset of Scala programming (that is, there isn’t a <em>different</em> language available to implement Scala effect monads; it’s just the same old Scala!).</li>
+  <li>All imperative subsets of Scala code can be encoded with the above <code class="highlighter-rouge">IO</code> monad.</li>
+</ol>
+
+<p>The first point is obvious. The second point can be seen by showing how a generic snippet of imperative Scala can be translated into the above <code class="highlighter-rouge">IO</code> monad.</p>
+
+<p>Let’s say we have the following snippet of imperative Scala, which consists of imperative statements <code class="highlighter-rouge">v_1 = &lt;e_1&gt;</code> to <code class="highlighter-rouge">v_n = &lt;e_n&gt;</code>, each of which do impure, effectful computation by executing an arbitrary chunk of Scala code and storing the result in a variable:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">v_1</span> <span class="k">=</span> <span class="o">&lt;</span><span class="n">e_1</span><span class="o">&gt;</span>
+<span class="k">val</span> <span class="nv">v_2</span> <span class="k">=</span> <span class="o">&lt;</span><span class="n">e_2</span><span class="o">&gt;</span>
+<span class="o">...</span>
+<span class="k">val</span> <span class="nv">v_n</span> <span class="k">=</span> <span class="o">&lt;</span><span class="n">e_n</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">e_ret</span><span class="o">&gt;</span></code></pre></figure>
+
+<p>In general, subsequent expressions will depend on variables introduced by prior expressions. For example, here’s a simple console program that demonstrates this sequential dependency:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="nv">v_1</span> <span class="k">=</span> <span class="nv">scala</span><span class="o">.</span><span class="py">Console</span><span class="o">.</span><span class="py">println</span><span class="o">(</span><span class="s">"What is your name?"</span><span class="o">)</span>
+<span class="k">val</span> <span class="nv">v_2</span> <span class="k">=</span> <span class="nv">scala</span><span class="o">.</span><span class="py">io</span><span class="o">.</span><span class="py">StdIn</span><span class="o">.</span><span class="py">readLine</span><span class="o">()</span>
+<span class="k">val</span> <span class="nv">v_3</span> <span class="k">=</span> <span class="nv">scala</span><span class="o">.</span><span class="py">Console</span><span class="o">.</span><span class="py">println</span><span class="o">(</span><span class="s">"Hello, "</span> <span class="o">+</span> <span class="n">v_2</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">)</span>
+<span class="o">()</span></code></pre></figure>
+
+<p>Notice how the expression defining <code class="highlighter-rouge">v_3</code> refers to <code class="highlighter-rouge">v_2</code>. Now, if some expression <code class="highlighter-rouge">&lt;e_i&gt;</code> evaluates to <code class="highlighter-rouge">Unit</code> (such as the first expression above), its corresponding variable assignment in statement <code class="highlighter-rouge">v_i</code> can be ignored.</p>
+
+<p>With a little effort, you should be able to convince yourself that <em>all</em> imperative Scala code can be written in this form. In turn, any imperative snippet in this form can be translated into the above <code class="highlighter-rouge">IO</code> as follows:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_1</span><span class="o">&gt;).</span><span class="py">flatMap</span><span class="o">(</span><span class="n">v1</span> <span class="k">=&gt;</span>
+  <span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_2</span><span class="o">&gt;).</span><span class="py">flatMap</span><span class="o">(</span><span class="n">v2</span> <span class="k">=&gt;</span>
+    <span class="o">...</span>
+    <span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_n</span><span class="o">&gt;).</span><span class="py">flatMap</span><span class="o">(</span><span class="n">v3</span> <span class="k">=&gt;</span>
+      <span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_ret</span><span class="o">&gt;)</span>
+    <span class="o">)))</span></code></pre></figure>
+
+<p>Of course, Scala provides <code class="highlighter-rouge">for</code> comprehension syntax for code structured in this fashion (otherwise known as <em>do notation</em>), so we can write this as simply:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">for</span> <span class="o">{</span>
+  <span class="n">v_1</span> <span class="k">&lt;-</span> <span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_1</span><span class="o">&gt;)</span>
+  <span class="n">v_2</span> <span class="k">&lt;-</span> <span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_2</span><span class="o">&gt;)</span>
+  <span class="o">...</span>
+  <span class="n">v_n</span> <span class="k">&lt;-</span> <span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_n</span><span class="o">&gt;)</span>
+  <span class="n">v_r</span> <span class="k">&lt;-</span> <span class="nc">IO</span><span class="o">(&lt;</span><span class="n">e_ret</span><span class="o">&gt;)</span>
+<span class="o">}</span> <span class="k">yield</span> <span class="n">v_r</span></code></pre></figure>
+
+<p>This structure captures <em>all the effects</em> of the original imperative snippet, which can be recovered by running the <code class="highlighter-rouge">unsafePerformIO()</code> method on the final <code class="highlighter-rouge">IO</code> value.</p>
+
+<p>Some people have claimed that, for example, a synchronous <code class="highlighter-rouge">IO</code> like this one doesn’t provide asynchronicity, so we need a <code class="highlighter-rouge">Future</code> for asynchronous applications.</p>
+
+<p>That’s completely false, as I’ve demonstrated here. In fact, for this particular myth, it’s useful to show a simple but powerful encoding for asynchronous effects (technically a specialization of the continuation monad <code class="highlighter-rouge">ContT</code>).</p>
+
+<p>We can define a wrapper for asynchronous <code class="highlighter-rouge">IO</code> computations like so:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">Try</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Either</span><span class="o">[</span><span class="kt">Throwable</span>, <span class="kt">A</span><span class="o">]</span>
+
+<span class="k">final</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Async</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">register</span><span class="k">:</span> <span class="o">(</span><span class="kt">Try</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">=&gt;</span> <span class="nc">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">])</span> <span class="k">=&gt;</span> <span class="nc">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">])</span> <span class="o">{</span> <span class="n">self</span> <span class="k">=&gt;</span>
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">ab</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)</span><span class="k">:</span> <span class="kt">Async</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Async</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="o">{</span> <span class="n">callback</span> <span class="k">=&gt;</span>
+    <span class="nv">self</span><span class="o">.</span><span class="py">register</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="nc">Left</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">callback</span><span class="o">(</span><span class="nc">Left</span><span class="o">(</span><span class="n">e</span><span class="o">))</span>
+      <span class="k">case</span> <span class="nc">Right</span><span class="o">(</span><span class="n">a</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">callback</span><span class="o">(</span><span class="nc">Right</span><span class="o">(</span><span class="nf">ab</span><span class="o">(</span><span class="n">a</span><span class="o">)))</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">flatMap</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">afb</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">Async</span><span class="o">[</span><span class="kt">B</span><span class="o">])</span><span class="k">:</span> <span class="kt">Async</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Async</span><span class="o">[</span><span class="kt">B</span><span class="o">]</span> <span class="o">{</span> <span class="n">callback</span> <span class="k">=&gt;</span>
+    <span class="nv">self</span><span class="o">.</span><span class="py">register</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="nc">Left</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">callback</span><span class="o">(</span><span class="nc">Left</span><span class="o">(</span><span class="n">e</span><span class="o">))</span>
+      <span class="k">case</span> <span class="nc">Right</span><span class="o">(</span><span class="n">a</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nf">afb</span><span class="o">(</span><span class="n">a</span><span class="o">).</span><span class="py">register</span><span class="o">(</span><span class="n">callback</span><span class="o">)</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">Async</span> <span class="o">{</span>
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">apply</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">a</span><span class="k">:</span> <span class="o">=&gt;</span> <span class="n">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">Async</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Async</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span> <span class="n">callback</span> <span class="k">=&gt;</span>
+    <span class="nf">callback</span><span class="o">(</span><span class="nc">Right</span><span class="o">(</span><span class="n">a</span><span class="o">))</span>
+  <span class="o">}</span>
+
+  <span class="k">final</span> <span class="k">def</span> <span class="nf">fail</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">e</span><span class="k">:</span> <span class="kt">Throwable</span><span class="o">)</span><span class="k">:</span> <span class="kt">Async</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Async</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span> <span class="o">{</span> <span class="n">callback</span> <span class="k">=&gt;</span>
+    <span class="nf">callback</span><span class="o">(</span><span class="nc">Left</span><span class="o">(</span><span class="n">e</span><span class="o">))</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>There you have it, an asynchronous monad in about 20 lines of code, built on the <code class="highlighter-rouge">IO</code> monad previously introduced. It doesn’t matter <em>what</em> features you want to add to your effect monad, they can <em>all</em> be easily expressed in terms of the above <code class="highlighter-rouge">IO</code>.</p>
+
+<p>In other words, no effect monad, no matter who wrote it, and no matter what it does, is more expressive than the 17 LOC effect monad introduced in this post!</p>
+
+<h2 id="why-scalaz-8-io">Why Scalaz 8 IO?</h2>
+
+<p>Some may wonder if the 17 LOC monad I introduced in this post is as expressive as any other, why I am <a href="https://degoes.net/articles/scalaz8-is-the-future">spending additional time developing Scalaz 8 IO</a>.</p>
+
+<p>The answer is simple: although the <code class="highlighter-rouge">IO</code> monad introduced in this post is as <em>expressive</em> as any other, expressing features common to many Scala applications would introduce many additional allocations and virtual method invocations.</p>
+
+<p>The <code class="highlighter-rouge">IO</code> monad I’m developing for Scalaz 8 bakes in additional functionality, not because it’s necessary, but because doing so <em>greatly</em> increases performance.</p>
+
+<p>Most Scala applications have to constantly deal with three real world concerns ignored by toy and pedagogical effect monads:</p>
+
+<ul>
+  <li><strong>Asynchronous Computation</strong></li>
+  <li><strong>Concurrent Computation</strong></li>
+  <li><strong>Resource Management</strong></li>
+</ul>
+
+<p>By providing clean, composable, and built-in semantics for dealing with these real world concerns, Scalaz 8 <code class="highlighter-rouge">IO</code> will provide the critical combination of performance, ease-of-use, and principled design necessary to succeed in a crowded marketplace of non-functional, semi-functional, prototype, and toy effect monads.</p>
+
+<p>That’s the goal, anyway. The Scala community will decide if it’s successful.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>When it comes to modeling effectful computation, the Scala community has more choices than ever—from <code class="highlighter-rouge">Future</code> monads baked into Scala, to <code class="highlighter-rouge">Task</code> and <code class="highlighter-rouge">IO</code> monads developed by the community, with varying degrees of purity and safeness.</p>
+
+<p>While these competing solutions are useful to explore the landscape of possible designs, it’s critical to remember that programs only <em>need</em> one effect monad. More than that, because every effect monad is <em>as expressive</em> as any other, there’s no reason why we need more than <em>one</em> effect monad for the entire Scala community.</p>
+
+<p>The only reason to specialize an <code class="highlighter-rouge">IO</code> monad more than the toy example provided in this post is to improve performance. Real world concerns for nearly all Scala programs include asynchronicity, concurrency, and resource management, and in my opinion, the winning design in this space will provide <em>all three</em> in a performant, principled, and pure package.</p>
+
+<p>In the Haskell world, there’s only one <code class="highlighter-rouge">IO</code> monad, and there’s no need for anything else. Over time, we may find that whatever effect monad design ends up winning will become Scala’s one and only <code class="highlighter-rouge">IO</code> monad.</p>
+
+<p>At the end of the day, after all, there can be only one!</p>
+:ET

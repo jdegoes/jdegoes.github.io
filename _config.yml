@@ -3,7 +3,7 @@ text_title:       John A De Goes
 tagline:          ramblings of a geek
 description:      The home on the web for technologist John A. De Goes.
 # Your site's domain goes here. Leave localhost server or blank when working locally.
-url:
+url: 
 
 # Owner/author information
 owner:
@@ -46,7 +46,7 @@ links:
   - title: Photos
     url: /photos/
 
-# http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 timezone:    America/Denver
 future:      true
 highlighter: rouge

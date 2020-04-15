@@ -1,0 +1,215 @@
+I"SV<p>Functional programming has enjoyed a surge in recent years. You can see in the proliferation of books and conferences, in the rapid growth of languages like Scala and Clojure, and in the very public conversions (John Carmack, Bob Martin, etc).</p>
+
+<p>These days, no one would dare announce a new programming language without supporting “functional programming.” Heck, even conservative, mild-mannered, Enterprise-certified Java is getting <a href="https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html">lambdas</a> and <a href="https://download.java.net/jdk8/docs/api/java/util/stream/Stream.html">even</a> <a href="https://download.java.net/jdk8/docs/api/java/util/Optional.html">monads</a>!</p>
+
+<p>Yep, it’s a whole new world.</p>
+
+<h2 id="why-fp-why-now">Why FP, Why Now?</h2>
+
+<p>I’ve been a <em>functionally-inclined</em> software engineer for more than four years now. I love FP and learn more every day.</p>
+
+<p>Recently, I accepted a short-term contract for working on an existing Java application. While working on the application (which I would describe as more or less idiomatic, “Enterprise Java”), I had the chance to revisit some of the fundamental reasons why I like functional programming (after a while, you sort of take them for granted).</p>
+
+<p>Among them:</p>
+
+<ul>
+  <li><strong>Higher-order functions</strong> (which let you pass functions to functions, or return functions from functions) let you factor out a lot of duplication in the small. I refactored the existing Java app to use higher order functions, and found and fixed several bugs along the way (all related to bugs by copy &amp; paste).</li>
+  <li><strong>Immutable data structures</strong>, which are often used in FP, free you from having to constantly worry about what code will do to the data that you pass it. In the Java app, I found a lot of “defensive copying”, which could simply be deleted as I changed many core data structures from mutable to immutable.</li>
+  <li><strong>Strong types</strong>, which appear in many functional programming languages (but not all), tell us more about statically-proven properties of the code. In the Java app, I changed a lot of code from using <code class="highlighter-rouge">null</code> to using a generic optional data structure, which more clearly communicates where values may be absent. This let me delete a lot of defensive <code class="highlighter-rouge">null</code>-checking, as well as fix a few NPEs in uncommon code paths.</li>
+  <li><strong>Pure functions</strong>, which are functions that don’t have side effects (i.e. their output is a deterministic function of their input), are much easier to understand and test, because you don’t have to wonder if the function’s behavior will change based on hidden state. In the Java application, I was able to convert a lot of stateful functions to stateless functions, which made the code much simpler and fixed a few bugs.</li>
+</ul>
+
+<p>There are other benefits, as well (and of course a few drawbacks), but as one data point, consider the fact that in this Java application, I was able to fix bugs and implement a large amount of new functionality with fewer total lines of code.</p>
+
+<p>That’s pretty common in my experience.</p>
+
+<p>These benefits have not escaped anyone’s notice. In contrast to even 5 years ago, most programmers today have heard of functional programming, many use some techniques from FP (at least higher-order functions), and a growing number have hopped on the bandwagon and become FP evangelists.</p>
+
+<h2 id="the-religion-of-fp">The Religion of FP</h2>
+
+<p>On the spectrum of functional programming (FP), people fall between one of two extremes. At one extreme, FP is a way to enrich imperative programming (e.g. pass a lightweight callback to a function or a block to a loop). At the other extreme, FP is a way to write so-called <em>pure</em> code — code without side-effects, expressed as pure, referentially transparent functions.</p>
+
+<p>Some people have fallen so much in love with FP (it’s hard not to!) that their views are almost religious. Hence, what I refer to as <em>the religion of FP</em>.</p>
+
+<p>The problem with any religion is that dogmatism can be blinding.</p>
+
+<p>In this case, I believe it’s blinded many to something that should be obvious:</p>
+
+<blockquote>
+  <p>Functional programming (pure or otherwise) is not the goal of software engineering. Rather, it’s a means to an end, like every other tool in the bag of a software engineer.</p>
+</blockquote>
+
+<p>Heresy, I know, so let me clarify.</p>
+
+<h2 id="the-goal-of-software-engineering">The Goal of Software Engineering</h2>
+
+<p>As a software engineer, my job is usually to produce working, comprehensible, maintainable software.</p>
+
+<p>Most everyone who pays me for my services wants some combination of the following:</p>
+
+<ol>
+  <li>Code that works reliably, even in parts of the application that aren’t used very often.</li>
+  <li>Code that can be easily understood by other people (I won’t be around forever).</li>
+  <li>Code that is factored in such a way as to minimize the cost of changing it (because if one thing is certain, it’s that requirements never stop changing).</li>
+</ol>
+
+<p>(They also usually want it fast and cheap, too, but that’s a topic for another post.)</p>
+
+<p>Maybe surprisingly, the above is what <em>I</em> want, too.</p>
+
+<p>I like code that doesn’t have bugs (it gives me a sense of pride in my work, and I hate debugging). I want all the code I write to be easily understood, because I’ll probably need to come back to the code a few months or years down the road (plus it helps reduce bugs). And I absolutely adore code that’s so well-factored, I can easily and safely change it to accommodate new requirements.</p>
+
+<p>So if the goal of software engineering is working, comprehensible, maintainable software, the logical question is, “Does functional programming help us achieve it?”</p>
+
+<p>My answer is: <em>not necessarily.</em></p>
+
+<h2 id="rogue-fp">Rogue FP</h2>
+
+<p>To illustrate my point, I decided to implement Quick Sort in the functional programming language <em>Haskell</em>.</p>
+
+<p>As per the description on its <a href="https://www.haskell.org">home page</a>, Haskell is an advanced, purely-functional programming language (and presently one of my favorite programming languages).</p>
+
+<p>You almost can’t get any more “FP” than Haskell. All programs written in Haskell are purely functional (although there are ways to cheat, we can ignore them here).</p>
+
+<p>With that said, brace yourself, and take a look at my implementation of Quick Sort:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="kr">module</span> <span class="nn">Main</span> <span class="p">(</span><span class="nf">main</span><span class="p">)</span> <span class="kr">where</span>
+
+<span class="kr">import</span> <span class="nn">Control.Applicative</span>
+<span class="kr">import</span> <span class="nn">Data.Array.MArray</span>
+<span class="kr">import</span> <span class="nn">Data.Array.IO</span>
+<span class="kr">import</span> <span class="nn">Data.IORef</span>
+
+<span class="kr">type</span> <span class="kt">Array</span> <span class="n">a</span> <span class="o">=</span> <span class="kt">IOArray</span> <span class="kt">Int</span> <span class="n">a</span>
+
+<span class="n">whileM</span> <span class="o">::</span> <span class="kt">IO</span> <span class="kt">Bool</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="nb">()</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">whileM</span> <span class="n">pred</span> <span class="n">effect</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">rez</span> <span class="o">&lt;-</span> <span class="n">pred</span>
+  <span class="kr">if</span> <span class="n">rez</span>
+  <span class="kr">then</span> <span class="kr">do</span>
+    <span class="n">effect</span>
+    <span class="n">whileM</span> <span class="n">pred</span> <span class="n">effect</span>
+  <span class="kr">else</span> <span class="n">return</span> <span class="nb">()</span>
+    
+<span class="n">quick_sort</span> <span class="o">::</span> <span class="kt">Ord</span> <span class="n">a</span> <span class="o">=&gt;</span> <span class="kt">Array</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="p">(</span><span class="kt">Array</span> <span class="n">a</span><span class="p">)</span>
+<span class="n">quick_sort</span> <span class="n">a</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">getBounds</span> <span class="n">a</span>
+  <span class="kr">let</span> <span class="n">loop'</span> <span class="o">=</span> <span class="n">loop</span>
+  <span class="n">loop'</span> <span class="n">a</span> <span class="n">m</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="kr">where</span> 
+    <span class="n">loop</span> <span class="n">ary</span> <span class="n">m</span> <span class="n">n</span> <span class="o">=</span> <span class="kr">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="kr">then</span> <span class="n">return</span> <span class="n">ary</span> <span class="kr">else</span> <span class="kr">do</span>
+      <span class="kr">let</span> <span class="n">readVal</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">readArray</span> <span class="n">ary</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="n">m</span><span class="p">)</span>
+          
+      <span class="kr">let</span> <span class="n">writeVal</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">writeArray</span> <span class="n">ary</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="n">m</span><span class="p">)</span>
+      
+      <span class="kr">let</span> <span class="n">readValRef</span> <span class="n">ref</span> <span class="o">=</span> <span class="n">readIORef</span> <span class="n">ref</span> <span class="o">&gt;&gt;=</span> <span class="n">readVal</span>
+
+      <span class="kr">let</span> <span class="n">writeValRef</span> <span class="n">ref</span> <span class="n">v</span> <span class="o">=</span> <span class="n">readIORef</span> <span class="n">ref</span> <span class="o">&gt;&gt;=</span> <span class="n">writeVal</span> <span class="o">&lt;*&gt;</span> <span class="n">pure</span> <span class="n">v</span>
+  
+      <span class="n">pivotVal</span> <span class="o">&lt;-</span> <span class="n">readVal</span> <span class="o">$</span> <span class="n">n</span> <span class="p">`</span><span class="n">div</span><span class="p">`</span> <span class="mi">2</span>
+      
+      <span class="n">leftIdxRef</span>  <span class="o">&lt;-</span> <span class="n">newIORef</span> <span class="mi">0</span>
+      <span class="n">rightIdxRef</span> <span class="o">&lt;-</span> <span class="n">newIORef</span> <span class="o">$</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+      
+      <span class="kr">let</span> <span class="n">incLeft</span>  <span class="o">=</span> <span class="n">modifyIORef</span> <span class="n">leftIdxRef</span> <span class="p">(</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+      <span class="kr">let</span> <span class="n">decRight</span> <span class="o">=</span> <span class="n">modifyIORef</span> <span class="n">rightIdxRef</span> <span class="p">(</span><span class="n">subtract</span> <span class="mi">1</span><span class="p">)</span>
+      
+      <span class="kr">let</span> <span class="n">readLeftIdx</span> <span class="o">=</span> <span class="n">readIORef</span> <span class="n">leftIdxRef</span>
+      <span class="kr">let</span> <span class="n">readRightIdx</span> <span class="o">=</span> <span class="n">readIORef</span> <span class="n">rightIdxRef</span>
+              
+      <span class="n">whileM</span> <span class="p">((</span><span class="o">&lt;=</span><span class="p">)</span> <span class="o">&lt;$&gt;</span> <span class="n">readLeftIdx</span> <span class="o">&lt;*&gt;</span> <span class="n">readRightIdx</span><span class="p">)</span> <span class="o">$</span> <span class="kr">do</span>
+        <span class="n">leftVal</span>  <span class="o">&lt;-</span> <span class="n">readValRef</span> <span class="n">leftIdxRef</span>
+        <span class="n">rightVal</span> <span class="o">&lt;-</span> <span class="n">readValRef</span> <span class="n">rightIdxRef</span>
+        
+        <span class="kr">if</span> <span class="p">(</span><span class="n">leftVal</span> <span class="o">&lt;</span> <span class="n">pivotVal</span><span class="p">)</span> <span class="kr">then</span> <span class="n">incLeft</span>
+        <span class="kr">else</span> <span class="kr">if</span> <span class="p">(</span><span class="n">rightVal</span> <span class="o">&gt;</span> <span class="n">pivotVal</span><span class="p">)</span> <span class="kr">then</span> <span class="n">decRight</span>
+        <span class="kr">else</span> <span class="kr">do</span> 
+          <span class="n">writeValRef</span> <span class="n">leftIdxRef</span> <span class="n">rightVal</span>
+          <span class="n">writeValRef</span> <span class="n">rightIdxRef</span> <span class="n">leftVal</span>
+          <span class="n">incLeft</span>
+          <span class="n">decRight</span>
+      
+      <span class="n">leftIdx</span>  <span class="o">&lt;-</span> <span class="n">readLeftIdx</span>
+      <span class="n">rightIdx</span> <span class="o">&lt;-</span> <span class="n">readRightIdx</span>
+      
+      <span class="n">loop</span> <span class="n">a</span> <span class="n">m</span>       <span class="p">(</span><span class="n">rightIdx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="n">loop</span> <span class="n">a</span> <span class="n">leftIdx</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">leftIdx</span><span class="p">)</span>
+
+<span class="n">main</span> <span class="o">=</span> <span class="n">newListArray</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;&gt;=</span> <span class="n">quick_sort</span> <span class="o">&gt;&gt;=</span> <span class="n">getElems</span> <span class="o">&gt;&gt;=</span> <span class="n">putStrLn</span><span class="o">.</span><span class="n">show</span></code></pre></figure>
+
+<p>Despite the fact that this program is “purely functional”, the code is complete and utter <em>garbage</em>:</p>
+
+<ul>
+  <li>It had several bugs when I first wrote it, and it took me a lot of time to track them down.</li>
+  <li>It’s hard to understand. In fact, a C implementation would probably be easier to understand.</li>
+  <li>For such a small function, it would be awfully hard to maintain. Making changes safely would require a large amount of mental effort and testing, and you might not be able to reuse much code.</li>
+</ul>
+
+<p>(Note, I said garbage, but I know full well that sometimes you have to take a hit to write systems-level, performance critical code; such is not the case, however, for the majority of modern software engineering.)</p>
+
+<p>There you have it, folks: a purely functional program which is utterly irrelevant to the goal of software engineering (this is a not-so-subtle demonstration, but there are many more real-world demonstrations that are more subtle, which functional programmers would appreciate).</p>
+
+<p>It’s FP gone rogue, and proof that just because something is “purely functional”, doesn’t mean it’s worth a damn.</p>
+
+<h2 id="lovable-fp">Lovable FP</h2>
+
+<p>Now I’d like to show you the better known example of Quick Sort in Haskell. It’s not exactly classic Quick Sort, because it doesn’t sort in-place, but it’s close enough:</p>
+
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="n">quicksort</span> <span class="o">::</span> <span class="kt">Ord</span> <span class="n">a</span> <span class="o">=&gt;</span> <span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="n">a</span><span class="p">]</span>
+<span class="n">quicksort</span> <span class="kt">[]</span>     <span class="o">=</span> <span class="kt">[]</span>
+<span class="n">quicksort</span> <span class="p">(</span><span class="n">p</span><span class="o">:</span><span class="n">xs</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">quicksort</span> <span class="n">lesser</span><span class="p">)</span> <span class="o">++</span> <span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">++</span> <span class="p">(</span><span class="n">quicksort</span> <span class="n">greater</span><span class="p">)</span>
+    <span class="kr">where</span>
+        <span class="n">lesser</span>  <span class="o">=</span> <span class="n">filter</span> <span class="p">(</span><span class="o">&lt;</span> <span class="n">p</span><span class="p">)</span> <span class="n">xs</span>
+        <span class="n">greater</span> <span class="o">=</span> <span class="n">filter</span> <span class="p">(</span><span class="o">&gt;=</span> <span class="n">p</span><span class="p">)</span> <span class="n">xs</span></code></pre></figure>
+
+<p>Now <em>that’s</em> a thing of beauty! And why people love FP.</p>
+
+<p>This code is practically correct by definition. It’s trivial to understand (if you know Haskell’s syntax), and there’s not a lot of sorting code that’s easier to maintain (well, <code class="highlighter-rouge">filter</code> should really be replaced by <code class="highlighter-rouge">partition</code>, because <code class="highlighter-rouge">filter</code> destroys information; use of <code class="highlighter-rouge">filter</code> requires manual negation of the boolean predicate <code class="highlighter-rouge">&lt; p</code>, which represents duplicated information content).</p>
+
+<p>We now have a <em>night and day</em> difference between two <em>purely functional</em> programs, both written in the same language.</p>
+
+<p>What gives?</p>
+
+<h2 id="fp-isnt-the-goal">FP Isn’t the Goal</h2>
+
+<p>My view is that although FP makes it easier to write good code, just because something’s functional, or even “purely functional”, doesn’t necessarily mean it’s any good.</p>
+
+<p>Stated differently, as software engineers trying to improve our craft, we shouldn’t latch onto or defend something just because it’s “functional” or “purely functional”. Although it’s possible to write good code using techniques from functional programming, it’s also possible to write bad code.</p>
+
+<p>FP doesn’t protect us. We need a different measure for “good code” than just “functional”.</p>
+
+<p>I’d suggest the answer has a lot to do with <em>composability</em>, <em>comprehensibility</em>, and <em>correctness</em>.</p>
+
+<h2 id="good_code--c3">good_code = c^3</h2>
+
+<p>Fundamentally, I believe all good code has the following properties:</p>
+
+<ol>
+  <li>You can comprehend how it works well-enough to be reasonably confident that it’s correct (and be right about that confidence most of the time!).</li>
+  <li>You can take two pieces of comprehensible, correct code, and easily compose them to create another piece of code that’s both comprehensible and correct.</li>
+</ol>
+
+<p>This is a very human, very <em>cognitive-centric</em> definition of good software.</p>
+
+<p>After all, we are glorified, talking apes. That bag of fat filling our skulls was never designed to write software.</p>
+
+<p>By recognizing this fact, good code tries to expand our (very limited) capacity for writing and maintaining working software.</p>
+
+<h2 id="fp-isnt-the-answer">FP Isn’t the Answer</h2>
+
+<p>In defining good code, I didn’t say anything about functional programming, static types, or lots of other things, because those are “just” a means to an end.</p>
+
+<p>Sometimes (but not always, as I’ve shown in this post!), these means help us create, comprehend, and compose correct code.</p>
+
+<p>But by themselves, they are not the goal of our work.</p>
+
+<blockquote>
+  <p>Stated differently, whether or not something’s “bad” is independent of whether or not it’s “purely functional”. “Purely functional” is neither a necessary nor sufficient condition for good code.</p>
+</blockquote>
+
+<p>We can’t stop at functional. We can’t pat ourselves on the back just because we wrote “purely functional” code. We can’t ignore “non-functional” programming techniques, including whole other paradigms like logic programming and reactive programming.</p>
+
+<p>Every technique has to be measured on its own, independent of whether or not it’s “functional”.</p>
+
+<p>In future posts, I hope to talk more about <em>comprehensibility</em>, dig into some meaty examples, and rant against monads (which I believe are often an <em>anti-pattern</em> in functional programming).</p>
+:ET

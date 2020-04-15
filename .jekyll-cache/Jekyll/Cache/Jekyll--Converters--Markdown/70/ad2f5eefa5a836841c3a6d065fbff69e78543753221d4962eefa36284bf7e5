@@ -1,0 +1,167 @@
+I"Mh<p>Monad transformers just aren’t practical in Scala.</p>
+
+<p>They impose tremendous performance overhead that rapidly leads to CPU-bound, memory-hogging applications that give functional programming in Scala a reputation for being impractical.</p>
+
+<p>Fortunately, all hope is not lost! In this article, I’ll describe the alternative approach that is being championed by Scalaz 8, which offers many of the benefits of MTL, but without the high costs.</p>
+
+<h2 id="the-trouble-with-transformers">The Trouble with Transformers</h2>
+
+<p>Monad transformers rely on vertical composition to layer new effects onto other effects. For example, the <code class="highlighter-rouge">EitherT</code> monad transformer adds the effect of error management to some base effect <code class="highlighter-rouge">F[_]</code>.</p>
+
+<p>In the following snippet, I have defined an <code class="highlighter-rouge">OptionT</code> transformer that adds the effect of optionality to some base effect <code class="highlighter-rouge">F[_]</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">case</span> <span class="k">class</span> <span class="nc">OptionT</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">](</span><span class="n">run</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">A</span><span class="o">]])</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)(</span><span class="k">implicit</span> <span class="n">F</span><span class="k">:</span> <span class="kt">Functor</span><span class="o">[</span><span class="kt">F</span><span class="o">])</span><span class="k">:</span> <span class="kt">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+    <span class="nc">OptionT</span><span class="o">(</span><span class="nv">run</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="n">f</span><span class="o">)))</span>
+
+  <span class="k">def</span> <span class="nf">flatMap</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">])(</span><span class="k">implicit</span> <span class="n">F</span><span class="k">:</span> <span class="kt">Monad</span><span class="o">[</span><span class="kt">F</span><span class="o">])</span><span class="k">:</span> <span class="kt">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+    <span class="nc">OptionT</span><span class="o">(</span><span class="nv">run</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span>
+      <span class="nv">_</span><span class="o">.</span><span class="py">fold</span><span class="o">(</span><span class="nv">Option</span><span class="o">.</span><span class="py">empty</span><span class="o">[</span><span class="kt">B</span><span class="o">].</span><span class="py">point</span><span class="o">[</span><span class="kt">F</span><span class="o">])(</span>
+        <span class="n">f</span> <span class="nf">andThen</span> <span class="o">((</span><span class="n">fa</span><span class="k">:</span> <span class="kt">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">])</span> <span class="k">=&gt;</span> <span class="nv">fa</span><span class="o">.</span><span class="py">run</span><span class="o">))))</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">OptionT</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="nf">point</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span><span class="kt">:</span> <span class="kt">Applicative</span>, <span class="kt">A</span><span class="o">](</span><span class="n">a</span><span class="k">:</span> <span class="kt">A</span><span class="o">)</span><span class="k">:</span> <span class="kt">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">A</span><span class="o">]</span> <span class="k">=</span>
+    <span class="nc">OptionT</span><span class="o">(</span><span class="nv">a</span><span class="o">.</span><span class="py">point</span><span class="o">[</span><span class="kt">Option</span><span class="o">].</span><span class="py">point</span><span class="o">[</span><span class="kt">F</span><span class="o">])</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>If you’ve ever written high-performance code on the JVM, even a quick glance at this definition of <code class="highlighter-rouge">OptionT</code> should concern you. The transformer imposes additional indirection and heap usage for every usage of <code class="highlighter-rouge">point</code>, <code class="highlighter-rouge">map</code>, and <code class="highlighter-rouge">flatMap</code> operation in your application.</p>
+
+<p>While runtimes for languages like Haskell are reasonably efficient at executing this type of code, the JVM is not. We can see this very clearly by performing a line-by-line analysis of the transformer.</p>
+
+<p>The definition of the class introduces a wrapper <code class="highlighter-rouge">OptionT</code>:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">case</span> <span class="k">class</span> <span class="nc">OptionT</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">A</span><span class="o">](</span><span class="n">run</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">A</span><span class="o">]])</span> <span class="o">{</span></code></pre></figure>
+
+<p>Compared to the original effect <code class="highlighter-rouge">F[_]</code>, use of this wrapper will involve two additional allocations: an allocation for <code class="highlighter-rouge">Option</code>, and an allocation for <code class="highlighter-rouge">OptionT</code>. In the worst case (for a simple <code class="highlighter-rouge">F[_]</code>), this wrapper might <em>triple</em> memory consumption of your application!</p>
+
+<p>The <code class="highlighter-rouge">map</code> function is defined as follows:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala">  <span class="k">def</span> <span class="nf">map</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="n">B</span><span class="o">)(</span><span class="k">implicit</span> <span class="n">F</span><span class="k">:</span> <span class="kt">Functor</span><span class="o">[</span><span class="kt">F</span><span class="o">])</span><span class="k">:</span> <span class="kt">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+    <span class="nc">OptionT</span><span class="o">(</span><span class="nv">run</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="n">f</span><span class="o">)))</span></code></pre></figure>
+
+<p>In the <code class="highlighter-rouge">map</code> of the original <code class="highlighter-rouge">F[_]</code>, there is a minimum of one method call. While no allocations are required, it is likely the function passed to <code class="highlighter-rouge">map</code> will be a lambda that closes over some local state, which means there will often be another allocation.</p>
+
+<p>In the <code class="highlighter-rouge">map</code> function of the <code class="highlighter-rouge">OptionT</code> transformer, there are an additional 3 method calls (<code class="highlighter-rouge">OptionT.apply</code>, <code class="highlighter-rouge">run</code>, <code class="highlighter-rouge">map</code>), and an additional two allocations (<code class="highlighter-rouge">OptionT</code>, <code class="highlighter-rouge">_</code>), one for the <code class="highlighter-rouge">OptionT</code> wrapper and one for the anonymous function.</p>
+
+<p>If the type class syntax is not free, like in the Cats library, then there will be even more allocations and method calls.</p>
+
+<p>This looks bad, but the actual situation is <em>far worse</em> than it appears.</p>
+
+<p>Monad transformers can be stacked on top of any monad. This means they need to require monadic constraints on <code class="highlighter-rouge">F[_]</code>, here represented by <code class="highlighter-rouge">implicit F: Functor[F]</code> on the <code class="highlighter-rouge">map</code> function (for this operation, we don’t need to assume <code class="highlighter-rouge">Monad</code>, because all we need is <code class="highlighter-rouge">Functor</code>).</p>
+
+<p>We are interacting with the base monad through a JVM interface, which has many, many implementations across our code base. Most likely, the JVM will not be able to determine which concrete class we are interacting with, and if so, the method calls will become <em>megamorphic</em>, which prevents many types of optimizations that can occur when calling methods on concrete classes.</p>
+
+<p>The story for <code class="highlighter-rouge">flatMap</code> is similar:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala">  <span class="k">def</span> <span class="nf">flatMap</span><span class="o">[</span><span class="kt">B</span><span class="o">](</span><span class="n">f</span><span class="k">:</span> <span class="kt">A</span> <span class="o">=&gt;</span> <span class="nc">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">])(</span><span class="k">implicit</span> <span class="n">F</span><span class="k">:</span> <span class="kt">Monad</span><span class="o">[</span><span class="kt">F</span><span class="o">])</span><span class="k">:</span> <span class="kt">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">]</span> <span class="k">=</span>
+    <span class="nc">OptionT</span><span class="o">(</span><span class="nv">run</span><span class="o">.</span><span class="py">flatMap</span><span class="o">(</span>
+      <span class="nv">_</span><span class="o">.</span><span class="py">fold</span><span class="o">(</span><span class="nv">Option</span><span class="o">.</span><span class="py">empty</span><span class="o">[</span><span class="kt">B</span><span class="o">].</span><span class="py">point</span><span class="o">[</span><span class="kt">F</span><span class="o">])(</span>
+        <span class="n">f</span> <span class="nf">andThen</span> <span class="o">((</span><span class="n">fa</span><span class="k">:</span> <span class="kt">OptionT</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">B</span><span class="o">])</span> <span class="k">=&gt;</span> <span class="nv">fa</span><span class="o">.</span><span class="py">run</span><span class="o">))))</span></code></pre></figure>
+
+<p>This definition of <code class="highlighter-rouge">flatMap</code> could be optimized, but even if completely optimized, there is even more overhead than <code class="highlighter-rouge">map</code>.</p>
+
+<p>Recently some benchmarks have compared the performance of Scalaz 8 IO (which has a bifunctor design for modeling errors) to its equivalent in <code class="highlighter-rouge">typelevel/cats</code>, which is roughly <code class="highlighter-rouge">EitherT[cats.effect.IO, E, A]</code> (modulo the additional failure case embedded into <code class="highlighter-rouge">IO</code>).</p>
+
+<p>The difference in performance is <em>staggering</em>: Scalaz 8 IO is nearly <strong>five times faster</strong> than <code class="highlighter-rouge">EitherT[cats.effect.IO, E, A]</code>.</p>
+
+<p>Actual use in production could be faster or slower than these figures suggest, depending on the overhead of the base monad and how well the JRE optimizes the code. However, most applications that use monad transformers use many layers (not just a single <code class="highlighter-rouge">EitherT</code> transformer), so the takeaway is clear: applications that use monad transformers will be tremendously slower and generate far more heap churn than applications that do not.</p>
+
+<p>Monad transformers just aren’t practical in Scala, a fact that Scalaz 8 is uniquely prepared to embrace.</p>
+
+<h2 id="the-good-part-of-mtl">The Good Part of MTL</h2>
+
+<p>Monad transformers aren’t all bad. In Haskell, the <code class="highlighter-rouge">mtl</code> library introduced <em>type classes</em> for abstracting over data types that support the same effect.</p>
+
+<p>For example, <code class="highlighter-rouge">MonadState</code> abstracts over all data types that are capable of supporting getting and setting state (including, of course, the <code class="highlighter-rouge">StateT</code> monad transformer).</p>
+
+<p>In fact, these days <strong>MTL-style</strong> does not refer to the use of monad transformers, per se, but to the use of the type classes that allow abstracting over the effects modeled by data structures.</p>
+
+<p>In Scala, this style has become known as <em>finally tagless</em> for <a href="https://okmij.org/ftp/tagless-final/index.html">historical reasons</a>. Most programmers doing functional programming in Scala recommend and use finally tagless-style, because it offers additional flexibility (for example, mocking out services for testing).</p>
+
+<p>It is not widely known in the Scala programming community that <em>finally tagless</em> does not require monad transformers. In fact, there is absolutely no connection between finally tagless and monad transformers!</p>
+
+<p>In the next section, I will show how you can use <em>MTL-style</em>, without specializing to concrete monad transformers.</p>
+
+<h2 id="m-l-without-the-t">M-L Without the T</h2>
+
+<p>Let’s say our application has some state type <code class="highlighter-rouge">AppState</code>. Rather than use <code class="highlighter-rouge">StateT[F, S, A]</code>, which is a monad transformer that adds state management to some base monad <code class="highlighter-rouge">F[_]</code>, we will instead use the <code class="highlighter-rouge">MonadState</code> type class:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">MonadState</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]</span>, <span class="kt">S</span><span class="o">]</span> <span class="nc">extends</span> <span class="nc">Monad</span><span class="o">[</span><span class="kt">F</span><span class="o">]</span> <span class="o">{</span> <span class="n">self</span> <span class="k">=&gt;</span>
+  <span class="k">def</span> <span class="nf">get</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">S</span><span class="o">]</span>
+  <span class="k">def</span> <span class="nf">put</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">S</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>We can then use <code class="highlighter-rouge">MonadState</code> in our application like so:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">runApp</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="k">_</span><span class="o">]](</span><span class="k">implicit</span> <span class="n">F</span><span class="k">:</span> <span class="kt">MonadState</span><span class="o">[</span><span class="kt">F</span>, <span class="kt">AppState</span><span class="o">])</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="n">state</span> <span class="k">&lt;-</span> <span class="nv">F</span><span class="o">.</span><span class="py">get</span>
+    <span class="o">...</span>
+    <span class="k">_</span> <span class="k">&lt;-</span> <span class="nv">F</span><span class="o">.</span><span class="py">put</span><span class="o">(</span><span class="nv">state</span><span class="o">.</span><span class="py">copy</span><span class="o">(...))</span>
+    <span class="o">...</span>
+  <span class="o">}</span> <span class="nf">yield</span> <span class="o">()</span></code></pre></figure>
+
+<p>Notice how this type class says <em>absolutely nothing</em> about the data types <code class="highlighter-rouge">F[_]</code> that can support state management.</p>
+
+<p>While we <em>can</em> use our function <code class="highlighter-rouge">updateState</code> with a <code class="highlighter-rouge">StateT</code> monad transformer, there is no <em>requirement</em> that we do so.</p>
+
+<p>The high-performance, industrial-strength approach embraced by Scalaz 8 involves defining instances for a newtype wrapper around the <code class="highlighter-rouge">IO</code> effect monad.</p>
+
+<p>I’ll show you how to do this in the next section.</p>
+
+<h2 id="powered-by-scalaz-8-io">Powered by Scalaz 8 IO™</h2>
+
+<p>The first step in the Scalaz 8 approach involves defining a newtype wrapper for <code class="highlighter-rouge">IO</code>. The point of this wrapper is to create a unique type, which will allow us to define instances of type classes like <code class="highlighter-rouge">MonadState</code> that are specific to the needs of our application.</p>
+
+<p>Although there are more reliable ways, one simple way to define a newtype is to declare a class that extends <code class="highlighter-rouge">AnyVal</code> and stores a single value:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">MyIO</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="k">val</span> <span class="nv">run</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">MyError</span>, <span class="kt">A</span><span class="o">])</span> <span class="k">extends</span> <span class="nc">AnyVal</span></code></pre></figure>
+
+<p>Once we have define this newtype, then we need to create instances for all the type classes used by our application.</p>
+
+<p>There are several ways to create an instance of <code class="highlighter-rouge">MonadState</code> for <code class="highlighter-rouge">MyIO</code>. Since instances are first-class values in Scala, I prefer the following way, which uses an <code class="highlighter-rouge">IORef</code> to manage the state:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">createMonadState</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">S</span><span class="o">](</span><span class="n">initial</span><span class="k">:</span> <span class="kt">S</span><span class="o">)</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">E</span>, <span class="kt">MonadState</span><span class="o">[</span><span class="kt">MyIO</span>, <span class="kt">S</span><span class="o">]]</span> <span class="k">=</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="n">ref</span> <span class="k">&lt;-</span> <span class="nc">IORef</span><span class="o">(</span><span class="n">initial</span><span class="o">)</span>
+  <span class="o">}</span> <span class="k">yield</span> <span class="k">new</span> <span class="nc">MonadState</span><span class="o">[</span><span class="kt">MyIO</span>, <span class="kt">S</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="k">:</span> <span class="kt">MyIO</span><span class="o">[</span><span class="kt">S</span><span class="o">]</span> <span class="k">=</span> <span class="nc">MyIO</span><span class="o">(</span><span class="nv">ref</span><span class="o">.</span><span class="py">read</span><span class="o">)</span>
+    <span class="k">def</span> <span class="nf">put</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">S</span><span class="o">)</span><span class="k">:</span> <span class="kt">MyIO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="nc">MyIO</span><span class="o">(</span><span class="nv">ref</span><span class="o">.</span><span class="py">write</span><span class="o">(</span><span class="n">s</span><span class="o">))</span>
+  <span class="o">}</span></code></pre></figure>
+
+<p>We can now use this function as follows inside our main function:</p>
+
+<figure class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="nf">main</span><span class="o">(</span><span class="n">args</span><span class="k">:</span> <span class="kt">IList</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span> <span class="k">=</span>
+  <span class="k">for</span> <span class="o">{</span>
+    <span class="n">monadState</span> <span class="k">&lt;-</span> <span class="nf">createMonadState</span><span class="o">(</span><span class="nc">AppState</span><span class="o">(...))</span>
+    <span class="k">_</span>          <span class="k">&lt;-</span> <span class="nf">runApp</span><span class="o">(</span><span class="n">monadState</span><span class="o">)</span>
+  <span class="o">}</span> <span class="nf">yield</span> <span class="o">()</span></code></pre></figure>
+
+<p>Because <code class="highlighter-rouge">MyIO</code> is nothing more than a newtype for <code class="highlighter-rouge">IO</code>, there are no additional heap allocations or method calls associated with use of the data type. This means that you get as close to the raw performance of <code class="highlighter-rouge">IO</code> as is possible in the finally tagless style.</p>
+
+<p>This approach works smoothly and efficiently for most common type classes, including <code class="highlighter-rouge">MonadReader</code>, <code class="highlighter-rouge">MonadWriter</code>, and many others.</p>
+
+<p>Now you can have your cake and eat it, too: use type classes to precisely capture the minimal set of effects required by different parts of your application, and use instances of these type classes for your own newtype around <code class="highlighter-rouge">IO</code>, giving you both abstraction and (relatively) high-performance.</p>
+
+<h2 id="stack-safety">Stack Safety</h2>
+
+<p>In Scala, many obvious monad transformers are stack unsafe. For example, the classic definition of <code class="highlighter-rouge">StateT</code> is not stack safe. It can be modified to become stack safe, but the performance of an already slow data type becomes even slower, with many more method calls and allocations.</p>
+
+<p>The problem is not limited to transformers, either. It is common to use stack-safe monad transformers to implement base monads (<code class="highlighter-rouge">State</code>, <code class="highlighter-rouge">Writer</code>, <code class="highlighter-rouge">Reader</code>, and so on). For example, one can define a stack-safe base <code class="highlighter-rouge">State</code> monad by using the type alias <code class="highlighter-rouge">type State[S, A] = StateT[F, S, A]</code>, for some stack-safe <code class="highlighter-rouge">StateT</code> and trampolined monad <code class="highlighter-rouge">F</code>.</p>
+
+<p>While this approach (seen <a href="https://github.com/typelevel/cats/blob/55e09026bd7e48f1cedf358cbe4f54666aca5460/core/src/main/scala/cats/data/package.scala#L48">in the Cats library</a>) creates stack safety for the base monad (by piggybacking on the safety of the transformer and the trampolined base monad), the resulting <code class="highlighter-rouge">State</code> monad, which is powered by a slow <code class="highlighter-rouge">StateT</code> transformer (made slower by stack safety!), becomes even slower due to trampolining.</p>
+
+<p>The technique presented in this post lets you eliminate base monads like <code class="highlighter-rouge">State</code>, bypassing the massive performance overhead entailed by older approaches to stack safety.</p>
+
+<h2 id="going-forward">Going Forward</h2>
+
+<p>A decade of functional programming in Scala has taught us that while the abstraction afforded by MTL is extremely powerful and useful, transformers themselves just don’t work well in Scala—not today, and maybe not ever.</p>
+
+<p>Fortunately, we can take advantage of MTL-style without sacrificing performance, merely by defining instances for cost-free wrappers around <code class="highlighter-rouge">IO</code>.</p>
+
+<p>As outlined in this post, there is a small amount of ceremony associated with this style, especially if you want to use localized effects. In addition, the <code class="highlighter-rouge">AnyVal</code> approach to creating newtypes is fraught with problems and doesn’t have the guarantees we need.</p>
+
+<p>In Scalaz 8, we should be able to address these issues in a way that makes it simple for users to use the right approach.</p>
+
+<p>Watch this space for more coverage of how recent innovations are making functional programming in Scala practical—suitable for mainstream use even for demanding technical requirements.</p>
+:ET

@@ -7,7 +7,7 @@
 {% include _head.html %}
 </head>
 
-<body class="articles" itemscope itemtype="http://schema.org/WebPage">
+<body class="articles" itemscope itemtype="https://schema.org/WebPage">
 
 {% include _browser-upgrade.html %}
 
@@ -27,7 +27,7 @@
   {% include _carbon.html %}
 </div>
 
-<div id="index" itemprop="mainContentOfPage" itemscope itemtype="http://schema.org/Blog">
+<div id="index" itemprop="mainContentOfPage" itemscope itemtype="https://schema.org/Blog">
   <h1 itemprop="name">{{ page.title }}</h1>
   {% for post in site.posts %}
   {% unless post.next %}
@@ -39,7 +39,7 @@
         <h3>{{ post.date | date: '%Y' }}</h3>
       {% endif %}
     {% endunless %}
-    <article itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost">
+    <article itemscope itemtype="https://schema.org/BlogPosting" itemprop="blogPost">
       <h4 itemprop="headline">
         <a href="{{ site.url }}{{ post.url }}" rel="bookmark" title="{{ post.title }}">{{ post.title }}</a>
       </h4>
