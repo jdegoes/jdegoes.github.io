@@ -84,7 +84,7 @@ On the one hand, ZIO defined an effect type with polymorphic (rather than monomo
 
 To narrow the growing gap between ZIO and the Cats Effect type classes, I volunteered to help design the next version of Cats Effect. Toward this end, I sketched out a complete hierarchy and [submitted it for feedback](https://github.com/typelevel/cats-effect/issues/321#issuecomment-449030858), conservatively aiming only to support typed errors, along with fixes for core semantic issues.
 
-Ultimately, however, I was [banned by Typelevel](https://web.archive.org/web/*/https://gist.github.com/djspiewak/39fcf30fc4480abb5096010886558792) in an elaborate and strange [press release](https://typelevel.org/blog/2019/09/05/jdg.html), allegedly for 'annoying' technical debates about the ideal design of the library, and my sketch was mostly rejected (although many elements survived in the eventual proposal for CE3).
+Ultimately, however, I was [banned by Typelevel](http://web.archive.org/web/20190905210318/https://gist.github.com/djspiewak/39fcf30fc4480abb5096010886558792) in an elaborate and bizarre [press release](https://typelevel.org/blog/2019/09/05/jdg.html), allegedly for 'annoying' technical debates about the ideal design of the library, and my sketch was mostly rejected (although many elements survived in the eventual proposal for CE3).
 
 The realization that Cats Effect would **never** catch up to ZIO, together with the massive pains of tagless-final, caused a tectonic shift in the market. Pretty soon, developers were building ZIO-specific libraries.
 
