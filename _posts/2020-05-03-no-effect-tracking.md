@@ -38,7 +38,7 @@ These procedures are not deterministic, pure functions that just combine and tra
 
 Eventually, of course, I discovered that in purely functional languages like Haskell, functions that interact with the outside world all return values of a mysterious `IO` data type.
 
-This discovery feeds a myth that's pervasive among even experienced Haskell programmers
+This discovery feeds a myth that's pervasive among even experienced Haskell programmers.
 
 The myth of _effect tracking_.
 
