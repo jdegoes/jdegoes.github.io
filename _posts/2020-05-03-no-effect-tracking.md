@@ -85,7 +85,7 @@ However, `IO` is not magical in this regard. Indeed, entirely without `IO`, we c
 
 {% highlight haskell %}
 data SocketIO a = 
-  ReadByte (Byte -> Socket IO a) |
+  ReadByte (Byte -> SocketIO a) |
   WriteByte Byte (SocketIO a)
 {% endhighlight %}
 {% highlight scala %}
