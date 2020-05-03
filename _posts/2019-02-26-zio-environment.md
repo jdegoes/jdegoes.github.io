@@ -504,7 +504,8 @@ def program: Reader[Module1 with ... with ModuleN, String] =
 
 This step is not so far away. There is a `Reader` monad transformer that can add the reader effect to any base monad, including the `IO` monad. However, not only are monad transformers very slow in Scala (adding 2-4x overhead per layer), but they have clumsy ergonomics and bad type inference.
 
-So instead, using a technique called [effect rotation](/articles/effect-rotation), we can bake the reader effect into the base effect monad, yielding a data type that is high-performance, and, if we are _very thoughtful_ in the design of the data type, opening the door to _delightful_ ergonomics and _flawless_ type inference.
+So instead, using a technique called [effect rotation](/articles/rotating-effects
+), we can bake the reader effect into the base effect monad, yielding a data type that is high-performance, and, if we are _very thoughtful_ in the design of the data type, opening the door to _delightful_ ergonomics and _flawless_ type inference.
 
 This is the approach taken by _ZIO Environment_, a new feature in ZIO and quite possibly the most defining feature of the impending 1.0 release of the ZIO library.
 
