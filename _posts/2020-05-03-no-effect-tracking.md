@@ -138,7 +138,7 @@ For example, if we call `System.currentTimeMillis()` inside a function annotated
 
 Presto, instant effect tracking, without esoteric "monads" or any of that pesky functional programming!
 
-Further, we don't have to stop at such course-grain effect tracking. If we like, we can allow `@Impure` annotations to introduce labels, which we could mistakenly call "algebras". 
+Further, we don't have to stop at such coarse-grained effect tracking. If we like, we can allow `@Impure` annotations to introduce labels, which we could mistakenly call "algebras". 
 
 This would give us (let's call it) _Tagless-Final Effect-Tracked Java™_, which would look something like this:
 
@@ -159,7 +159,7 @@ Read on for my unexpected and totally surprising answer!
 
 ## Worthless Effect Tracking
 
-Effect tracking, whether at the course or fine-grained level, is simply not commercially valuable. If it were, not only would there exist popular annotation processors for it, but the Java language itself would probably have the feature.
+Effect tracking, whether at the coarse or fine-grained level, is simply not commercially valuable. If it were, not only would there exist popular annotation processors for it, but the Java language itself would probably have the feature.
 
 Instead, while the feature can be found as one of many features in the [Checker Framework](https://checkerframework.org/manual/#purity-checker), it has no commercial traction.
 
