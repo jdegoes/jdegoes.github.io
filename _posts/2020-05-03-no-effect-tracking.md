@@ -167,31 +167,33 @@ Moreover, early versions of PureScript used row types to provide statically-chec
 
 Contrast these results with lambdas (anonymous functions), which have made their way into every programming language because of the unquestionably positive effects they have on productivity.
 
-It's my contention that effect tracking is worthless precisely because if a developer has _any_ idea about what a function is intended to do, then they already know with a high degree of certainty whether or not the function performs side-effects.
+It's my contention that effect tracking is worthless precisely because if a developer has _any_ idea about what a function is intended to do, then they already know with a high degree of certainty whether or not the function performs side-effects (assuming, of course, they are taught what it means for something to "perform side-effects").
 
-No developer is surprised that `System.currentTimeMillis()` performs a side-effect, because they already know what the function is intended to do. Indeed, many language features and best practices (as well as IDE features!) are designed _precisely_ to give developers a better idea of what functions are supposed to do.
+No developer who knows what side-effects are is surprised that `System.currentTimeMillis()` performs a side-effect, because they already know what the function is intended to do. Indeed, many language features and best practices (as well as IDE features!) are designed _precisely_ to give developers a better idea of what functions are supposed to do.
 
-Given a rudimentary understanding of what a function's purpose, the purity of the function can be predicted with high probability (violations, like `java.net.URL#hashCode`, become legendary!). However, given the purity of a function, this information by itself does not convey any useful information on what the function's purpose.
+Given a rudimentary understanding of what a function's purpose, the purity of the function can be predicted with high probability (violations, like `java.net.URL#hashCode/equals`, become legendary!). However, given the purity of a function, this information by itself does not convey any useful information on the function's purpose.
 
-Stated simply, effect tracking isn't useful in practice, because when it matters (and it doesn't always matter), we already know roughly what functions do, and therefore, whether or not they perform side-effects.
+Stated simply, effect tracking isn't incredibly useful in practice, because when it matters (and it doesn't always matter), we already know roughly what functions do, and therefore, whether or not they perform side-effects.
 
-Whatever marginal benefit effect tracking would add is overwhelmed by the cost of ceremony and boilerplate.
+Whatever benefit effect tracking would have would be overwhelmed by the cost of ceremony and boilerplate&mdash;this is doubly-true for the "fine-grained" variants.
 
-This is doubly-true for the "fine-grained" variants.
+Moreover, even assuming, evidence to the contrary notwithstanding, that effect tracking _was_ a killer feature, it could be baked into an IDE without any modifications to a language's syntax or semantics. 
+
+One could imagine clicking on an "interactions" button next to a function, and seeing what external (and side-effecting) systems each function interacts with. A pure tooling solution like this would have only upside, because it would not require mindless and verbose boilerplate and ceremony.
 
 ## Why IO?
 
 If effect tracking is commercially useless, then why use `IO` data types? 
 
-If you're in Haskell, you don't have a choice: if you want to get useful work done, then you will use _some_ model of interaction with the outside world, and it may as well be `IO`, which is industry-proven.
+If you're in Haskell, you don't have a choice: if you want to get useful work done, then you will use _some_ model of interaction with the outside world, and it may as well be `IO`, which is industry-proven and adopted extensively.
 
 If you're in Scala, however, you _do_ have a choice: you can write plain vanilla Scala code, and perform side-effects anywhere that you want. Or you can grab one of the functional effect systems like [ZIO](https://zio.dev), and create and compose values that _model_ side-effects instead.
 
-The greatest reason to use a functional effect system like ZIO is that it makes side-effects first-class values. Values are things you can accept and return from functions. You can store them in data structures. You can write your own operators, which accept functional effects, and which transform or combine them in custom ways.
+The greatest reason to use a functional effect system like ZIO is that it makes side-effects _first-class values_. Values are things you can accept and return from functions. You can store them in data structures. You can write your own operators, which accept functional effects, and which transform or combine them in custom ways.
 
 All of these abilities let you make your own control flow structures and factor out kinds of duplication you can't avoid when you solve problems using side-effecting code (take a look at some of my talks for examples).
 
-ZIO in particular goes beyond providing first-class effects, and delivers additional valuable features, including:
+ZIO goes beyond providing first-class effects, and delivers additional valuable features, including:
 
 * Highly-scalable fiber-based runtime
 * Resource-safety across asynchronous and concurrent effects
@@ -204,18 +206,18 @@ ZIO in particular goes beyond providing first-class effects, and delivers additi
 * Type-safety and user-friendliness
 * Features for making user-land code fully testable
 
-The real reason for using ZIO or other functional effect **isn't** effect tracking: it's everything else.
+The real reason for using ZIO or other functional effect **isn't** effect tracking: it's everything else!
 
 ## Summary
 
 Effect tracking isn't a good reason to use an `IO` like data type, in Scala or any other programming language. That's because effect tracking (which is actually a misnomer!) isn't commercially useful.
 
-If we have a vague idea about what functions do, then we generally have a really good idea about whether they perform side-effects, and compiler-enforced effect tracking would add overhead that wouldn't pay for itself.
+If we have a vague idea about what functions do, then we generally have a really good idea about whether they perform side-effects, and compiler-enforced effect tracking would add overhead that wouldn't pay for itself (assuming our only tangible benefit were "effect tracking"). Also, if we wanted effect tracking, we could always obtain the feature with non-invasive tooling, which could give us the same insight into function interactions without overhead.
 
 Instead, functional effect systems like ZIO (and Haskell's `IO` data type) let us take side-effects and make them more useful, by turning them into values, which we can transform and compose, solving complex problems with easy and type-safe combinators that simply can't exist for side-effecting statements.
 
 Beyond this ability, ZIO in particular gives us new superpowers, like easy and safe concurrency, parallelism, resource handling, dependency injection, diagnostic and debugging information, testability, and type-safety.
 
-In summary, don't use ZIO or IO or any functional effect system for effect tracking. 
+In summary, _don't_ use ZIO or IO or any functional effect system for effect tracking, because that benefit alone cannot pay for the cost.
 
-Instead, if you decide to use functional effect systems, then use them to become a more powerful and productive programmer.
+Instead, if you decide to use functional effect systems, then use them to become a more powerful and productive programmer!
