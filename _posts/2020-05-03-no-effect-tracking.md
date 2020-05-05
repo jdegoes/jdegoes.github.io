@@ -90,7 +90,7 @@ data SocketIO a =
 {% endhighlight %}
 {% highlight scala %}
 sealed trait SocketIO[+A]
-final case class ReadByte[A](withByteDo: A => SocketIO[A]) extends SocketIO[A]
+final case class ReadByte[A](withByteDo: Byte => SocketIO[A]) extends SocketIO[A]
 final case class WriteByte[A](byte: Byte, andThenDo: SocketIO[A]) extends SocketIO[A]
 {% endhighlight %}
 
