@@ -364,9 +364,9 @@ just add another standalone function:
 {% highlight scala %}
 def describe(filter: EmailFilter): String = 
   filter match {
-    case And(l, r) => s"(${describe(l)} && ${describe(r)})")
-    case Or(l, r) => s"(${describe(l)} || ${describe(r)})")
-    case Not(v) => s"!${describe(v)}")
+    case And(l, r) => s"(${describe(l)} && ${describe(r)})"
+    case Or(l, r) => s"(${describe(l)} || ${describe(r)})"
+    case Not(v) => s"!${describe(v)}"
     case SubjectContains(phrase) => s"(subject contains ${phrase})"
   }
 {% endhighlight %}
