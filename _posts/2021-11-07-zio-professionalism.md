@@ -16,7 +16,7 @@ In the past few months, the TypeLevel organization has become increasingly hosti
 
 As an open source developer myself, I am keenly aware of the fact that OSS is a "nights and weekends" hobby for most of us. We freely volunteer our time, often sacrificing other pursuits in order to contribute to open source and support our end-users.
 
-As a result of this reality, I whole-heartedly support the right of every OSS developer to contribute on their own terms, whatever those terms may be. Unpaid users of free software should _not_ get to dictate these terms.
+As a result of this reality, I whole-heartedly support the right of every OSS developer to contribute on their own terms, whatever those terms may be. Non-paying users of free software should _not_ get to dictate these terms.
 
 At the same time, I recognize that the actions of the TypeLevel organization have destructive effects on the Scala community:
 
