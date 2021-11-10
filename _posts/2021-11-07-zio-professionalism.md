@@ -6,12 +6,12 @@ category:     articles
 tags:         [functional programming, scala, zio, community, open source, leadership]
 ---
 
-In the past few months, the TypeLevel organization has become increasingly hostile toward the ZIO community:
+In the past few months, the TypeLevel organization has become increasingly hostile toward the ZIO community (whose software directly competes with TypeLevel):
 
  - Rob Norris [ripping out](https://github.com/tpolecat/doobie/pull/1587) an existing Quill integration from Doobie because Quill decided to move to the ZIO organization
  - Rob Norris [refusing to help a user](https://github.com/tpolecat/skunk/issues/438) who happened to be using Skunk with ZIO
  - Ross Baker and Christopher Davenport [rejecting a ZIO integration](https://github.com/http4s/http4s/issues/4718) on grounds that ZIO is "inconsistent with our values"
- - Rob Norris and Michael Pilquist referring to ZIO as "Z**" or "*IO", with Rob Norris [leaving](https://twitter.com/tpolecat/status/1424368733976416257) the [Scala Discord](https://discord.gg/scala) because ZIO is [mentioned](https://twitter.com/nafg613/status/1424542295244873730)
+ - Rob Norris and Michael Pilquist referring to ZIO as `Z**` or `*IO`, with Rob Norris [leaving](https://twitter.com/tpolecat/status/1424368733976416257) the [Scala Discord](https://discord.gg/scala) because ZIO was [mentioned](https://twitter.com/nafg613/status/1424542295244873730)
  - Oscar Boykin [attacking and smearing](https://twitter.com/flaviusbraz/status/1456615716619055106) both an Orthodox Jew and a Latino who contribute to Quill and ZIO
 
 As an open source developer myself, I am keenly aware of the fact that OSS is a "nights and weekends" hobby for most of us. We freely volunteer our time, often sacrificing other pursuits in order to contribute to open source and support our end-users.
@@ -38,6 +38,6 @@ ZIO is already doing a great job at being _pro-community_, as ZIO JSON hosts an 
 
 As for being _pro-professionalism_, within ZIO official spaces (Github, Discord, etc.), I have only ever seen welcoming, inclusive, and non-discrimantory behavior, without ad hominem or career sabotage. But explicitly committing to this high-standard of professionalism can only help to set expectations and provide guidance for leaders as the organization continues to grow.
 
-I encourage other Scala open source organizations to follow ZIO's lead, and adopt these _pro-community_ and _pro-professsionalism_ measures, without imposing any negative repurcussions on Scala open source contributors who choose to take a different path (OSS entitlement is a [real problem](https://medium.com/@fommil/the-open-source-entitlement-complex-bcb718e2326d)).
+I encourage other Scala open source organizations to follow ZIO's lead, and adopt these _pro-community_ and _pro-professsionalism_ measures, without imposing any negative repurcussions on Scala open source contributors (including TypeLevel) who choose to take a different path (OSS entitlement is a [real problem](https://medium.com/@fommil/the-open-source-entitlement-complex-bcb718e2326d)).
 
 As [Martin Odersky](https://en.wikipedia.org/wiki/Martin_Odersky) once wrote, [Scala is a big tent](https://www.scala-lang.org/blog/2019/05/02/community.html). It is not necessary that open source contributors have the same views or even like each other. But if we put Scala first, by being pro-community and pro-professionalism, we can find a way to co-exist peacefully inside this big tent, and together, we can, in different ways and with different audiences, show the world that Scala is a force to reckon with.
