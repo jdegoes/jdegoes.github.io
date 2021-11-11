@@ -3,7 +3,7 @@ layout:       post
 title:        "Improvements to the ZIO Organization"
 description:  "The ZIO organization needs to use its strong position in the Scala community to bind together all Scala developers for a common good"
 category:     articles
-tags:         [functional programming, scala, zio, community, open source, leadership]
+tags:         [typelevel, functional programming, scala, zio, community, open source, leadership]
 ---
 
 In the past few months, the TypeLevel organization has become increasingly hostile toward the ZIO community (whose software directly competes with TypeLevel):
@@ -18,7 +18,7 @@ As an open source developer myself, I am keenly aware of the fact that OSS is a 
 
 As a result of this reality, I whole-heartedly support the right of every OSS developer to contribute on their own terms, whatever those terms may be. Non-paying users of free software should _not_ get to dictate these terms.
 
-At the same time, I recognize that the actions of the TypeLevel organization have undesirable side-effects on the Scala community:
+At the same time, I recognize that the actions of the TypeLevel organization may have undesirable side-effects on the Scala community:
 
  - They undermine the trust that end-users and companies place in Scala OSS
  - They increase the risk involved in deploying solutions based on Scala OSS
