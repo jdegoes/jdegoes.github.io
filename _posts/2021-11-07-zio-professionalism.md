@@ -8,11 +8,11 @@ tags:         [functional programming, scala, zio, community, open source, leade
 
 In the past few months, the TypeLevel organization has become increasingly hostile toward the ZIO community (whose software directly competes with TypeLevel):
 
- - Rob Norris [ripping out](https://github.com/tpolecat/doobie/pull/1587) an existing Quill integration from Doobie because Quill decided to move to the ZIO organization
- - Rob Norris [refusing to help a user](https://github.com/tpolecat/skunk/issues/438) who happened to be using Skunk with ZIO
+ - Rob Norris [removing](https://github.com/tpolecat/doobie/pull/1587) an existing Quill integration from Doobie because Quill decided to move to the ZIO organization
+ - Rob Norris [opting to not help a user](https://github.com/tpolecat/skunk/issues/438) specifically because they were using Skunk with ZIO
  - Ross Baker and Christopher Davenport [rejecting a ZIO integration](https://github.com/http4s/http4s/issues/4718) on grounds that ZIO is "inconsistent with our values"
  - Rob Norris and Michael Pilquist referring to ZIO as `Z**` or `*IO`, with Rob Norris [leaving](https://twitter.com/tpolecat/status/1424368733976416257) the [Scala Discord](https://discord.gg/scala) because ZIO was [mentioned](https://twitter.com/nafg613/status/1424542295244873730)
- - Oscar Boykin [attacking and smearing](https://twitter.com/flaviusbraz/status/1456615716619055106) both an Orthodox Jew and a Latino who contribute to Quill and ZIO
+ - Oscar Boykin [attacking](https://twitter.com/flaviusbraz/status/1456615716619055106) both an Orthodox Jew and a Latino who contribute to Quill and ZIO
 
 As an open source developer myself, I am keenly aware of the fact that OSS is a "nights and weekends" hobby for most of us. We freely volunteer our time, often sacrificing other pursuits in order to contribute to open source and support our end-users.
 
