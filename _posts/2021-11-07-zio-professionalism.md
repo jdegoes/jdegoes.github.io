@@ -18,7 +18,7 @@ As an open source developer myself, I am keenly aware of the fact that OSS is a 
 
 As a result of this reality, I whole-heartedly support the right of every OSS developer to contribute on their own terms, whatever those terms may be. Non-paying users of free software should _not_ get to dictate these terms.
 
-At the same time, I recognize that the actions of the TypeLevel organization have destructive effects on the Scala community:
+At the same time, I recognize that the actions of the TypeLevel organization have undesirable side-effects on the Scala community:
 
  - They undermine the trust that end-users and companies place in Scala OSS
  - They increase the risk involved in deploying solutions based on Scala OSS
@@ -27,7 +27,7 @@ At the same time, I recognize that the actions of the TypeLevel organization hav
 
 As a passionate fan of the Scala programming language, a well-known advocate for functional programming, a leader in the ZIO open source ecosystem, and a founder of a [company devoted to Scala OSS](https://ziverge.com), I want Scala to prosper.
 
-I have no ability to influence the TypeLevel organization. However, as [BDFL](https://en.wikipedia.org/wiki/Benevolent_dictator_for_life) of the [ZIO organization](https://github.com/zio), I am in a position where I can learn from these destructive behaviors, and implement changes within the ZIO organization that I believe will benefit the whole Scala community.
+I have no ability to influence the TypeLevel organization. However, as [BDFL](https://en.wikipedia.org/wiki/Benevolent_dictator_for_life) of the [ZIO organization](https://github.com/zio), I am in a position where I can learn from these behaviors, and implement changes within the ZIO organization that I believe will benefit the whole Scala community.
 
 Effective immediately, I hereby codify and will support the following:
 
