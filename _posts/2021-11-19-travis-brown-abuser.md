@@ -98,4 +98,4 @@ I honestly hope that I never have to wade into this muck again.
 
 I don't enjoy it. I want to go back to creating beautiful and amazing technology that changes the world for the better, and empowering others to do the same.
 
-But make no mistake about it: if anyone go beyond just attacking me, to attacking the broader community, then I *will* take a stand, and I will *not* back down.
+But make no mistake about it: if anyone goes beyond just attacking me, to attacking the broader community, then I *will* take a stand, and I will *not* back down.
