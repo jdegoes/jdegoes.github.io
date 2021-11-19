@@ -316,7 +316,7 @@ Even if we ignore the fact that effect parametric polymorphism doesn't exist in 
 
 In Scala, the Cats Effect type class hierarchy provides many type classes that are _explicitly designed_ to capture side-effecting code. These type classes include `Sync`, `Async`, `LiftIO`, `Concurrent`, `Effect`, and `ConcurrentEffect`. 
 
-Methods that require one of these type classes can literally do _anything_ they wants, without constraints, even assuming a working social contract. These methods nullify the power of discipline, depriving us of any benefits to reasoning and testability, resulting in opaque blobs of side-effecting, untestable procedural code.
+Methods that require one of these type classes can literally do _anything_ they want, without constraints, even assuming a working social contract. These methods nullify the power of discipline, depriving us of any benefits to reasoning and testability, resulting in opaque blobs of side-effecting, untestable procedural code.
 
 Nearly all tagless-final code (including some of the [best open source functional Scala I know of](https://github.com/slamdata/quasar/search?q=Sync&unscoped_q=Sync)) makes liberal use of these type classes, freely embedding side-effects in numerous methods sprawled across the code base.
 
