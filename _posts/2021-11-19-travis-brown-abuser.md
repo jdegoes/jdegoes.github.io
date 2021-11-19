@@ -75,7 +75,7 @@ In a separate incident, Travis Brown even went so far as to try to correlate a d
 
 All of this behavior is in clear violation of the Scala Code of Conduct, which most events and open source projects in the Scala community have adopted. One developer reported these violations to the TypeLevel moderators, who then deleted the report at the request of Travis Brown.
 
-Travis Brown's abusive behavior resulted in extreme psychological distress for these individuals, and contributed to the hospitalization of a Latino developer. The woman I mentioned was afraid for her own physical safety as she walked the street of Berlin, where Travis Brown lives.
+Travis Brown's abusive behavior resulted in extreme psychological distress for these individuals. The woman I mentioned was afraid for her own physical safety as she walked the street of Berlin, where Travis Brown lives.
 
 During the worst of these attacks, I feared someone might end up dead because of Travis Brown.
 
