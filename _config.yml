@@ -1,5 +1,5 @@
-title:            John <em>A</em> <strong>De Goes</strong>
-text_title:       John A De Goes
+title:            John A De Goes
+rich_title:       John <em>A</em> <strong>De Goes</strong>
 tagline:          ramblings of a geek
 description:      The home on the web for technologist John A. De Goes.
 # Your site's domain goes here. Leave localhost server or blank when working locally.
