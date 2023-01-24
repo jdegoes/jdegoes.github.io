@@ -111,7 +111,7 @@ At a high-level, SBT suffers from the following major drawbacks (among others):
  - **Poor Scala integration**. Despite being written in Scala and targeting Scala builds, SBT has no deep understanding of Scala versioning or cross-platforming, or the Scala compiler itself, and leaves many of the hard problems of building complex Scala applications to developers.
  - **Inscrutable failures**. Diagnosing problems with SBT can be extremely frustrating. To this day, there are times when SBT will fail to build a project, leading to the loss of countless developer hours. I myself once walked away from fixing a build problem after spending 40 hours without progress.
 
-In my opinion, the main reason developers choose SBT to build Scala projects because developers choose SBT to build Scala projects. For all these drawbacks, Scala's build tool gets an F.
+In my opinion, the main reason developers choose SBT to build Scala projects is because developers choose SBT to build Scala projects. For all these drawbacks, Scala's build tool gets an F.
 
 Grade: F
 
@@ -238,13 +238,13 @@ Grade: B
 
 ### Other
 
-Though Scala is home to many open source libraries, most of these are not part of any ecosystem. The two partial exceptions are SoftwareMill's range of libraries, including Tapir and sttp, and Li Haioa's Python-esque libraries that focus on getting things done with a minimum of ceremony.
+Though Scala is home to many open source libraries, most of these are not part of any ecosystem. The two partial exceptions are SoftwareMill's range of libraries, including Tapir and sttp, and Li Haoyi's Python-esque libraries that focus on getting things done with a minimum of ceremony.
 
 There is no doubt many of these libraries are high quality, especially in the aforementioned two ecosystems. Where they are present, weaknesses of libraries across the greater Scala ecosystem include:
 
  - **Duplicated effort**. For its relatively small size, Scala has a disproportionately high number of libraries all trying to solve any given problem. Given that Scala is not very opinionated, but that OSS contributors very often **are** opinionated, perhaps this is not surprising.
  - **Abandoned libraries**. Due to their origin as one-person passion projects, many older Scala libraries are abandoned or in a state of disrepair, without being officially deprecated or transitioned to more motivated maintainers.
- - **Relatively unambitious**. There are few concerted efforts to build large-scale open source that could rival the size and scope of projects like Flink, Spring, or even Akka (with some [exceptions](https://github.com/JohnSnowLabs)).
+ - **Relatively unambitious**. There are few concerted efforts to build large-scale open source systems that could rival the size and scope of projects like Flink, Spring, or even Akka (with some [exceptions](https://github.com/JohnSnowLabs)).
 
 Overall, Scala gets a B in this category, an above average score. For its size, Scala has a wonderful third-party OSS ecosystem.
 
@@ -475,7 +475,7 @@ In the best case scenario, the Scala Center continues to operate as before, whic
 The main commercial organizations involved in contributing to the greater Scala ecosystem include:
 
  - **JetBrains**. JetBrains is investing quite a lot into Scala via its Scala development team. The problem is that their current approach to re-creating Scala's type system leads to massive waste, and it doesn't work and can't ever work. I would like to see JetBrains invest in the core compiler to make it better suited for use in an IDE (e.g. error recovery, plug-ins to export compile-time information, tooling around TASTY, etc.). I know many Scala developers who would easily pay $500 or more for a Scala IDE that actually worked.
- - **Lightbend**. Lightbend maintains the Scala 2.x compiler, allegedly with revenue from fintech-based support and maintenance contracts. This is important work, as Scala 3 adoption is still low in industry. However, given Lightbend has an uncertain future, and an increasingly tenuous connection to Scala, I believe that the company will stop funding 2.x maintenance. I hope the maintenance contracts will be smoothly transitioned to another organization who can continue to maintain Scala 2.x.
+ - **Lightbend**. Lightbend maintains the Scala 2.x compiler, allegedly with revenue from fintech-based support and maintenance contracts. This is important work, as Scala 3 adoption is still low in industry. However, given Lightbend has an uncertain future, and an increasingly tenuous connection to Scala, I believe that the company will stop funding 2.x maintenance. I hope the maintenance contracts will be smoothly transitioned to another organization that can continue to maintain Scala 2.x.
  - **LunaTech**. LunaTech has not been very active in contributing to Scala, but recently the organization lent Chris Kipp to the Scala Center to focus on improved tooling for the Scala ecosystem (donating labor is one way to obtain a seat on the Scala Center advisory board). My hope is that this represents a long-term commitment from LunaTech to improving Scala tooling, and I would love to see them extend this investment.
  - **Scalac**. Scalac is one of the oldest Scala consultancies, and has invested into many open source libraries, particularly around the Akka and ZIO ecosystems. It would be fantastic to see this investment become more consistent, dedicated, and expanded.
  - **SoftwareMill**. SoftwareMill primarily contributes to the Scala open source ecosystem, principally its own projects such as Tapir, sttp, Bootzooka, Magnolia, MacWire, and so forth. These libraries have a positive impact on Scala's adoption in industry. It would be great to see these OSS investments maintained, and perhaps even supplemented with additional investment into tooling or the language itself.
