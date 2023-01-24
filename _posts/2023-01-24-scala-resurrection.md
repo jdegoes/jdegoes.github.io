@@ -147,7 +147,7 @@ The architectural issues with the IntelliJ IDEA Scala manifest themselves in way
 
 Beyond these frustrating issues with simple compilation, the Scala plug-in for IntelliJ IDEA simply is not up to the same standards as their Java IDE. Refactoring support is barely present, and doesn't always work. With so many resources spent merely trying to keep the plug-in's model of Scala consistent with all the editions of the two Scala compilers, it is hardly surprising the team can't implement other IDE features.
 
-As a result, while many commercial Scala developers still use IntelliJ IDEA, it is not an acceptable development experience, and it is no where in the same league as modern IDEs for languages such as Java, Kotlin, C#, Go, TypeScript, or even Python.
+As a result, while many commercial Scala developers still use IntelliJ IDEA (because, for all its drawbacks, it is significantly more stable and robust than Scala Metals), it is not an acceptable development experience, and it is no where in the same league as modern IDEs for languages such as Java, Kotlin, C#, Go, TypeScript, or even Python.
 
 My own frustrations with IntelliJ IDEA led me to try Scala Metals, and I was blown away by the early experience of using the tool: with just a few clicks, it would compile my project and start reporting errors in VS Code, which were powered directly by the real Scala compiler.
 
