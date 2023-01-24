@@ -101,7 +101,7 @@ The de facto build tool for Scala is _Simple Build Tool_, better known by the ac
 
 To its credit, SBT did not shy away from complex builds, unlike many other attempts at creating build tools for Scala. Furthermore, its wide adoption is a testament not merely to its first-mover advantage, but to its features, documentation, build model, and extensive ecosystem of plugins. I and many other Scala developers owe a huge debt of gratitude and appreciation for the countless developer years poured into this tool, both by individual contributors who generously donated their free time, as well as by companies.
 
-Unfortunately, SBT falls far short of the standards for modern build tools. Indeed, SBT falls so far short that numerous frustrated developers over the past decade have attempted to write better build tools for Scala (Mill, CBT, Seed, Fury, Bleep, etc.).
+Unfortunately, [SBT falls far short](https://www.lihaoyi.com/post/SowhatswrongwithSBT.html) of the standards for modern build tools. Indeed, SBT falls so far short that numerous frustrated developers over the past decade have attempted to write better build tools for Scala (Mill, CBT, Seed, Fury, Bleep, etc.).
 
 At a high-level, SBT suffers from the following major drawbacks (among others):
 
