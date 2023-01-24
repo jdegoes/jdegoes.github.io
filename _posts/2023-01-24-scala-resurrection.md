@@ -16,9 +16,9 @@ Yet, not all is sunshine and roses in the world of Scala:
   - The tooling around Scala is worse now than in the 2.x days, and poor compared to even much newer languages like Go, Kotlin, and Rust. 
   - Critical platform and tooling projects in the Scala ecosystem remain underfunded and underdeveloped.
   - Scala has completely intertwined its fate with the JVM, which is under constant threat from more modern alternatives.
-  - Lightbend has effectively closed source the entire Akka ecosystem.
+  - Lightbend has effectively close sourced the entire Akka ecosystem.
   
-These factors, combined the scarcity and high cost of senior Scala talent, have pushed many companies to other languages like Go, Kotlin, Java, and Rust, depending on their use cases.
+These factors, combined with the scarcity and high cost of senior Scala talent, have pushed many companies to other languages like Go, Kotlin, Java, and Rust, depending on their use cases.
 
 While there are too many commercial users of Scala for the language to "disappear", it is not clear that the Scala programming language will grow adoption over time. The [ZIO community](https://zio.dev) continues to grow, but upon close inspection, the majority of this growth is occurring within the _existing_ Scala market, and it is therefore not a proxy for the commercial success of Scala.
 
@@ -54,7 +54,7 @@ In the old days, a text editor and `make` were considered sufficient "tooling", 
 
 Every successful commercial programming language must include four key tools:
 
-1. A packager manager and online registry.
+1. A package manager and online registry.
 2. A build tool.
 3. An integrated development environment (IDE).
 4. An interactive mode (REPL).

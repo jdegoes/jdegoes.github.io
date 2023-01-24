@@ -2,7 +2,7 @@
 layout: none
 ---
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="https://www.w3.org/2005/Atom" xml:lang="en">
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
 <title type="text">{{ site.title }}</title>
 <subtitle type="text">{{ site.tagline }}</subtitle>
 <generator uri="https://github.com/mojombo/jekyll">Jekyll</generator>
