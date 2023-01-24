@@ -379,7 +379,7 @@ While not really a build tool right now (for most real world projects), Scala CL
 
 Solving the tooling challenges will require investment into promising open source projects, investigating ways to integrate the best parts from multiple OSS projects (for example, Scala CLI, Ammonite, Fury, Ensime), and the creation of new open source projects. Moreover, it will require a commitment to ongoing, broad-based investment from the community at large, as well as partners from academia and industry.
 
-### Ecosystem
+### Healthy Ecosystem
 
 The Scala open source ecosystem is strong, but needs to become stronger. Obviously, the respective ecosystems can and should embrace their respective strengths, while addressing their respective weaknesses.
 
@@ -397,7 +397,7 @@ In support of this goal, I will personally commit to helping organize a _Scala O
 
 If the most brilliant minds in Scala open source work together, then surely, the whole ecosystem can rise to new heights!
 
-### Cross-Platform
+### Natively Cross-Platform
 
 The JVM is attempting to innovate, and to its credit, is doing so faster now than at any time in its history. However, the world has moved far past the JVM, with cloud-driven requirements including auto-scaling, fast startup times, and low memory usages, running on heavily virtualized and sandboxed infrastructure, for applications demanding increased efficiency for greater cost savings.
 
@@ -425,7 +425,7 @@ As CEO of Ziverge and a core contributor to ZIO, I am happy to play a role in de
 
 ### The How
 
-As the Scala programming language and broader ecosystem is not a commercial product, there is no single entity who can fund development and maintenance of critical infrastructure. Although in some cases, I've volunteered my own time and resources, or those of my companies, ultimately, in order to address all of these challenges, we need much broader participation.
+As the Scala programming language and broader ecosystem is not a commercial product, there is no single entity who can fund development and maintenance of critical infrastructure. Although in some cases, I've volunteered my own time and resources, or those of my company, ultimately, in order to address all of these challenges, we need much broader participation.
 
 Fortunately, there are many organizations who can and do contribute to Scala. The involvement of some of these organizations will be crucial.
 
