@@ -101,7 +101,7 @@ The de facto build tool for Scala is _Simple Build Tool_, better known by the ac
 
 To its credit, SBT did not shy away from complex builds, unlike many other attempts at creating build tools for Scala. Furthermore, its wide adoption is a testament not merely to its first-mover advantage, but to its features, documentation, build model, and extensive ecosystem of plugins. I and many other Scala developers owe a huge debt of gratitude and appreciation for the countless developer years poured into this tool, both by individual contributors who generously donated their free time, as well as by companies.
 
-Unfortunately, SBT falls far short of the standards for modern build tools. Indeed, SBT falls so far short that numerous frustrated developers over the past decade have attempted to write better build tools for Scala (Mill, CBT, Seed, Fury, etc.).
+Unfortunately, SBT falls far short of the standards for modern build tools. Indeed, SBT falls so far short that numerous frustrated developers over the past decade have attempted to write better build tools for Scala (Mill, CBT, Seed, Fury, Bleep, etc.).
 
 At a high-level, SBT suffers from the following major drawbacks (among others):
 
@@ -293,6 +293,7 @@ That said, however, Scala.js has a number of weaknesses:
  - **Standalone target**. Scala.js is not integrated into the compiler, but must be added as a compiler plug-in, with library dependencies.
  - **Complex build**. Setting up a project for cross-building is difficult (with quite painful developer experience), complicates the build, and significantly slows down building and testing.
  - **Incomplete JDK support**. The JDK is so vast that inevitably some class is needed which is not emulated in Scala.js.
+ - **Poor tooling**. The IDEs that we have do a poor job supporting Scala.js; one can argue this is a problem with the tooling, but it affets Scala.js users.
 
 Considering both the strengths and weaknesses of Scala's Javascript platform support, Scala.js gets a grade of B.
 
@@ -308,7 +309,7 @@ Scala Native is an enormous undertaking, because LLVM is much lower-level than t
 
 A number of highly talented engineers have poured their own personal time and effort into Scala Native. In addition, the project has seen some modest investment by EPFL and the Scala Center.
 
-Despite all of this investment, however, Scala Native is _no where near_ to a suitable replacement for Scala JVM. The vast majority of Scala applications are not even close to _compiling_, let alone executing reliably and performantly, on Scala Native. 
+Despite all of this investment, however, Scala Native is _no where near_ to a suitable replacement for Scala JVM. The vast majority of Scala applications are not even close to _compiling_, let alone executing reliably and performantly, on Scala Native. And as with Scala.js, there tooling that exists or at least partially works for the JVM is missing or buggy for Native, leading to a poor development experience.
 
 As much as I see the promise of viable alternatives to the JVM, Scala's LLVM support receives a grade of D, simply because it is not there yet, and requires significant further investment to become viable for most JVM-based Scala applications.
 
