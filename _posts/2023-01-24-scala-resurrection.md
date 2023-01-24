@@ -309,7 +309,7 @@ Scala Native is an enormous undertaking, because LLVM is much lower-level than t
 
 A number of highly talented engineers have poured their own personal time and effort into Scala Native. In addition, the project has seen some modest investment by EPFL and the Scala Center.
 
-Despite all of this investment, however, Scala Native is _no where near_ to a suitable replacement for Scala JVM. The vast majority of Scala applications are not even close to _compiling_, let alone executing reliably and performantly, on Scala Native. And as with Scala.js, there tooling that exists or at least partially works for the JVM is missing or buggy for Native, leading to a poor development experience.
+Despite all of this investment, however, Scala Native is _no where near_ to a suitable replacement for Scala JVM. The vast majority of Scala applications are not even close to _compiling_, let alone executing reliably and performantly, on Scala Native. And as with Scala.js, the tooling that exists or at least partially works for the JVM is missing or buggy for Native, leading to a poor development experience.
 
 As much as I see the promise of viable alternatives to the JVM, Scala's LLVM support receives a grade of D, simply because it is not there yet, and requires significant further investment to become viable for most JVM-based Scala applications.
 
