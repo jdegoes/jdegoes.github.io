@@ -54,7 +54,7 @@ In the old days, a text editor and `make` were considered sufficient "tooling", 
 
 Every successful commercial programming language must include four key tools:
 
-1. A packager manager and online registry.
+1. A package manager and online registry.
 2. A build tool.
 3. An integrated development environment (IDE).
 4. An interactive mode (REPL).
