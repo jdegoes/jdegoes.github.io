@@ -16,7 +16,7 @@ In the past few months, the TypeLevel organization has become increasingly hosti
 
 As an open source developer myself, I am keenly aware of the fact that OSS is a "nights and weekends" hobby for most of us. We freely volunteer our time, often sacrificing other pursuits in order to contribute to open source and support our end-users.
 
-As a result of this reality, I whole-heartedly support the right of every OSS developer to contribute on their own terms, whatever those terms may be. Non-paying users of free software should _not_ get to dictate these terms.
+As a result of this reality, I wholeheartedly support the right of every OSS developer to contribute on their own terms, whatever those terms may be. Non-paying users of free software should _not_ get to dictate these terms.
 
 At the same time, I recognize that the actions of the TypeLevel organization may have undesirable side-effects on the Scala community:
 
@@ -36,8 +36,8 @@ Effective immediately, I hereby codify and will support the following:
 
 ZIO is already doing a great job at being _pro-community_, as ZIO JSON hosts an integration for the TypeLevel projects _http4s_ and _Refined_, and ZIO Core hosts integrations for _Cats Effect 2_, _Cats Effect 3_, and _Akka Cluster_ (among other integrations too numerous to list). However, I believe that making this behavior official will further increase trust and expand integrations, and also clearly set expectations for new projects coming into the organization.
 
-As for being _pro-professionalism_, within ZIO official spaces (Github, Discord, etc.), I have only ever seen welcoming, inclusive, and non-discrimantory behavior, without ad hominem or career sabotage. But explicitly committing to this high-standard of professionalism can only help to set expectations and provide guidance for leaders as the organization continues to grow.
+As for being _pro-professionalism_, within ZIO official spaces (Github, Discord, etc.), I have only ever seen welcoming, inclusive, and non-discriminatory behavior, without ad hominem or career sabotage. But explicitly committing to this high-standard of professionalism can only help to set expectations and provide guidance for leaders as the organization continues to grow.
 
-I encourage other Scala open source organizations to follow ZIO's lead, and adopt these _pro-community_ and _pro-professsionalism_ measures, without imposing any negative repurcussions on Scala open source contributors (including TypeLevel) who choose to take a different path (OSS entitlement is a [real problem](https://medium.com/@fommil/the-open-source-entitlement-complex-bcb718e2326d)).
+I encourage other Scala open source organizations to follow ZIO's lead, and adopt these _pro-community_ and _pro-professsionalism_ measures, without imposing any negative repercussions on Scala open source contributors (including TypeLevel) who choose to take a different path (OSS entitlement is a [real problem](https://medium.com/@fommil/the-open-source-entitlement-complex-bcb718e2326d)).
 
 As [Martin Odersky](https://en.wikipedia.org/wiki/Martin_Odersky) once wrote, [Scala is a big tent](https://www.scala-lang.org/blog/2019/05/02/community.html). It is not necessary that open source contributors have the same views or even like each other. But if we put Scala first, by being pro-community and pro-professionalism, we can find a way to co-exist peacefully inside this big tent, and together, we can, in different ways and with different audiences, show the world that Scala is a force to reckon with.
