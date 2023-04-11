@@ -71,11 +71,11 @@ In no particular order:
  
 A build file should be pure data, not code, a mistake that SBT and other build tools have replicated. The idea of expressing a build in a general-purpose programming language is attractive to generalists, but is a massive drawback to tooling, which wants to be able to read and write build files (this is especially important for IDEs).
 
-In addition, build tools powered by programming languages trade off usability for expressive power that is utilized by almost no one, and which can be obtained in other ways (plug-ins). A user creating a new build file does not want to start from an empty Scala file, having no idea what to type or why. They want a few settings they can set. They want a Scala build-specific "language" that's so highly constrained, it's obvious what to write. 
+In addition, build tools powered by programming languages trade off usability for expressive power that is utilized by almost no one, and which can be obtained in other ways (plug-ins). A user creating a new build file does not want to start from an empty Scala file, having no idea what to type or why. They want a few obvious and build parameters they can set. They want a Scala build-specific "language" that's so highly constrained, it's obvious what to write. 
 
-It's important that the data be in a standardized format, which can be written and read by tooling. Moreover, unlike Bazel, I would say it's important the build data be high-level, and suitable for humans to create and maintain. Finally, it's important the format be textual, so that developers can work on independent changes to the build file, and merge them in using standard Git-based workflows and tooling. 
+It's important that the data be in a standardized format, which can be written and read by tooling. Moreover, unlike Bazel, I would say it's important the build file format be high-level, and suitable for humans to create and maintain. Finally, it's important the format be textual, so that developers can work on independent changes to the build file, and merge them in using standard Git-based workflows and tooling. 
 
-A proprietary binary format for build data would be a mistake, even if advanced front-end tooling existed to create and maintain such build data.
+A proprietary binary format for the build file (or even a textual format that doesn't merge well using version control) would be a catastrophic mistake, even if advanced front-end tooling existed to create and maintain such build data.
 
 ### All-in on Scala
 
