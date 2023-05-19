@@ -1,7 +1,7 @@
 ---
 layout:       post
 title:        "A Splendid Scala Journey"
-description:  "My heartfelt thoughts, reflections, and notes on my 15 year Scala journey, and what's next for me"
+description:  "My heartfelt thoughts, reflections, and notes on my 15 year Scala journey, and on what's next for me"
 category:     articles
 tags:         [scala, scala3, tooling, ides, functional programming]
 ---
