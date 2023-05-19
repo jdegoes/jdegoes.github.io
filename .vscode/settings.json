@@ -1,6 +1,11 @@
 {
   "cSpell.ignoreWords": [
-    "Caprese"
+    "Caprese",
+    "Consummatum",
+    "Lightbend",
+    "Odersky",
+    "Shardcake",
+    "Typelevel"
   ],
   "cSpell.words": [
     "abandonware",
@@ -23,5 +28,6 @@
     "sttp",
     "Typesafe",
     "Xebia"
-  ]
+  ],
+  "cSpell.enabled": true
 }
