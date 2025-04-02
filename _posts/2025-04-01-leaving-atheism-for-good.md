@@ -90,7 +90,7 @@ So I acknowledged the reality of qualia and the fact that they lie wholly outsid
 
 To a mathematician, such an acceptance is demanded. Gödel's first incompleteness theorem says that within any formal axiomatic system, there are true things which are nonetheless unprovable within that system. I had no choice but to accept this.
 
-I left these unsolved puzzles to sit on a shelf until many years later.
+I left these unsolved puzzles to collect dust until many years later.
 
 ## Ghosts
 
@@ -116,13 +116,13 @@ I went through trauma around 5 years after the birth of the last of the three ch
 
 I couldn't see it, but my atheism and the way my life philosophy affected my views, behavior, roles, and relationships gave birth to and nourished the trauma.
 
-I did not recover from these dark days for many years. As this process ran its logical conclusion, the last of my connections to Christianity were severed. In the aftermath, I understood the implications of my naturalism and reductionism.
+I did not recover from these dark days for many years. As this process ran its logical conclusion, the last of my connections to Christianity were severed. In the aftermath, I viscerally understood the implications of my naturalism and reductionism.
 
 In a world where everything is matter and energy—and nothing but matter and energy—there is no right or wrong, no obligation or responsibility, no higher purpose and no meaning to anything. Everything reduces to the question: what _do I want right now?_
 
 I followed this path straight into divorce and my own mid-life crisis.
 
-Despite doing whatever I wanted whenever I wanted it, I never felt more lost in my entire life. Waves tossed me here and there and every wind carried me about.
+Despite doing whatever I wanted, whenever I wanted it, I never felt more lost in my entire life. Waves tossed me here and there and every wind carried me about.
 
 Even as the foundations of my behavior and values crumbled beneath me, the final cornerstone of my identity began to fracture: the intellectual superiority of my atheist worldview.
 
@@ -146,7 +146,7 @@ Scientific papers and mainstream science articles discussed alternate ways of kn
 
 Instead of seeing the brave guardians of truth standing up to this madness, I watched in horror as famous scientists everywhere debased themselves and all of science with them.
 
-I was slowly forced to process what studies had already told me—that even people who believe they are too smart to be affected by biases are _particularly_ affected by them.
+I was slowly forced to process what studies had already told me—that even people who believe they are too smart to be affected by biases are affected by them; in fact, they are _especially_ affected by them.
 
 If so many smart people can be wrong about so many topics—in the 21st century, and with everyone having access to all human knowledge—then _anyone_ can be wrong about _anything_.
 
@@ -156,7 +156,7 @@ _Even me_.
 
 Over the years, I sometimes wondered if I had been wrong about atheism.
 
-"_God,_" I would sometimes say, "_If you exist, show me. I am open to being wrong._" I didn't expect anything to happen.
+"_God,_" I would sometimes say, "_If you exist, show me. I am open to being wrong._" I never expected anything to happen.
 
 But in 2022, after living decades as an atheist, I felt humbled and even ashamed.
 
@@ -190,11 +190,11 @@ Somehow, the lyrics resonated with me. I too wanted to walk upon the waters; I w
 
 After that evening, I became open to exploring religion, not as a means of understanding objective truth, but as a way of finding meaning and purpose. Of orienting myself to those around me and to the universe itself.
 
-In early 2023, I began attending [The Junction Church](https://thejunction.church/), with much trepidation and disbelief. Despite being an atheist at the time, I was welcomed with warmth and hospitality, without reservation or judgment.
+In early 2023, I began attending [The Junction Church](https://thejunction.church/), with much trepidation and disbelief. Despite being an atheist my first visit to this church, I was welcomed with warmth and hospitality, without reservation or judgment.
 
 I was awestruck by the abundance of meaning and purpose all around me. Even if I could not participate in it, the richness of the experience was palpable.
 
-I wanted to have what _they_ had; however, I still had borders that prevented my feet from wandering.
+I wanted to have what _they_ had; however, rigid borders still prevented my feet from wandering.
 
 ## Evolution
 
@@ -218,9 +218,9 @@ Though still incomplete, this process began to happen more quickly than I imagin
 
 In mere months, I found ways to reconcile the formal and the informal, the objective and subjective, the what and the why.
 
-In mid 2023, I turned my back on atheism and surrendered to the King of Kings. This decision has had an impact on my life that I never could have imagined, opening new doors to spiritual growth and understanding.
+In mid 2023, I turned my back on atheism and surrendered to the King of Kings. This decision has had a far-ranging effects on my life, opening new doors to spiritual growth and understanding.
 
-I now attend a [Presbyterian church](https://www.crecannapolis.com/) in Annapolis, Maryland. There, I strive to learn more about why I am here and how I should live. To deal with the sin in my own life, and in so doing, to improve my relationships with family, friends, and the world at large.
+I now attend a [Presbyterian church](https://www.crecannapolis.com/) in Annapolis, Maryland. There, I strive to learn more about why I am here and how I should live. To deal with the sin in my own life, and in so doing, to improve my relationships with God, family, friends, and the world at large.
 
 ## Reflection
 
@@ -232,15 +232,15 @@ That's certainly not how it worked in my life.
 
 I came to Christianity because following a life of atheism left my life in shambles, without meaning and purpose, and humbled me. Something was missing in my life–the _God-shaped hole_ that demands to be filled with something, be that sex and drugs, conspiracy theories, or woke imitations of religion.
 
-I now believe that humanity was _designed_ for religion. In the future, our descendants will be _more_ religious, not less. Scientists will write about how the pill and susceptibility to various behavior-altering ideologies led to a punctuated event that reshaped humanity's future.
+I now believe that humanity was _designed_ for religion. In the future, our descendants will be _more_ religious, not less. Scientists will write about how the pill and susceptibility to various behavior-altering ideologies led to a rapid, episodic event that reshaped humanity's future.
 
-They will say this is part of God's divine plan, manifestly encoded in the very fabric of the unfolding universe since eons past—even as they decry the tendency of older scientists to constantly turn to the goddesses Fortuna and Tyche to "explain" everything they didn't understand.
+They will say this is part of God's divine plan, manifestly encoded in the very fabric of the unfolding universe since eons past—even as they decry the tendency of ancient scientists to constantly turn to the fictional goddesses Fortuna and Tyche to "explain" everything they didn't understand.
 
-I don't believe in the kind of God who needs me, as though He needed anything. I understand and I am grateful that I get to play the smallest of roles in the greatest story ever told–the glory of God, as manifest in humanity's redemptive arc from creation until the end of all things.
+I don't believe in the kind of God who needs me (as though He needed anything). I understand and I am grateful that I get to play the smallest of roles in the greatest story ever told–the glory of God, as manifest in humanity's redemptive arc from creation until the end of all things.
 
-My job is not to conquer the infidels, to persecute the heretics, to heap hatred, scorn and judgment upon others. Many have done so in the name of Christianity over the past two thousand years, and their sins are not my sins.
+My job is not to conquer the infidels, to burn the heretics, to heap hatred, scorn and judgment upon others. Many have done so in the name of Christianity over the past two thousand years, and their sins are not my sins.
 
-My job is to be a witness for what God has done in my life. I am to be a light put upon a stand, so that those who feel the God-shaped hole (the working of the Holy Spirit, as it is often called) can find healing, forgiveness, and justification in Christ alone.
+My job is to be a witness for what God has done in my own life. I am to be a light put upon a stand, so that those who feel the God-shaped hole (the _working of the Holy Spirit_, as it is often called) can find healing, forgiveness, and justification in Christ alone.
 
 My job is to _love_, even when that's not an easy thing to do. To love people, to love kindness, and to walk humbly with my God.
 
