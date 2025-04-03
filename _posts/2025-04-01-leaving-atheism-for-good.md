@@ -72,7 +72,7 @@ I acknowledged the hard problem and took what I believed to be the only intellec
 
 The hard problem of morality might have been a roadblock, but it can be avoided—albeit at great social cost. Some challenges I saw could not be overcome at any cost.
 
-The serious challenge concerns the nature of reality. In a naturalistic, reductionist worldview, reality is reduced to its most fundamental natural elements: quarks, leptons, photons, bosons, gluons, Higgs, perhaps gravitons.
+One serious challenge concerns the nature of reality. In a naturalistic, reductionist worldview, reality is reduced to its most fundamental natural elements: quarks, leptons, photons, bosons, gluons, Higgs, perhaps gravitons.
 
 These particles interact with each other according to the laws of physics. Electromagnetism governs charged particles, the strong nuclear force binds quarks together, the weak nuclear force enables radioactive decay, and gravity affects everything with mass or energy.
 
