@@ -60,7 +60,7 @@ What will you never sacrifice? For what will you sacrifice everything else?
 
 * Immutable gods produce long-term projects—cathedrals, universities, constitutions; mutable gods produce tear-downs and perpetual revolution  
 * Goal-gods risk collapsing reasoning into pure consequentialism—no fixed standard means effectiveness becomes the only measure  
-* Entity gods inspire deeper commitment than goal gods—you can relate to an entity; you can only achieve or fail a goal  
+* Entity-gods inspire deeper commitment than goal-gods—you can relate to an entity; you can only achieve or fail a goal  
 * The god generates the enemy; identify the god, and the enemy follows
 
 ### **2\. Enemy**
@@ -183,9 +183,9 @@ What must you do, and what does it cost?
 
 #### **Predictions**
 
-* Thick constraints correlate with entity gods; thin constraints correlate with goal gods—entities have natures that forbid certain means; goals have only outcomes  
+* Thick constraints correlate with entity-gods; thin constraints correlate with goal-gods—entities have natures that forbid certain means; goals have only outcomes  
 * Thin constraints make a religion dangerous to dissenters—obstacles get removed by whatever works  
-* Asymmetric obligation appears where goal gods meet asymmetric human nature  
+* Asymmetric obligation appears where goal-gods meet asymmetric human nature  
 * Cheap ethics spread fast; costly ethics retain under pressure—when real costs arrive, cheap-ethics believers defect  
 * Pro-natal ethics confer compound reproductive advantage over generations  
 * Cheap ethics win the sprint; costly pro-natal ethics win the marathon
