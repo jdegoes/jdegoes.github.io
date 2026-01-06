@@ -36,7 +36,7 @@ I'm a Christian, and I believe Christianity is both good and true. I'm not going
 
 The framework *describes* the anatomy of religion in a way that makes testable predictions—and therefore makes it possible to evaluate religions not only by their claims, but by what they reliably produce in human beings and societies.
 
-One constraint: the framework describes religions as *coherently* held. Many profess one religion while belonging to another. The framework predicts behavior for coherent adherents; incoherent adherents will show mixed patterns. To understand someone's true religion, watch what wins when commitments collide.
+One constraint: predictions apply to religions as *held*, not as *professed*. The Christian who consistently worships comfort is not a Christian who falsifies framework predictions: he's a comfort-worshipper with Christian décor. The test is already given and independent of any prediction: watch what wins when commitments collide under real cost.
 
 Eleven elements predict what believers will sacrifice, what they'll protect, how they'll fight, and whether their religion will outlast them.
 
@@ -60,7 +60,7 @@ What will you never sacrifice? For what will you sacrifice everything else?
 
 * Immutable gods produce long-term projects—cathedrals, universities, constitutions; mutable gods produce tear-downs and perpetual revolution  
 * Goal-gods risk collapsing reasoning into pure consequentialism—no fixed standard means effectiveness becomes the only measure  
-* Entity-gods inspire deeper commitment than goal-gods—you can relate to an entity; you can only achieve or fail a goal  
+* Entity-gods sustain commitment across generations; goal-gods can produce revolutionary intensity but burn out
 * The god generates the enemy; identify the god, and the enemy follows
 
 ### **2\. Enemy**
@@ -133,13 +133,15 @@ Christianity appeals to Scripture as its stable reference, interpreted through c
 
 Whether a religion has a fixed canon matters enormously. Christianity's congregation can appeal to Scripture against a corrupt pastor. Islam's umma can appeal to Quran against a wayward imam. Scientific materialism can appeal to data against a fraudulent researcher. Therapeutic Individualism has no canon—"my truth" supersedes any text, so authority cannot be checked, only felt.
 
+Self-sealing epistemologies (where disagreement proves the challenger is disqualified) is not the same as heresy: Christianity has heresy, but heresy appeals to an external text—you can argue from Scripture that the charge is wrong. "Problematic" has no external standard; the offense is self-evident to the initiated, and disputing it proves the charge.
+
 #### **Probing Question**
 
 What settles what's true?
 
 #### **Predictions**
 
-* Self-sealing epistemologies (where disagreement proves the challenger is disqualified) make course-correction impossible—expect accumulated error and eventual collapse or schism  
+* Self-sealing epistemologies make course-correction impossible—expect accumulated error and eventual collapse or schism  
 * Corrigible epistemologies (where external evidence can overturn beliefs) enable institutional survival across centuries—the religion can recover from corruption  
 * Feeling-based epistemologies produce unstable ethics—what's right shifts with mood and circumstance  
 * Fixed canon enables reformation—believers can appeal to text over corrupt leaders  
